@@ -16,5 +16,6 @@ gradle.properties
 
 # Local contact data — NEVER commit real exports
 *.vcf
+!src/test/resources/fixtures/*.vcf
 /data/
 /scratch/
