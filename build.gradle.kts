@@ -1,5 +1,7 @@
 plugins {
     kotlin("jvm") version "2.0.21"
+    // kotlinx.serialization for JSON-serializable rule sets (#6).
+    kotlin("plugin.serialization") version "2.0.21"
     // Code coverage measurement + verification (ADR-0009 quality gates).
     id("org.jetbrains.kotlinx.kover") version "0.9.1"
     // Formatting enforced via ktlint through Spotless (ADR-0009).
@@ -16,6 +18,7 @@ repositories {
 dependencies {
     implementation("com.googlecode.ez-vcard:ez-vcard:0.12.1")
     implementation("com.googlecode.libphonenumber:libphonenumber:8.13.50")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.7.3")
 
     testImplementation(kotlin("test"))
     testImplementation("org.junit.jupiter:junit-jupiter:5.11.3")
@@ -46,6 +49,14 @@ spotless {
 // over time. koverVerify fails the build if either floor is not met.
 kover {
     reports {
+        // Exclude kotlinx.serialization-generated `$serializer` classes from
+        // coverage: their synthetic branches would otherwise drag branch
+        // coverage below the floor once @Serializable types are added (#6).
+        filters {
+            excludes {
+                classes("*\$serializer")
+            }
+        }
         verify {
             rule {
                 bound {
