@@ -36,4 +36,12 @@ class RuleStoreTest {
     @Test fun `malformed json throws`() {
         assertFailsWith<Exception> { RuleStore.fromJson("{ not valid") }
     }
+
+    @Test fun `save then load round-trips through a file`(
+        @org.junit.jupiter.api.io.TempDir tempDir: java.nio.file.Path,
+    ) {
+        val path = tempDir.resolve("rules.json")
+        RuleStore.save(path, sample)
+        assertEquals(sample, RuleStore.load(path))
+    }
 }

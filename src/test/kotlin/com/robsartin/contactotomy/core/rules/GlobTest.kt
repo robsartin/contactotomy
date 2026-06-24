@@ -20,6 +20,10 @@ class GlobTest {
         assertTrue(Glob.matches("*@INDEED.com", "x@indeed.com"))
     }
 
+    @Test fun `wildcards match across newlines`() {
+        assertTrue(Glob.matches("*", "a\nb"))
+    }
+
     @Test fun `dot is a literal, not any-char`() {
         assertTrue(Glob.matches("a.b", "a.b"))
         assertFalse(Glob.matches("a.b", "axb"))

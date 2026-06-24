@@ -16,6 +16,6 @@ internal object Glob {
                 else -> sb.append(Regex.escape(ch.toString()))
             }
         }
-        return Regex(sb.toString(), RegexOption.IGNORE_CASE)
+        return Regex(sb.toString(), setOf(RegexOption.IGNORE_CASE, RegexOption.DOT_MATCHES_ALL))
     }
 }

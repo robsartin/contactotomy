@@ -19,6 +19,17 @@ class PhonePatternTest {
         assertFalse(PhonePattern.matches("000????", "5551234"))
     }
 
+    @Test fun `parseable phone does not fall back to suffix match`() {
+        // "5551234" is the trailing digits but NOT the national number; must not match.
+        assertFalse(PhonePattern.matches("555-1234", "+15125551234"))
+    }
+
+    @Test fun `preserves leading zero in national significant number`() {
+        // Rome (+39 06...) keeps its trunk leading zero in the NSN: "0665897000".
+        // nationalNumber (a Long) would drop it to "665897000", breaking the match.
+        assertTrue(PhonePattern.matches("06-????-????", "+390665897000"))
+    }
+
     @Test fun `empty pattern never matches`() {
         assertFalse(PhonePattern.matches("---", "+15125551234"))
     }

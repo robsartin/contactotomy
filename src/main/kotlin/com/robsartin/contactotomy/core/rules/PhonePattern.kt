@@ -14,16 +14,19 @@ internal object PhonePattern {
         if (pat.isEmpty()) return false
 
         val national = nationalDigits(phone)
-        if (national != null && digitMatch(pat, national)) return true
+        if (national != null) {
+            // Parseable: decide solely on the national-number match (no suffix fallback).
+            return digitMatch(pat, national)
+        }
 
-        // Fallback: suffix match against the phone's bare digits.
+        // Fallback (unparseable only): suffix match against the phone's bare digits.
         val digits = phone.filter { it.isDigit() }
         return digits.length >= pat.length && digitMatch(pat, digits.takeLast(pat.length))
     }
 
     private fun nationalDigits(phone: String): String? =
         try {
-            util.parse(phone, null).nationalNumber.toString()
+            util.getNationalSignificantNumber(util.parse(phone, null))
         } catch (e: com.google.i18n.phonenumbers.NumberParseException) {
             null
         }
