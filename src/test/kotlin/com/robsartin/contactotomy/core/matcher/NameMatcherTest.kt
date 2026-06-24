@@ -9,8 +9,12 @@ import kotlin.test.assertTrue
 
 class NameMatcherTest {
     private val matcher = NameMatcher(NicknameDictionary(listOf(setOf("robert", "rob", "bob"))))
-    private fun name(given: String? = null, middle: String? = null, family: String? = null) =
-        ContactName(given = given, middle = middle, family = family)
+
+    private fun name(
+        given: String? = null,
+        middle: String? = null,
+        family: String? = null,
+    ) = ContactName(given = given, middle = middle, family = family)
 
     @Test
     fun `exact given names match`() {

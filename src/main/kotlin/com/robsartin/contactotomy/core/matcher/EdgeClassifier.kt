@@ -3,9 +3,13 @@ package com.robsartin.contactotomy.core.matcher
 import com.robsartin.contactotomy.core.model.Contact
 
 /** Classifies a pair of contacts into a MatchEdge, or null when they must never merge. */
-class EdgeClassifier(private val nameMatcher: NameMatcher) {
-
-    fun classify(a: Contact, b: Contact): MatchEdge? {
+class EdgeClassifier(
+    private val nameMatcher: NameMatcher,
+) {
+    fun classify(
+        a: Contact,
+        b: Contact,
+    ): MatchEdge? {
         // Rule 1: clearly different given names => never merge, even with shared contact info.
         if (nameMatcher.givenConflict(a.name, b.name)) return null
 

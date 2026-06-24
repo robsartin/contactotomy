@@ -34,9 +34,10 @@ class NicknameDictionaryTest {
 
     @Test
     fun `unisex token belongs to multiple groups without bridging them`() {
-        val dict = NicknameDictionary(
-            listOf(setOf("samuel", "sam", "sammy"), setOf("samantha", "sam", "sammy")),
-        )
+        val dict =
+            NicknameDictionary(
+                listOf(setOf("samuel", "sam", "sammy"), setOf("samantha", "sam", "sammy")),
+            )
         assertTrue(dict.areEquivalent("sam", "samuel"))
         assertTrue(dict.areEquivalent("sam", "samantha"))
         // sam/sammy are the only overlap; the two full names do not match directly.

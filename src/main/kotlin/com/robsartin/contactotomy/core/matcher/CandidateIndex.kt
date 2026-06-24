@@ -3,11 +3,16 @@ package com.robsartin.contactotomy.core.matcher
 import com.robsartin.contactotomy.core.model.Contact
 
 /** Generates candidate pairs by blocking on shared phone, email, or family name. */
-class CandidateIndex(private val contacts: List<Contact>) {
-
+class CandidateIndex(
+    private val contacts: List<Contact>,
+) {
     fun candidatePairs(): Set<Pair<Contact, Contact>> {
         val buckets = HashMap<String, MutableList<Contact>>()
-        fun add(key: String, c: Contact) {
+
+        fun add(
+            key: String,
+            c: Contact,
+        ) {
             if (key.isBlank()) return
             buckets.getOrPut(key) { mutableListOf() }.add(c)
         }
@@ -31,8 +36,13 @@ class CandidateIndex(private val contacts: List<Contact>) {
     }
 
     private fun familyKey(c: Contact): String? =
-        c.name.family?.lowercase()?.trim()?.ifEmpty { null }
+        c.name.family
+            ?.lowercase()
+            ?.trim()
+            ?.ifEmpty { null }
 
-    private fun orderPair(a: Contact, b: Contact): Pair<Contact, Contact> =
-        if (a.id <= b.id) a to b else b to a
+    private fun orderPair(
+        a: Contact,
+        b: Contact,
+    ): Pair<Contact, Contact> = if (a.id <= b.id) a to b else b to a
 }

@@ -5,16 +5,16 @@ import com.robsartin.contactotomy.core.model.Contact
 
 /** Applies accept/reject/field decisions to produce the final deduplicated contact list. */
 class DecisionApplier {
-
     fun applyDecisions(
         allContacts: List<Contact>,
         proposals: List<MergeProposal>,
         decisions: List<MergeDecision>,
     ): List<Contact> {
         val decisionByCluster = decisions.associateBy { it.clusterId }
-        val accepted = proposals.filter {
-            (decisionByCluster[it.cluster.id]?.action ?: Action.REJECT) == Action.ACCEPT
-        }
+        val accepted =
+            proposals.filter {
+                (decisionByCluster[it.cluster.id]?.action ?: Action.REJECT) == Action.ACCEPT
+            }
 
         val acceptedMemberIds = accepted.flatMap { it.cluster.members.map { m -> m.id } }.toSet()
         val indexOf = allContacts.withIndex().associate { (i, c) -> c.id to i }
@@ -32,30 +32,43 @@ class DecisionApplier {
         return result
     }
 
-    private fun adjust(proposal: MergeProposal, decision: MergeDecision): Contact {
+    private fun adjust(
+        proposal: MergeProposal,
+        decision: MergeDecision,
+    ): Contact {
         var merged = proposal.merged
         for ((field, value) in decision.conflictChoices) merged = setSingle(merged, field, value)
         for (excluded in decision.excludedValues) merged = removeValue(merged, excluded.field, excluded.value)
         return merged
     }
 
-    private fun setSingle(c: Contact, field: String, value: String): Contact = when (field) {
-        "org" -> c.copy(org = value)
-        "title" -> c.copy(title = value)
-        "notes" -> c.copy(notes = value)
-        else -> c
-    }
+    private fun setSingle(
+        c: Contact,
+        field: String,
+        value: String,
+    ): Contact =
+        when (field) {
+            "org" -> c.copy(org = value)
+            "title" -> c.copy(title = value)
+            "notes" -> c.copy(notes = value)
+            else -> c
+        }
 
-    private fun removeValue(c: Contact, field: String, value: String): Contact = when (field) {
-        "phones" -> c.copy(phones = c.phones - value)
-        "rawPhones" -> c.copy(rawPhones = c.rawPhones - value)
-        "emails" -> c.copy(emails = c.emails - value)
-        "addresses" -> c.copy(addresses = c.addresses - value)
-        "urls" -> c.copy(urls = c.urls - value)
-        "categories" -> c.copy(categories = c.categories - value)
-        "org" -> if (c.org == value) c.copy(org = null) else c
-        "title" -> if (c.title == value) c.copy(title = null) else c
-        "notes" -> if (c.notes == value) c.copy(notes = null) else c
-        else -> c
-    }
+    private fun removeValue(
+        c: Contact,
+        field: String,
+        value: String,
+    ): Contact =
+        when (field) {
+            "phones" -> c.copy(phones = c.phones - value)
+            "rawPhones" -> c.copy(rawPhones = c.rawPhones - value)
+            "emails" -> c.copy(emails = c.emails - value)
+            "addresses" -> c.copy(addresses = c.addresses - value)
+            "urls" -> c.copy(urls = c.urls - value)
+            "categories" -> c.copy(categories = c.categories - value)
+            "org" -> if (c.org == value) c.copy(org = null) else c
+            "title" -> if (c.title == value) c.copy(title = null) else c
+            "notes" -> if (c.notes == value) c.copy(notes = null) else c
+            else -> c
+        }
 }
