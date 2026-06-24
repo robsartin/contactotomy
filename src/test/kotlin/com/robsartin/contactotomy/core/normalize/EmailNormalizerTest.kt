@@ -1,4 +1,4 @@
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

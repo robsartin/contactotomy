@@ -1,10 +1,10 @@
-package com.contactotomy.core.importer
+package com.robsartin.contactotomy.core.importer
 
-import com.contactotomy.core.model.Contact
-import com.contactotomy.core.model.ContactName
-import com.contactotomy.core.model.Source
-import com.contactotomy.core.normalize.EmailNormalizer
-import com.contactotomy.core.normalize.PhoneNormalizer
+import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.normalize.EmailNormalizer
+import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion

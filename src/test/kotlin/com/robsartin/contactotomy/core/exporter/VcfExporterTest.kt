@@ -1,8 +1,8 @@
-package com.contactotomy.core.exporter
+package com.robsartin.contactotomy.core.exporter
 
-import com.contactotomy.core.model.Contact
-import com.contactotomy.core.model.ContactName
-import com.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.Source
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -45,7 +45,7 @@ class VcfExporterTest {
         )
 
         val text = VcfExporter().export(listOf(original))
-        val reimported = com.contactotomy.core.importer
+        val reimported = com.robsartin.contactotomy.core.importer
             .VcfImporter(source = Source.GOOGLE).import(text).single()
 
         assertEquals("Jane", reimported.name.given)

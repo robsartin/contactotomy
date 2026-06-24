@@ -1,6 +1,6 @@
-package com.contactotomy.core.importer
+package com.robsartin.contactotomy.core.importer
 
-import com.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.model.Source
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals

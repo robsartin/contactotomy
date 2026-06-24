@@ -1,6 +1,6 @@
-package com.contactotomy.core.exporter
+package com.robsartin.contactotomy.core.exporter
 
-import com.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.Contact
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion

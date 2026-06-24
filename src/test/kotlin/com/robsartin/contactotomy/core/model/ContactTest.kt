@@ -1,4 +1,4 @@
-package com.contactotomy.core.model
+package com.robsartin.contactotomy.core.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals

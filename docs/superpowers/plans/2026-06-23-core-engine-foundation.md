@@ -4,7 +4,7 @@
 
 **Goal:** Stand up the Contactotomy Kotlin project and a headless core engine that imports Apple/Google vCard files into a normalized model and writes a combined cleaned vCard, with architecture boundaries enforced by Konsist.
 
-**Architecture:** Pure-Kotlin core engine (`com.contactotomy.core.*`) with no UI/Compose dependency. This plan builds the `model`, normalization utilities, `importer`, and `exporter`. Matching/merging (Plan 2), deletion rules (Plan 3), and the Compose UI (Plan 4) build on this foundation. See `docs/superpowers/specs/2026-06-23-contactotomy-design.md` and ADR-0002/0003/0006.
+**Architecture:** Pure-Kotlin core engine (`com.robsartin.contactotomy.core.*`) with no UI/Compose dependency. This plan builds the `model`, normalization utilities, `importer`, and `exporter`. Matching/merging (Plan 2), deletion rules (Plan 3), and the Compose UI (Plan 4) build on this foundation. See `docs/superpowers/specs/2026-06-23-contactotomy-design.md` and ADR-0002/0003/0006.
 
 **Tech Stack:** Kotlin (JVM, toolchain 21), Gradle (Kotlin DSL), JUnit 5, ez-vcard (vCard parse/serialize), libphonenumber (phone normalization), Konsist (architecture tests).
 
@@ -24,7 +24,7 @@
 - `src/test/kotlin/com/contactotomy/architecture/ArchitectureTest.kt` — Konsist boundary rules.
 - `src/test/resources/fixtures/*.vcf` — sample messy vCards.
 
-Note: this plan keeps the project a single Gradle module with package-level boundaries (enforced by Konsist). The Compose UI in Plan 4 will live under `com.contactotomy.ui.*` in the same module (or a split module if preferred then).
+Note: this plan keeps the project a single Gradle module with package-level boundaries (enforced by Konsist). The Compose UI in Plan 4 will live under `com.robsartin.contactotomy.ui.*` in the same module (or a split module if preferred then).
 
 ---
 
@@ -48,7 +48,7 @@ plugins {
     kotlin("jvm") version "2.0.21"
 }
 
-group = "com.contactotomy"
+group = "com.robsartin.contactotomy"
 version = "0.1.0"
 
 repositories {
@@ -85,7 +85,7 @@ Expected: creates `gradlew`, `gradle/wrapper/gradle-wrapper.properties`, and `gr
 `src/test/kotlin/com/contactotomy/core/SanityTest.kt`:
 
 ```kotlin
-package com.contactotomy.core
+package com.robsartin.contactotomy.core
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -100,7 +100,7 @@ class SanityTest {
 
 - [ ] **Step 5: Run the sanity test**
 
-Run: `./gradlew test --tests "com.contactotomy.core.SanityTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.SanityTest"`
 Expected: BUILD SUCCESSFUL, 1 test passes. (This confirms the toolchain, dependencies resolve, and JUnit 5 is wired.)
 
 - [ ] **Step 6: Commit**
@@ -124,7 +124,7 @@ This locks in ADR-0006 before there is much code to violate it.
 `src/test/kotlin/com/contactotomy/architecture/ArchitectureTest.kt`:
 
 ```kotlin
-package com.contactotomy.architecture
+package com.robsartin.contactotomy.architecture
 
 import com.lemonappdev.konsist.api.Konsist
 import com.lemonappdev.konsist.api.verify.assertTrue
@@ -136,22 +136,22 @@ class ArchitectureTest {
     fun `core does not depend on ui or compose`() {
         Konsist.scopeFromProject()
             .files
-            .filter { it.packagee?.fullyQualifiedName?.startsWith("com.contactotomy.core") == true }
+            .filter { it.packagee?.fullyQualifiedName?.startsWith("com.robsartin.contactotomy.core") == true }
             .assertTrue { file ->
                 file.imports.none { import ->
                     import.name.startsWith("androidx.compose") ||
-                        import.name.startsWith("com.contactotomy.ui")
+                        import.name.startsWith("com.robsartin.contactotomy.ui")
                 }
             }
     }
 }
 ```
 
-Note: Konsist's API surface can shift between versions. If `assertTrue`/`packagee.fullyQualifiedName`/`imports.name` differ in `0.17.3`, consult https://docs.konsist.lemonappdev.com and adjust — the rule itself ("no file under `com.contactotomy.core` imports `androidx.compose.*` or `com.contactotomy.ui.*`") is what must hold.
+Note: Konsist's API surface can shift between versions. If `assertTrue`/`packagee.fullyQualifiedName`/`imports.name` differ in `0.17.3`, consult https://docs.konsist.lemonappdev.com and adjust — the rule itself ("no file under `com.robsartin.contactotomy.core` imports `androidx.compose.*` or `com.robsartin.contactotomy.ui.*`") is what must hold.
 
 - [ ] **Step 2: Run the test**
 
-Run: `./gradlew test --tests "com.contactotomy.architecture.ArchitectureTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.architecture.ArchitectureTest"`
 Expected: PASS (there is no UI code yet, so the rule holds vacuously). This verifies Konsist scans the project successfully.
 
 - [ ] **Step 3: Commit**
@@ -174,7 +174,7 @@ git commit -m "test: enforce core has no UI/Compose dependency via Konsist"
 `src/test/kotlin/com/contactotomy/core/model/ContactTest.kt`:
 
 ```kotlin
-package com.contactotomy.core.model
+package com.robsartin.contactotomy.core.model
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -202,7 +202,7 @@ class ContactTest {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `./gradlew test --tests "com.contactotomy.core.model.ContactTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.model.ContactTest"`
 Expected: FAIL — `Contact` / `ContactName` / `Source` unresolved.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -210,7 +210,7 @@ Expected: FAIL — `Contact` / `ContactName` / `Source` unresolved.
 `src/main/kotlin/com/contactotomy/core/model/Contact.kt`:
 
 ```kotlin
-package com.contactotomy.core.model
+package com.robsartin.contactotomy.core.model
 
 import java.time.Instant
 
@@ -246,7 +246,7 @@ data class Contact(
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `./gradlew test --tests "com.contactotomy.core.model.ContactTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.model.ContactTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -269,7 +269,7 @@ git commit -m "feat: add normalized Contact model"
 `src/test/kotlin/com/contactotomy/core/normalize/PhoneNormalizerTest.kt`:
 
 ```kotlin
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -296,7 +296,7 @@ class PhoneNormalizerTest {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `./gradlew test --tests "com.contactotomy.core.normalize.PhoneNormalizerTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.normalize.PhoneNormalizerTest"`
 Expected: FAIL — `PhoneNormalizer` unresolved.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -304,7 +304,7 @@ Expected: FAIL — `PhoneNormalizer` unresolved.
 `src/main/kotlin/com/contactotomy/core/normalize/PhoneNormalizer.kt`:
 
 ```kotlin
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 import com.google.i18n.phonenumbers.NumberParseException
 import com.google.i18n.phonenumbers.PhoneNumberUtil
@@ -325,7 +325,7 @@ class PhoneNormalizer(private val defaultRegion: String = "US") {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `./gradlew test --tests "com.contactotomy.core.normalize.PhoneNormalizerTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.normalize.PhoneNormalizerTest"`
 Expected: PASS (all 3).
 
 - [ ] **Step 5: Commit**
@@ -348,7 +348,7 @@ git commit -m "feat: add phone normalizer (E.164 via libphonenumber)"
 `src/test/kotlin/com/contactotomy/core/normalize/EmailNormalizerTest.kt`:
 
 ```kotlin
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -368,7 +368,7 @@ class EmailNormalizerTest {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `./gradlew test --tests "com.contactotomy.core.normalize.EmailNormalizerTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.normalize.EmailNormalizerTest"`
 Expected: FAIL — `EmailNormalizer` unresolved.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -376,7 +376,7 @@ Expected: FAIL — `EmailNormalizer` unresolved.
 `src/main/kotlin/com/contactotomy/core/normalize/EmailNormalizer.kt`:
 
 ```kotlin
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 object EmailNormalizer {
     /** Lowercases and trims; returns null if blank. */
@@ -389,7 +389,7 @@ object EmailNormalizer {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `./gradlew test --tests "com.contactotomy.core.normalize.EmailNormalizerTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.normalize.EmailNormalizerTest"`
 Expected: PASS.
 
 - [ ] **Step 5: Commit**
@@ -434,9 +434,9 @@ END:VCARD
 `src/test/kotlin/com/contactotomy/core/importer/VcfImporterTest.kt`:
 
 ```kotlin
-package com.contactotomy.core.importer
+package com.robsartin.contactotomy.core.importer
 
-import com.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.model.Source
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -475,7 +475,7 @@ class VcfImporterTest {
 
 - [ ] **Step 3: Run test to verify it fails**
 
-Run: `./gradlew test --tests "com.contactotomy.core.importer.VcfImporterTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.importer.VcfImporterTest"`
 Expected: FAIL — `VcfImporter` unresolved.
 
 - [ ] **Step 4: Write minimal implementation**
@@ -483,13 +483,13 @@ Expected: FAIL — `VcfImporter` unresolved.
 `src/main/kotlin/com/contactotomy/core/importer/VcfImporter.kt`:
 
 ```kotlin
-package com.contactotomy.core.importer
+package com.robsartin.contactotomy.core.importer
 
-import com.contactotomy.core.model.Contact
-import com.contactotomy.core.model.ContactName
-import com.contactotomy.core.model.Source
-import com.contactotomy.core.normalize.EmailNormalizer
-import com.contactotomy.core.normalize.PhoneNormalizer
+import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.normalize.EmailNormalizer
+import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import java.time.Instant
@@ -539,7 +539,7 @@ class VcfImporter(
 
 - [ ] **Step 5: Run test to verify it passes**
 
-Run: `./gradlew test --tests "com.contactotomy.core.importer.VcfImporterTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.importer.VcfImporterTest"`
 Expected: PASS (both tests).
 
 - [ ] **Step 6: Commit**
@@ -562,11 +562,11 @@ git commit -m "feat: add vCard importer (ez-vcard) producing normalized Contacts
 `src/test/kotlin/com/contactotomy/core/exporter/VcfExporterTest.kt`:
 
 ```kotlin
-package com.contactotomy.core.exporter
+package com.robsartin.contactotomy.core.exporter
 
-import com.contactotomy.core.model.Contact
-import com.contactotomy.core.model.ContactName
-import com.contactotomy.core.model.Source
+import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.Source
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertTrue
@@ -609,7 +609,7 @@ class VcfExporterTest {
         )
 
         val text = VcfExporter().export(listOf(original))
-        val reimported = com.contactotomy.core.importer
+        val reimported = com.robsartin.contactotomy.core.importer
             .VcfImporter(source = Source.GOOGLE).import(text).single()
 
         assertEquals("Jane", reimported.name.given)
@@ -623,7 +623,7 @@ class VcfExporterTest {
 
 - [ ] **Step 2: Run test to verify it fails**
 
-Run: `./gradlew test --tests "com.contactotomy.core.exporter.VcfExporterTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.exporter.VcfExporterTest"`
 Expected: FAIL — `VcfExporter` unresolved.
 
 - [ ] **Step 3: Write minimal implementation**
@@ -631,9 +631,9 @@ Expected: FAIL — `VcfExporter` unresolved.
 `src/main/kotlin/com/contactotomy/core/exporter/VcfExporter.kt`:
 
 ```kotlin
-package com.contactotomy.core.exporter
+package com.robsartin.contactotomy.core.exporter
 
-import com.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.Contact
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion
@@ -676,7 +676,7 @@ class VcfExporter {
 
 - [ ] **Step 4: Run test to verify it passes**
 
-Run: `./gradlew test --tests "com.contactotomy.core.exporter.VcfExporterTest"`
+Run: `./gradlew test --tests "com.robsartin.contactotomy.core.exporter.VcfExporterTest"`
 Expected: PASS (both tests).
 
 - [ ] **Step 5: Run the full suite**

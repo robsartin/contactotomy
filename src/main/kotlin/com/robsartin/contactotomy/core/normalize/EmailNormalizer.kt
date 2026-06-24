@@ -1,4 +1,4 @@
-package com.contactotomy.core.normalize
+package com.robsartin.contactotomy.core.normalize
 
 object EmailNormalizer {
     /** Lowercases and trims; returns null if blank. */
