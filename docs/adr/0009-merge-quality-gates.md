@@ -38,8 +38,10 @@ Continuous integration must pass before a pull request can be merged. CI runs
 - **Code formatting**, enforced by Spotless with ktlint. CI runs
   `spotlessCheck`; developers run `spotlessApply` locally to auto-fix.
 
-An **automated agent review** runs on every pull request via the Claude Code
-GitHub Action and posts its findings as a review comment. This review is
+An **automated agent review** runs on every pull request via the **managed
+Claude GitHub App** (Code Review), configured from the Claude admin settings for
+this repository — not a self-hosted GitHub Actions workflow, so no API-key secret
+is managed in the repo. It posts its findings as a review comment. This review is
 **advisory**: it informs the human but is not a hard gate and never blocks merge.
 
 A **human approves the merge**. After CI is green, a human merges the pull
