@@ -21,3 +21,4 @@ Status is one of: Proposed, Accepted, Superseded, Deprecated.
 | [0005](0005-name-gated-matching.md) | Name-gated matching; shared phone/email is corroborating only | Accepted |
 | [0006](0006-enforce-module-boundaries-with-konsist.md) | Enforce module boundaries with Konsist | Accepted |
 | [0007](0007-deletion-rule-engine.md) | Deletion-rule engine: shell-glob, AND/OR, review-gated | Accepted |
+| [0008](0008-clustering-strategy.md) | Clustering: transitive on strong links only; surname changes gated | Accepted |
