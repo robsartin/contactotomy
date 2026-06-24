@@ -1,0 +1,54 @@
+package com.robsartin.contactotomy.ui
+
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.material.Button
+import androidx.compose.material.MaterialTheme
+import androidx.compose.material.Text
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
+
+@Composable
+fun App(store: AppStore) {
+    val state: AppState by store.state.collectAsState()
+    MaterialTheme {
+        Column(Modifier.fillMaxSize().padding(16.dp)) {
+            StepIndicator(state.screen)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+                Button(onClick = { store.back() }, enabled = state.screen != Screen.IMPORT) { Text("Back") }
+                val nextEnabled = !(state.screen == Screen.IMPORT && state.contacts.isEmpty())
+                Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
+            }
+            when (state.screen) {
+                Screen.IMPORT -> Text("Import — choose files")
+                Screen.MERGE -> Text("Merge review — built in 4b")
+                Screen.DELETION -> Text("Deletion review — built in 4c")
+                Screen.EXPORT -> Text("Export — built in 4d")
+            }
+        }
+    }
+}
+
+@Composable
+private fun StepIndicator(current: Screen) {
+    val labels =
+        listOf(
+            Screen.IMPORT to "Import",
+            Screen.MERGE to "Merge",
+            Screen.DELETION to "Deletion",
+            Screen.EXPORT to "Export",
+        )
+    Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        labels.forEach { (screen, label) ->
+            if (screen == current) Text("▸")
+            Text(label)
+        }
+    }
+}

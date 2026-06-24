@@ -1,0 +1,6 @@
+root = true
+
+[*.{kt,kts}]
+# Composable functions conventionally use PascalCase names; exempt them from
+# ktlint's function-naming rule (ADR-0009, Compose Desktop UI in the ui package).
+ktlint_function_naming_ignore_when_annotated_with = Composable
