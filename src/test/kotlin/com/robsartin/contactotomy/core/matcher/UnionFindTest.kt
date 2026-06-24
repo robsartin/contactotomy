@@ -9,7 +9,12 @@ class UnionFindTest {
         val uf = UnionFind(listOf("a", "b", "c", "d"))
         uf.union("a", "b")
         uf.union("b", "c")
-        val groups = uf.groups().values.map { it.toSet() }.toSet()
+        val groups =
+            uf
+                .groups()
+                .values
+                .map { it.toSet() }
+                .toSet()
         assertEquals(setOf(setOf("a", "b", "c"), setOf("d")), groups)
     }
 }

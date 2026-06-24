@@ -1,7 +1,7 @@
 package com.robsartin.contactotomy.core.matcher
 
-import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.Source
 import kotlin.test.Test
 import kotlin.test.assertEquals

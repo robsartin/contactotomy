@@ -1,6 +1,8 @@
 package com.robsartin.contactotomy.core.matcher
 
-class UnionFind<T>(items: Collection<T>) {
+class UnionFind<T>(
+    items: Collection<T>,
+) {
     private val parent = HashMap<T, T>().apply { items.forEach { put(it, it) } }
 
     fun find(x: T): T {
@@ -15,7 +17,10 @@ class UnionFind<T>(items: Collection<T>) {
         return root
     }
 
-    fun union(a: T, b: T) {
+    fun union(
+        a: T,
+        b: T,
+    ) {
         parent[find(a)] = find(b)
     }
 

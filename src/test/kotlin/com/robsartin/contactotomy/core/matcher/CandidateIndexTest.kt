@@ -8,8 +8,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class CandidateIndexTest {
-    private fun idsOf(pairs: Set<Pair<Contact, Contact>>) =
-        pairs.map { setOf(it.first.id, it.second.id) }.toSet()
+    private fun idsOf(pairs: Set<Pair<Contact, Contact>>) = pairs.map { setOf(it.first.id, it.second.id) }.toSet()
 
     @Test
     fun `cards sharing a phone are candidates`() {
@@ -46,17 +45,31 @@ class CandidateIndexTest {
 
     private fun contact(
         id: String,
-        given: String? = null, middle: String? = null, family: String? = null,
-        phones: List<String> = emptyList(), emails: List<String> = emptyList(),
-        org: String? = null, title: String? = null, notes: String? = null,
+        given: String? = null,
+        middle: String? = null,
+        family: String? = null,
+        phones: List<String> = emptyList(),
+        emails: List<String> = emptyList(),
+        org: String? = null,
+        title: String? = null,
+        notes: String? = null,
         categories: List<String> = emptyList(),
-        modifiedAt: java.time.Instant? = null, createdAt: java.time.Instant? = null,
+        modifiedAt: java.time.Instant? = null,
+        createdAt: java.time.Instant? = null,
         source: Source = Source.APPLE,
     ) = Contact(
-        id = id, source = source,
+        id = id,
+        source = source,
         name = ContactName(given = given, middle = middle, family = family),
-        phones = phones, rawPhones = phones, emails = emails, org = org, title = title,
-        notes = notes, categories = categories, modifiedAt = modifiedAt, createdAt = createdAt,
+        phones = phones,
+        rawPhones = phones,
+        emails = emails,
+        org = org,
+        title = title,
+        notes = notes,
+        categories = categories,
+        modifiedAt = modifiedAt,
+        createdAt = createdAt,
         rawVCard = "BEGIN:VCARD\nFN:${given ?: ""} ${family ?: ""}\nEND:VCARD",
     )
 }

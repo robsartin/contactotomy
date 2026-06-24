@@ -17,10 +17,14 @@ class DecisionApplierTest {
     private val merger = ContactMerger()
 
     private fun proposalFor(vararg members: Contact): MergeProposal =
-        merger.merge(Cluster(
-            "cluster-" + members.map { it.id }.sorted().joinToString("+"),
-            members.toList(), Confidence.HIGH, listOf(MatchReason.SHARED_PHONE),
-        ))
+        merger.merge(
+            Cluster(
+                "cluster-" + members.map { it.id }.sorted().joinToString("+"),
+                members.toList(),
+                Confidence.HIGH,
+                listOf(MatchReason.SHARED_PHONE),
+            ),
+        )
 
     @Test
     fun `accept replaces members with merged card and keeps singletons`() {
@@ -29,10 +33,12 @@ class DecisionApplierTest {
         val c = contact("c", given = "Zoe", family = "Quinn")
         val p = proposalFor(a, b)
 
-        val result = applier.applyDecisions(
-            listOf(a, b, c), listOf(p),
-            listOf(MergeDecision(p.cluster.id, Action.ACCEPT)),
-        )
+        val result =
+            applier.applyDecisions(
+                listOf(a, b, c),
+                listOf(p),
+                listOf(MergeDecision(p.cluster.id, Action.ACCEPT)),
+            )
 
         assertEquals(listOf(p.merged.id, "c"), result.map { it.id })
         assertEquals(setOf("+1111", "+2222"), result.first().phones.toSet())
@@ -52,10 +58,12 @@ class DecisionApplierTest {
         val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"))
         val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+2222"))
         val p = proposalFor(a, b)
-        val result = applier.applyDecisions(
-            listOf(a, b), listOf(p),
-            listOf(MergeDecision(p.cluster.id, Action.ACCEPT, excludedValues = setOf(ExcludedValue("phones", "+1111")))),
-        )
+        val result =
+            applier.applyDecisions(
+                listOf(a, b),
+                listOf(p),
+                listOf(MergeDecision(p.cluster.id, Action.ACCEPT, excludedValues = setOf(ExcludedValue("phones", "+1111")))),
+            )
         assertTrue("+1111" !in result.first().phones)
         assertTrue("+2222" in result.first().phones)
     }
@@ -65,10 +73,12 @@ class DecisionApplierTest {
         val a = contact("a", given = "Rob", family = "Sartin", org = "OldCo")
         val b = contact("b", given = "Robert", family = "Sartin", org = "NewCo")
         val p = proposalFor(a, b)
-        val result = applier.applyDecisions(
-            listOf(a, b), listOf(p),
-            listOf(MergeDecision(p.cluster.id, Action.ACCEPT, conflictChoices = mapOf("org" to "OldCo"))),
-        )
+        val result =
+            applier.applyDecisions(
+                listOf(a, b),
+                listOf(p),
+                listOf(MergeDecision(p.cluster.id, Action.ACCEPT, conflictChoices = mapOf("org" to "OldCo"))),
+            )
         assertEquals("OldCo", result.first().org)
     }
 
@@ -87,16 +97,30 @@ class DecisionApplierTest {
 
 fun contact(
     id: String,
-    given: String? = null, middle: String? = null, family: String? = null,
-    phones: List<String> = emptyList(), emails: List<String> = emptyList(),
-    org: String? = null, title: String? = null, notes: String? = null,
+    given: String? = null,
+    middle: String? = null,
+    family: String? = null,
+    phones: List<String> = emptyList(),
+    emails: List<String> = emptyList(),
+    org: String? = null,
+    title: String? = null,
+    notes: String? = null,
     categories: List<String> = emptyList(),
-    modifiedAt: java.time.Instant? = null, createdAt: java.time.Instant? = null,
+    modifiedAt: java.time.Instant? = null,
+    createdAt: java.time.Instant? = null,
     source: Source = Source.APPLE,
 ) = Contact(
-    id = id, source = source,
+    id = id,
+    source = source,
     name = ContactName(given = given, middle = middle, family = family),
-    phones = phones, rawPhones = phones, emails = emails, org = org, title = title,
-    notes = notes, categories = categories, modifiedAt = modifiedAt, createdAt = createdAt,
+    phones = phones,
+    rawPhones = phones,
+    emails = emails,
+    org = org,
+    title = title,
+    notes = notes,
+    categories = categories,
+    modifiedAt = modifiedAt,
+    createdAt = createdAt,
     rawVCard = "BEGIN:VCARD\nFN:${given ?: ""} ${family ?: ""}\nEND:VCARD",
 )

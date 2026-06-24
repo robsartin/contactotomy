@@ -13,15 +13,27 @@ import kotlin.test.assertTrue
 
 class ContactMergerProvenanceTest {
     private val merger = ContactMerger()
-    private fun cluster(vararg members: Contact) =
-        Cluster("cluster-x", members.toList(), Confidence.HIGH, listOf(MatchReason.SHARED_PHONE))
+
+    private fun cluster(vararg members: Contact) = Cluster("cluster-x", members.toList(), Confidence.HIGH, listOf(MatchReason.SHARED_PHONE))
 
     @Test
     fun `records a conflict for disagreeing single-value field with newest chosen`() {
-        val older = contact("a", given = "Robert", family = "Sartin", org = "OldCo",
-            modifiedAt = Instant.parse("2020-01-01T00:00:00Z"))
-        val newer = contact("b", given = "Robert", family = "Sartin", org = "NewCo",
-            modifiedAt = Instant.parse("2024-01-01T00:00:00Z"))
+        val older =
+            contact(
+                "a",
+                given = "Robert",
+                family = "Sartin",
+                org = "OldCo",
+                modifiedAt = Instant.parse("2020-01-01T00:00:00Z"),
+            )
+        val newer =
+            contact(
+                "b",
+                given = "Robert",
+                family = "Sartin",
+                org = "NewCo",
+                modifiedAt = Instant.parse("2024-01-01T00:00:00Z"),
+            )
 
         val proposal = merger.merge(cluster(older, newer))
         val orgConflict = proposal.conflicts.single { it.field == "org" }
@@ -38,10 +50,21 @@ class ContactMergerProvenanceTest {
 
     @Test
     fun `chooses the most complete name`() {
-        val full = contact("a", given = "Robert", middle = "A", family = "Sartin",
-            modifiedAt = Instant.parse("2020-01-01T00:00:00Z"))
-        val sparse = contact("b", given = "Robert", family = "Sartin",
-            modifiedAt = Instant.parse("2024-01-01T00:00:00Z"))    // newer but less complete
+        val full =
+            contact(
+                "a",
+                given = "Robert",
+                middle = "A",
+                family = "Sartin",
+                modifiedAt = Instant.parse("2020-01-01T00:00:00Z"),
+            )
+        val sparse =
+            contact(
+                "b",
+                given = "Robert",
+                family = "Sartin",
+                modifiedAt = Instant.parse("2024-01-01T00:00:00Z"),
+            ) // newer but less complete
         val merged = merger.merge(cluster(full, sparse)).merged
         assertEquals("A", merged.name.middle)
     }
@@ -59,17 +82,31 @@ class ContactMergerProvenanceTest {
     // contact(...) in ContactMergerTest (same package).
     private fun contact(
         id: String,
-        given: String? = null, middle: String? = null, family: String? = null,
-        phones: List<String> = emptyList(), emails: List<String> = emptyList(),
-        org: String? = null, title: String? = null, notes: String? = null,
+        given: String? = null,
+        middle: String? = null,
+        family: String? = null,
+        phones: List<String> = emptyList(),
+        emails: List<String> = emptyList(),
+        org: String? = null,
+        title: String? = null,
+        notes: String? = null,
         categories: List<String> = emptyList(),
-        modifiedAt: Instant? = null, createdAt: Instant? = null,
+        modifiedAt: Instant? = null,
+        createdAt: Instant? = null,
         source: Source = Source.APPLE,
     ) = Contact(
-        id = id, source = source,
+        id = id,
+        source = source,
         name = ContactName(given = given, middle = middle, family = family),
-        phones = phones, rawPhones = phones, emails = emails, org = org, title = title,
-        notes = notes, categories = categories, modifiedAt = modifiedAt, createdAt = createdAt,
+        phones = phones,
+        rawPhones = phones,
+        emails = emails,
+        org = org,
+        title = title,
+        notes = notes,
+        categories = categories,
+        modifiedAt = modifiedAt,
+        createdAt = createdAt,
         rawVCard = "BEGIN:VCARD\nFN:${given ?: ""} ${family ?: ""}\nEND:VCARD",
     )
 }

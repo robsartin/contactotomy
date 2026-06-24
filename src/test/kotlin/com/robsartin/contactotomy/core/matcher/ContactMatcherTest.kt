@@ -8,9 +8,10 @@ import kotlin.test.assertEquals
 import kotlin.test.assertTrue
 
 class ContactMatcherTest {
-    private val matcher = ContactMatcher(
-        EdgeClassifier(NameMatcher(NicknameDictionary(listOf(setOf("robert", "rob", "bob")))))
-    )
+    private val matcher =
+        ContactMatcher(
+            EdgeClassifier(NameMatcher(NicknameDictionary(listOf(setOf("robert", "rob", "bob"))))),
+        )
 
     @Test
     fun `transitive chain over HIGH edges forms one cluster`() {
@@ -20,7 +21,14 @@ class ContactMatcherTest {
         val c = contact("c", given = "Bob", family = "Sartin", emails = listOf("r@x.com"))
         val result = matcher.match(listOf(a, b, c))
         assertEquals(1, result.clusters.size)
-        assertEquals(setOf("a", "b", "c"), result.clusters.first().members.map { it.id }.toSet())
+        assertEquals(
+            setOf("a", "b", "c"),
+            result.clusters
+                .first()
+                .members
+                .map { it.id }
+                .toSet(),
+        )
     }
 
     @Test
@@ -73,24 +81,46 @@ class ContactMatcherTest {
         val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"))
         val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+1111"))
         assertEquals(
-            matcher.match(listOf(a, b)).clusters.first().id,
-            matcher.match(listOf(b, a)).clusters.first().id,
+            matcher
+                .match(listOf(a, b))
+                .clusters
+                .first()
+                .id,
+            matcher
+                .match(listOf(b, a))
+                .clusters
+                .first()
+                .id,
         )
     }
 
     private fun contact(
         id: String,
-        given: String? = null, middle: String? = null, family: String? = null,
-        phones: List<String> = emptyList(), emails: List<String> = emptyList(),
-        org: String? = null, title: String? = null, notes: String? = null,
+        given: String? = null,
+        middle: String? = null,
+        family: String? = null,
+        phones: List<String> = emptyList(),
+        emails: List<String> = emptyList(),
+        org: String? = null,
+        title: String? = null,
+        notes: String? = null,
         categories: List<String> = emptyList(),
-        modifiedAt: java.time.Instant? = null, createdAt: java.time.Instant? = null,
+        modifiedAt: java.time.Instant? = null,
+        createdAt: java.time.Instant? = null,
         source: Source = Source.APPLE,
     ) = Contact(
-        id = id, source = source,
+        id = id,
+        source = source,
         name = ContactName(given = given, middle = middle, family = family),
-        phones = phones, rawPhones = phones, emails = emails, org = org, title = title,
-        notes = notes, categories = categories, modifiedAt = modifiedAt, createdAt = createdAt,
+        phones = phones,
+        rawPhones = phones,
+        emails = emails,
+        org = org,
+        title = title,
+        notes = notes,
+        categories = categories,
+        modifiedAt = modifiedAt,
+        createdAt = createdAt,
         rawVCard = "BEGIN:VCARD\nFN:${given ?: ""} ${family ?: ""}\nEND:VCARD",
     )
 }

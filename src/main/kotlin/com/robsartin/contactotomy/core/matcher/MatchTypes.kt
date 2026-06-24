@@ -5,9 +5,14 @@ import com.robsartin.contactotomy.core.model.Contact
 enum class Confidence { HIGH, UNCERTAIN }
 
 enum class MatchReason {
-    SHARED_PHONE, SHARED_EMAIL,
-    NAME_EXACT, NAME_NICKNAME, NAME_DROPPED_MIDDLE, NAME_INITIAL,
-    SURNAME_CHANGE, NAME_ONLY,
+    SHARED_PHONE,
+    SHARED_EMAIL,
+    NAME_EXACT,
+    NAME_NICKNAME,
+    NAME_DROPPED_MIDDLE,
+    NAME_INITIAL,
+    SURNAME_CHANGE,
+    NAME_ONLY,
 }
 
 data class MatchEdge(

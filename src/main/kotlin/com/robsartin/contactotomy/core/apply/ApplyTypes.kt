@@ -2,7 +2,10 @@ package com.robsartin.contactotomy.core.apply
 
 enum class Action { ACCEPT, REJECT }
 
-data class ExcludedValue(val field: String, val value: String)
+data class ExcludedValue(
+    val field: String,
+    val value: String,
+)
 
 data class MergeDecision(
     val clusterId: String,
