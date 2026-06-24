@@ -48,6 +48,16 @@ repository, a *required approving review* is intentionally **not** enforced (it
 would create a self-approval deadlock); the human-merge-after-green-CI step is
 the equivalent control.
 
+Enforcement is implemented with a GitHub **repository ruleset** on `main`
+(requires a pull request, requires the `build` status check, allows only
+squash merges, blocks force-pushes and deletion). Because GitHub branch
+protection/rulesets require a paid plan on private repositories, the repository
+is **public**. The repository **admin role retains ruleset bypass** as a safety
+valve: this is required to bootstrap CI (a brand-new workflow does not run on a
+pull request until it exists on the default branch, so the very first
+gates-introducing PR is merged via admin bypass), and to recover if CI is ever
+wedged. Routine changes still go through PR + green CI + human merge.
+
 ## Consequences
 
 - `main` stays green, tested, covered, and consistently formatted, because every
