@@ -21,6 +21,7 @@ class AppStore(
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state.asStateFlow()
     private var importCounter = 0
+    private val prefixByPath = mutableMapOf<String, String>()
 
     fun next() {
         val s = _state.value
@@ -47,7 +48,9 @@ class AppStore(
         result
             .onSuccess { parsed ->
                 val n = importCounter++
-                val namespaced = parsed.map { it.copy(id = "imp$n:${it.id}") }
+                val prefix = "imp$n:"
+                prefixByPath[path] = prefix
+                val namespaced = parsed.map { it.copy(id = prefix + it.id) }
                 _state.update { st ->
                     st.copy(
                         importing = false,
@@ -58,5 +61,15 @@ class AppStore(
             }.onFailure { e ->
                 _state.update { it.copy(importing = false, error = e.message ?: "Import failed") }
             }
+    }
+
+    fun removeImportedFile(path: String) {
+        val prefix = prefixByPath.remove(path) ?: return
+        _state.update { st ->
+            st.copy(
+                imported = st.imported.filterNot { it.path == path },
+                contacts = st.contacts.filterNot { it.id.startsWith(prefix) },
+            )
+        }
     }
 }
