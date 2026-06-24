@@ -1,0 +1,18 @@
+# Gradle / Kotlin / JVM
+.gradle/
+build/
+!gradle/wrapper/gradle-wrapper.jar
+*.class
+
+# IDE
+.idea/
+*.iml
+.kotlin/
+
+# OS
+.DS_Store
+
+# Local contact data — NEVER commit real exports
+*.vcf
+/data/
+/scratch/
