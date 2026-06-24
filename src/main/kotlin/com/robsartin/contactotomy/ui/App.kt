@@ -27,7 +27,13 @@ fun App(store: AppStore) {
                 Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
             }
             when (state.screen) {
-                Screen.IMPORT -> ImportScreen(store)
+                Screen.IMPORT ->
+                    ImportScreen(
+                        store,
+                        applePicker = AwtFilePicker("Choose Apple vCard export"),
+                        googlePicker = AwtFilePicker("Choose Google vCard export"),
+                        otherPicker = AwtFilePicker("Choose a vCard file"),
+                    )
                 Screen.MERGE -> Text("Merge review — built in 4b")
                 Screen.DELETION -> Text("Deletion review — built in 4c")
                 Screen.EXPORT -> Text("Export — built in 4d")

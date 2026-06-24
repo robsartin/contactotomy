@@ -1,13 +1,13 @@
 package com.robsartin.contactotomy.ui
 
-import androidx.compose.material.MaterialTheme
-import androidx.compose.material.Text
+import androidx.compose.runtime.remember
 import androidx.compose.ui.window.Window
 import androidx.compose.ui.window.application
 
 fun main() =
     application {
+        val store = remember { AppStore() }
         Window(onCloseRequest = ::exitApplication, title = "Contactotomy") {
-            MaterialTheme { Text("Contactotomy") }
+            App(store)
         }
     }
