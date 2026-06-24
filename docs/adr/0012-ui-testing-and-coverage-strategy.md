@@ -4,39 +4,46 @@ Date: 2026-06-24
 
 ## Status
 
-Accepted
+Accepted. Supersedes the coverage-threshold figures in ADR-0009 (raises them).
 
 ## Context
 
 Plan 4 introduces a Compose Desktop UI. The repo enforces code-coverage floors
-(ADR-0009: line ≥80%, branch ≥60%). Compose rendering code (composable functions,
-the application entry point, the native file dialog) is expensive and brittle to
-unit-test and is best verified by running the app. Counting it toward line/branch
-coverage would either force low-value UI tests or pressure the floors downward,
-undermining the gate's meaning for real logic.
+(ADR-0009 originally set line ≥80%, branch ≥60%). We want the UI to be genuinely
+tested — not excluded from coverage — and we want to hold a higher bar now that the
+codebase is well-established. Measured coverage at this point is line 93.7% /
+branch 71.9%, so there is headroom to raise the floors.
+
+Compose Multiplatform provides an offscreen JUnit test harness
+(`compose.desktop.uiTestJUnit4`, `runComposeUiTest { setContent { … } }`) that
+renders composables without a real window and runs headlessly on CI. This lets us
+drive screens (clicks, text assertions, state changes) and cover the rendering
+code, rather than excluding it.
 
 ## Decision
 
+- **Raise the coverage floors to line ≥ 90%, branch ≥ 65%** (updates ADR-0009's
+  figures). Still floors to raise over time, never lowered to make a build pass.
 - **Logic lives in framework-free state holders** (e.g. `AppStore`) and pure
-  helpers, separate from composables. This logic is unit-tested and fully counts
-  toward coverage.
-- **The Compose rendering layer is excluded from coverage** — composable functions,
-  `MainKt`/`App` entry points, and thin platform adapters (e.g. the AWT
-  `FilePicker` implementation). Excluded via Kover filters (by package/file or an
-  exclusion annotation), documented in `build.gradle.kts`.
-- **The UI is verified by running the app** (`./gradlew run`) as part of each UI
-  sub-plan's "done": launch, exercise the screen, and record a screenshot/notes in
-  the PR. This is the acceptance check that replaces unit coverage for rendering.
-- Platform-bound, untestable seams (native file dialogs, etc.) are isolated behind
-  small interfaces so the surrounding logic stays testable with fakes; only the
-  thin real implementation is excluded.
+  helpers, separate from composables; unit-tested as before.
+- **Composables are tested with Compose UI tests** (`runComposeUiTest`) and count
+  toward coverage. Each UI sub-plan ships UI tests that exercise its screens.
+- **Only genuinely untestable seams are excluded from coverage:** the application
+  entry point (`MainKt` / `application {}`) and thin platform adapters such as the
+  real AWT `FileDialog` implementation (isolated behind the `FilePicker`
+  interface). The exclusion list stays scoped to these; it is never used to hide
+  untested logic.
+- **Run-the-app verification remains** part of each UI sub-plan's "done"
+  (`./gradlew run` + a screenshot/notes in the PR) as a complement to UI tests.
 
 ## Consequences
 
-- Coverage floors remain meaningful: they measure logic, not rendering.
-- UI correctness is gated by a deliberate run-the-app verification step, not by
-  brittle pixel/coverage tests.
-- The logic/rendering split is a design constraint for all UI sub-plans (4a–4d):
-  keep composables thin, push behavior into testable holders.
-- The Kover exclusion list grows as UI packages are added; it must stay scoped to
-  genuine rendering/platform code, never used to hide untested logic.
+- Higher floors (90/65) keep quality rising; current coverage clears them.
+- The UI is actually tested, headlessly and in CI, not assumed-correct.
+- Composables must stay thin and driven by injectable state so `runComposeUiTest`
+  can exercise them with fakes (no real window/file dialog).
+- CI must be able to run the Compose offscreen test harness headlessly; if Skiko
+  needs a virtual display on the Linux runner, the CI workflow adds it (e.g.
+  `xvfb-run`), decided during implementation.
+- ADR-0009 remains in force except for the threshold figures, which this ADR
+  raises.

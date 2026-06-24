@@ -23,8 +23,10 @@ here, built in 4b–4d.
   no navigation library. Next is gated (cannot leave IMPORT with zero contacts).
 - **Per-source labeled pickers** on the Import screen (Apple / Google / Other),
   each tagging imported contacts with their `Source`.
-- **Compose rendering layer excluded from coverage** (verified by running the app,
-  not unit coverage); logic stays measured. Captured in ADR-0012.
+- **Composables are tested with Compose UI tests** (`runComposeUiTest`, headless)
+  and count toward coverage; only the app entry point (`MainKt`) and the real AWT
+  file dialog are excluded. Coverage floors raised to **line ≥ 90%, branch ≥ 65%**
+  (ADR-0012). Logic still also lives in testable holders.
 - **Contact ids are namespaced per import** so accumulating multiple files keeps
   ids unique for the matcher.
 
@@ -35,10 +37,13 @@ the reverse, ADR-0006). Build additions:
 
 - Plugins: `org.jetbrains.compose` (~1.7.x) and `org.jetbrains.kotlin.plugin.compose`
   (matching Kotlin 2.0.21). Exact versions pinned/verified in the plan.
-- Dependency: `implementation(compose.desktop.currentOs)`.
+- Dependency: `implementation(compose.desktop.currentOs)`; test dependency
+  `compose.desktop.uiTestJUnit4` for headless Compose UI tests.
 - `compose.desktop.application { mainClass = "com.robsartin.contactotomy.ui.MainKt" }`.
-- Kover: exclude the Compose rendering layer (composable functions / UI files) from
-  coverage so the line/branch floors stay meaningful on logic (ADR-0012).
+- Kover: raise floors to **line ≥ 90%, branch ≥ 65%** (ADR-0012); exclude only the
+  app entry point (`MainKt`) and the real AWT `FileDialog` adapter. Composables are
+  covered by Compose UI tests, not excluded. CI may need a virtual display
+  (`xvfb-run`) for the Skiko offscreen renderer on Linux — decided in the plan.
 
 Layering: `MainKt` → `App` composable (wizard shell) → screen composables, all
 reading `AppState` and calling `AppStore` intents. The native file dialog is
@@ -107,10 +112,15 @@ tests run deterministically.
   without throwing; `importing` toggles around a parse (deterministic via injected
   dispatcher).
 - **Pure helpers** (id-namespacing, totals) tested directly.
-- **Compose rendering** excluded from Kover; **verified by running the app**
-  (`./gradlew run`): window opens on the wizard shell, pick a real `.vcf`, see
-  counts + file list, Next advances to the stub Merge screen. Screenshot/notes in
-  the PR.
+- **Compose UI tests** (`runComposeUiTest`, headless): render the wizard shell +
+  Import screen with a fake `FilePicker` and a real/seeded `AppStore`; assert the
+  step indicator, that choosing a file shows its summary + total count, that Next
+  is disabled with zero contacts and enabled after import, that Remove clears a
+  file, and that an import error renders inline. These cover the composables.
+- **Excluded from coverage:** only `MainKt` and the real AWT `FileDialog` adapter.
+- **Run-the-app verification** (`./gradlew run`): window opens on the wizard shell,
+  pick a real `.vcf`, see counts + file list, Next advances to the stub Merge
+  screen. Screenshot/notes in the PR.
 - Konsist continues to enforce `core` has no UI/Compose imports.
 
 ## 7. Scope boundary
