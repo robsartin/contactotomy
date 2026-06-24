@@ -27,7 +27,7 @@ fun App(store: AppStore) {
                 Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
             }
             when (state.screen) {
-                Screen.IMPORT -> Text("Import — choose files")
+                Screen.IMPORT -> ImportScreen(store)
                 Screen.MERGE -> Text("Merge review — built in 4b")
                 Screen.DELETION -> Text("Deletion review — built in 4c")
                 Screen.EXPORT -> Text("Export — built in 4d")
