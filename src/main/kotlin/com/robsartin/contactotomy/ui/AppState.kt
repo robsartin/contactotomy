@@ -9,6 +9,10 @@ data class ImportedFile(
     val path: String,
     val source: Source,
     val count: Int,
+    // Stable association to this import's contributed contacts: every contact
+    // contributed by this row has an id starting with [prefix]. Lets removal
+    // target the right contacts even when the same path is imported twice.
+    val prefix: String,
 )
 
 data class AppState(

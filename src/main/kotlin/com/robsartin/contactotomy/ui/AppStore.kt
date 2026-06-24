@@ -10,6 +10,14 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.withContext
 
+/**
+ * Holds the UI state for the import workflow.
+ *
+ * Single-writer assumption: this store is mutated only from the desktop app's
+ * single UI thread/coroutine scope. [importFile] and [removeImportedFile] are
+ * not synchronized against concurrent callers by design; interleaved imports
+ * would corrupt the monotonic import counter and are not supported.
+ */
 class AppStore(
     private val parse: (String, Source) -> List<Contact> = { path, source ->
         com.robsartin.contactotomy.core.importer
@@ -21,7 +29,6 @@ class AppStore(
     private val _state = MutableStateFlow(AppState())
     val state: StateFlow<AppState> = _state.asStateFlow()
     private var importCounter = 0
-    private val prefixByPath = mutableMapOf<String, String>()
 
     fun next() {
         val s = _state.value
@@ -49,12 +56,11 @@ class AppStore(
             .onSuccess { parsed ->
                 val n = importCounter++
                 val prefix = "imp$n:"
-                prefixByPath[path] = prefix
                 val namespaced = parsed.map { it.copy(id = prefix + it.id) }
                 _state.update { st ->
                     st.copy(
                         importing = false,
-                        imported = st.imported + ImportedFile(path, source, parsed.size),
+                        imported = st.imported + ImportedFile(path, source, parsed.size, prefix),
                         contacts = st.contacts + namespaced,
                     )
                 }
@@ -64,11 +70,17 @@ class AppStore(
     }
 
     fun removeImportedFile(path: String) {
-        val prefix = prefixByPath.remove(path) ?: return
         _state.update { st ->
+            // Remove the most-recent summary row for this path and only the
+            // contacts contributed by that specific import (its prefix). If the
+            // same path was imported more than once, the other imports survive.
+            val target = st.imported.lastOrNull { it.path == path } ?: return@update st
             st.copy(
-                imported = st.imported.filterNot { it.path == path },
-                contacts = st.contacts.filterNot { it.id.startsWith(prefix) },
+                imported =
+                    st.imported.toMutableList().apply {
+                        removeAt(indexOfLast { it.path == path })
+                    },
+                contacts = st.contacts.filterNot { it.id.startsWith(target.prefix) },
             )
         }
     }

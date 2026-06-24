@@ -16,7 +16,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun App(store: AppStore) {
+fun App(
+    store: AppStore,
+    applePicker: FilePicker = AwtFilePicker("Choose Apple vCard export"),
+    googlePicker: FilePicker = AwtFilePicker("Choose Google vCard export"),
+    otherPicker: FilePicker = AwtFilePicker("Choose a vCard file"),
+) {
     val state: AppState by store.state.collectAsState()
     MaterialTheme {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
@@ -28,12 +33,7 @@ fun App(store: AppStore) {
             }
             when (state.screen) {
                 Screen.IMPORT ->
-                    ImportScreen(
-                        store,
-                        applePicker = AwtFilePicker("Choose Apple vCard export"),
-                        googlePicker = AwtFilePicker("Choose Google vCard export"),
-                        otherPicker = AwtFilePicker("Choose a vCard file"),
-                    )
+                    ImportScreen(store, applePicker, googlePicker, otherPicker)
                 Screen.MERGE -> Text("Merge review — built in 4b")
                 Screen.DELETION -> Text("Deletion review — built in 4c")
                 Screen.EXPORT -> Text("Export — built in 4d")

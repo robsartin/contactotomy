@@ -73,6 +73,9 @@ kover {
                 // Compose entry point and the real AWT file dialog are
                 // UI plumbing exercised only by run-the-app, not unit tests.
                 classes("com.robsartin.contactotomy.ui.MainKt")
+                // Synthetic singletons holding the application{}/Window lambda
+                // bodies referenced from MainKt; also run-the-app-only plumbing.
+                classes("com.robsartin.contactotomy.ui.ComposableSingletons${'$'}MainKt*")
                 classes("com.robsartin.contactotomy.ui.AwtFilePicker")
             }
         }
