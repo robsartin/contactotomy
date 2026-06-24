@@ -3,6 +3,8 @@
 build/
 !gradle/wrapper/gradle-wrapper.jar
 *.class
+# Machine-specific: pins the Gradle daemon launcher JVM (kept local, not committed)
+gradle.properties
 
 # IDE
 .idea/
