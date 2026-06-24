@@ -24,3 +24,4 @@ Status is one of: Proposed, Accepted, Superseded, Deprecated.
 | [0008](0008-clustering-strategy.md) | Clustering: transitive on strong links only; surname changes gated | Accepted |
 | [0009](0009-merge-quality-gates.md) | Merge quality gates: CI (tests/coverage/format/Konsist), agent review, human-merged | Accepted |
 | [0010](0010-issue-driven-pull-requests.md) | Issue-driven pull requests: a GitHub issue per change, linked in the PR | Accepted |
+| [0011](0011-deletion-rule-engine-details.md) | Deletion-rule engine: JSON AST with NOT, national-number phone matching | Accepted |
