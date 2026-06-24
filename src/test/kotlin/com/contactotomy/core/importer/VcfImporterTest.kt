@@ -1,8 +1,10 @@
 package com.contactotomy.core.importer
 
 import com.contactotomy.core.model.Source
+import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class VcfImporterTest {
@@ -26,7 +28,21 @@ class VcfImporterTest {
         assertEquals(listOf("rob@example.com"), rob.emails)
         assertEquals("Acme Inc.", rob.org)
         assertEquals(listOf("Work", "Friends"), rob.categories)
+        assertEquals(Instant.parse("2024-01-15T10:30:00Z"), rob.modifiedAt)
         assertTrue(rob.rawVCard.contains("BEGIN:VCARD"))
+    }
+
+    @Test
+    fun `second card with only a formatted name parses cleanly`() {
+        val contacts = VcfImporter(source = Source.APPLE).import(fixture("apple-sample.vcf"))
+
+        val noPhone = contacts[1]
+        assertTrue(noPhone.phones.isEmpty())
+        assertTrue(noPhone.rawPhones.isEmpty())
+        assertTrue(noPhone.emails.isEmpty())
+        assertEquals("No Phone Person", noPhone.name.formatted)
+        assertNull(noPhone.name.given)
+        assertNull(noPhone.name.family)
     }
 
     @Test

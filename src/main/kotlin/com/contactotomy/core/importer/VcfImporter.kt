@@ -14,7 +14,13 @@ class VcfImporter(
     private val source: Source,
     private val phoneNormalizer: PhoneNormalizer = PhoneNormalizer(),
 ) {
-    /** Parses vCard text into normalized Contacts, tagging each with [source]. */
+    /**
+     * Parses vCard text into normalized Contacts, tagging each with [source].
+     *
+     * Note: the assigned [Contact.id] is positional (`"$source-$index"`) within a single import.
+     * These ids are NOT stable across re-imports or reordering of the input, so downstream
+     * consumers must not treat them as durable identity.
+     */
     fun import(vcfText: String): List<Contact> =
         Ezvcard.parse(vcfText).all().mapIndexed { index, card -> toContact(card, index) }
 
