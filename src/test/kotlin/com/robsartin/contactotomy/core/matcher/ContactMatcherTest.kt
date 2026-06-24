@@ -42,6 +42,33 @@ class ContactMatcherTest {
     }
 
     @Test
+    fun `reasons and uncertain pairs are deterministically ordered`() {
+        // HIGH cluster: two Robert/Rob contacts share both a phone and an email
+        // (nickname given match) => reasons SHARED_PHONE, SHARED_EMAIL, NAME_NICKNAME.
+        val p1 = contact("p1", given = "Robert", family = "Stone", phones = listOf("+15"), emails = listOf("rs@x.com"))
+        val p2 = contact("p2", given = "Rob", family = "Stone", phones = listOf("+15"), emails = listOf("rs@x.com"))
+        // Two name-only uncertain pairs, ids intentionally out of natural order.
+        val z = contact("z", given = "Jane", family = "Doe")
+        val m = contact("m", given = "Jane", family = "Doe")
+        val a = contact("a", given = "Karl", family = "Frey")
+        val k = contact("k", given = "Karl", family = "Frey")
+
+        val result = matcher.match(listOf(p1, p2, z, m, a, k))
+
+        // uncertainPairs sorted by (a.id, b.id): a<k pair first, then m<z pair.
+        assertEquals(
+            listOf("a" to "k", "m" to "z"),
+            result.uncertainPairs.map { it.a.id to it.b.id },
+        )
+
+        val cluster = result.clusters.single()
+        assertEquals(
+            listOf(MatchReason.SHARED_PHONE, MatchReason.SHARED_EMAIL, MatchReason.NAME_NICKNAME),
+            cluster.reasons,
+        )
+    }
+
+    @Test
     fun `cluster id is deterministic from member ids`() {
         val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"))
         val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+1111"))

@@ -31,4 +31,22 @@ class NicknameDictionaryTest {
         assertTrue(dict.areEquivalent("bob", "robert"))
         assertTrue(dict.areEquivalent("liz", "elizabeth"))
     }
+
+    @Test
+    fun `unisex token belongs to multiple groups without bridging them`() {
+        val dict = NicknameDictionary(
+            listOf(setOf("samuel", "sam", "sammy"), setOf("samantha", "sam", "sammy")),
+        )
+        assertTrue(dict.areEquivalent("sam", "samuel"))
+        assertTrue(dict.areEquivalent("sam", "samantha"))
+        // sam/sammy are the only overlap; the two full names do not match directly.
+        assertFalse(dict.areEquivalent("samuel", "samantha"))
+    }
+
+    @Test
+    fun `bundled resource resolves multi-group nicknames`() {
+        val dict = NicknameDictionary.fromResource()
+        assertTrue(dict.areEquivalent("sam", "samuel"))
+        assertTrue(dict.areEquivalent("alex", "alexander"))
+    }
 }

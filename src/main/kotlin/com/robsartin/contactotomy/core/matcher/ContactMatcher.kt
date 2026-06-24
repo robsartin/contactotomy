@@ -24,7 +24,10 @@ class ContactMatcher(
             .filterValues { it.size >= 2 }
             .map { (root, ids) ->
                 val members = ids.map { byId.getValue(it) }.sortedBy { it.id }
-                val reasons = reasonsByRoot[root].orEmpty().flatMap { it.reasons }.distinct()
+                val reasons = reasonsByRoot[root].orEmpty()
+                    .flatMap { it.reasons }
+                    .distinct()
+                    .sortedBy { it.ordinal }
                 Cluster(clusterId(members), members, Confidence.HIGH, reasons)
             }
             .sortedBy { it.id }
@@ -34,11 +37,13 @@ class ContactMatcher(
             .toMap()
 
         // Drop uncertain pairs already unified inside one HIGH cluster.
-        val uncertainPairs = uncertainEdges.filter {
-            val ca = clusterIdByMember[it.a.id]
-            val cb = clusterIdByMember[it.b.id]
-            ca == null || cb == null || ca != cb
-        }
+        val uncertainPairs = uncertainEdges
+            .filter {
+                val ca = clusterIdByMember[it.a.id]
+                val cb = clusterIdByMember[it.b.id]
+                ca == null || cb == null || ca != cb
+            }
+            .sortedWith(compareBy({ it.a.id }, { it.b.id }))
 
         return MatchResult(clusters, uncertainPairs)
     }
