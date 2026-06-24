@@ -115,6 +115,9 @@ For a candidate pair:
 3. Given compatible AND family compatible AND no shared contact info →
    **UNCERTAIN** (NAME_ONLY).
 4. Shared phone/email but given incompatible → **no edge**.
+5. Shared phone/email AND given **indeterminate** (one side has no given name, so
+   there is neither a positive match nor a conflict) → **UNCERTAIN** (NAME_ONLY).
+   A missing given name is never treated as a conflict.
 
 Email is weighted no weaker than phone for identity, but the name gate above
 applies equally to both.
