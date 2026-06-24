@@ -10,7 +10,8 @@ import kotlin.test.assertTrue
 class VcfImporterTest {
     private fun fixture(name: String): String =
         requireNotNull(javaClass.classLoader.getResourceAsStream("fixtures/$name"))
-            .bufferedReader().use { it.readText() }
+            .bufferedReader()
+            .use { it.readText() }
 
     @Test
     fun `imports cards with normalized fields and source tag`() {

@@ -21,10 +21,12 @@ class VcfImporter(
      * These ids are NOT stable across re-imports or reordering of the input, so downstream
      * consumers must not treat them as durable identity.
      */
-    fun import(vcfText: String): List<Contact> =
-        Ezvcard.parse(vcfText).all().mapIndexed { index, card -> toContact(card, index) }
+    fun import(vcfText: String): List<Contact> = Ezvcard.parse(vcfText).all().mapIndexed { index, card -> toContact(card, index) }
 
-    private fun toContact(card: VCard, index: Int): Contact {
+    private fun toContact(
+        card: VCard,
+        index: Int,
+    ): Contact {
         val rawPhones = card.telephoneNumbers.mapNotNull { it.text }
         val rawEmails = card.emails.mapNotNull { it.value }
         return Contact(
@@ -35,7 +37,11 @@ class VcfImporter(
             rawPhones = rawPhones,
             emails = rawEmails.mapNotNull { EmailNormalizer.normalize(it) },
             addresses = card.addresses.mapNotNull { it.streetAddress },
-            org = card.organization?.values?.joinToString(" / ")?.ifEmpty { null },
+            org =
+                card.organization
+                    ?.values
+                    ?.joinToString(" / ")
+                    ?.ifEmpty { null },
             title = card.titles.firstOrNull()?.value,
             urls = card.urls.mapNotNull { it.value },
             notes = card.notes.firstOrNull()?.value,

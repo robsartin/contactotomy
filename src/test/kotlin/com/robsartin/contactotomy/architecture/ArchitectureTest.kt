@@ -5,10 +5,10 @@ import com.lemonappdev.konsist.api.verify.assertTrue
 import kotlin.test.Test
 
 class ArchitectureTest {
-
     @Test
     fun `core does not depend on ui or compose`() {
-        Konsist.scopeFromProject()
+        Konsist
+            .scopeFromProject()
             .files
             .filter { it.packagee?.name?.startsWith("com.robsartin.contactotomy.core") == true }
             .assertTrue { file ->
