@@ -1,8 +1,6 @@
 package com.robsartin.contactotomy.core.matcher
 
-import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
-import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -67,33 +65,3 @@ class EdgeClassifierTest {
         assertNull(classifier.classify(a, b))
     }
 }
-
-fun contact(
-    id: String,
-    given: String? = null,
-    middle: String? = null,
-    family: String? = null,
-    phones: List<String> = emptyList(),
-    emails: List<String> = emptyList(),
-    org: String? = null,
-    title: String? = null,
-    notes: String? = null,
-    categories: List<String> = emptyList(),
-    modifiedAt: java.time.Instant? = null,
-    createdAt: java.time.Instant? = null,
-    source: Source = Source.APPLE,
-) = Contact(
-    id = id,
-    source = source,
-    name = ContactName(given = given, middle = middle, family = family),
-    phones = phones,
-    rawPhones = phones,
-    emails = emails,
-    org = org,
-    title = title,
-    notes = notes,
-    categories = categories,
-    modifiedAt = modifiedAt,
-    createdAt = createdAt,
-    rawVCard = "BEGIN:VCARD\nFN:${given ?: ""} ${family ?: ""}\nEND:VCARD",
-)
