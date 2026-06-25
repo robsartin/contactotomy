@@ -56,6 +56,10 @@ rule. It is created once in the **prerequisite task below**, then imported:
 import com.robsartin.contactotomy.testsupport.contact
 ```
 
+Keep the factory **minimal (YAGNI)**: it exposes only the fields 4b-1's tests use.
+Don't add speculative parameters for fields a later plan might need — add a
+parameter when (and where) a test actually needs it.
+
 **Important for every task below:** the test snippets show their `contact(...)`
 calls using this shared factory. Do **not** redeclare a private `contact(...)` in
 any test class — add the import above instead. (If you see an inline factory in a
@@ -121,8 +125,12 @@ import java.time.Instant
 
 /**
  * Single shared test factory for Contact — imported by tests; never redeclared per class.
- * Parameter order is chosen so the common positional call `contact(id, given, family, phones)`
- * works, with everything else passed by name.
+ *
+ * Only the parameters 4b-1's tests actually use are exposed. This is deliberate
+ * (YAGNI): do NOT add speculative parameters for fields a future plan *might*
+ * need. When a later test needs another field (e.g. categories, createdAt, a
+ * non-Apple source), add that one parameter then, in that plan. Param order lets
+ * the common positional call `contact(id, given, family, phones)` work.
  */
 fun contact(
     id: String,
@@ -132,27 +140,14 @@ fun contact(
     emails: List<String> = emptyList(),
     org: String? = null,
     modifiedAt: Instant? = null,
-    middle: String? = null,
-    formatted: String? = null,
-    addresses: List<String> = emptyList(),
-    title: String? = null,
-    notes: String? = null,
-    categories: List<String> = emptyList(),
-    source: Source = Source.APPLE,
-    createdAt: Instant? = null,
 ) = Contact(
     id = id,
-    source = source,
-    name = ContactName(given = given, middle = middle, family = family, formatted = formatted),
+    source = Source.APPLE,
+    name = ContactName(given = given, family = family),
     phones = phones,
     rawPhones = phones,
     emails = emails,
-    addresses = addresses,
     org = org,
-    title = title,
-    notes = notes,
-    categories = categories,
-    createdAt = createdAt,
     modifiedAt = modifiedAt,
     rawVCard = "",
 )
