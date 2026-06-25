@@ -4,7 +4,8 @@ Date: 2026-06-24
 
 ## Status
 
-Accepted
+Accepted. Coverage threshold figures raised by ADR-0012 (now line ≥ 90%,
+branch ≥ 65%); the rest of this ADR stands.
 
 ## Context
 
