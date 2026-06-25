@@ -78,11 +78,60 @@ private fun ClusterRow(
     }
 }
 
-// Temporary minimal detail pane; replaced in Task 7.
 @Composable
 private fun MergeDetail(
     store: MergeReviewStore,
     item: ReviewItem,
 ) {
-    Text("Detail for ${item.id} — built in Task 7")
+    val p = item.proposal
+    Column(Modifier.padding(start = 4.dp)) {
+        val name =
+            p.merged.name
+                .let { it.formatted ?: listOfNotNull(it.given, it.family).joinToString(" ") }
+        Text("Merged: $name", Modifier.padding(bottom = 6.dp))
+
+        // multi-value fields as include/exclude chips
+        MultiField("phones", p.merged.phones, item, store)
+        MultiField("emails", p.merged.emails, item, store)
+        MultiField("categories", p.merged.categories, item, store)
+
+        // single-value conflicts as choices
+        p.conflicts.forEach { conflict ->
+            Text("${conflict.field} (conflict):", Modifier.padding(top = 6.dp))
+            Row {
+                conflict.candidates.map { it.value }.distinct().forEach { value ->
+                    val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
+                    val mark = if (value == chosen) "◉" else "○"
+                    Button(onClick = { store.chooseConflict(item.id, conflict.field, value) }) { Text("$mark $value") }
+                }
+            }
+        }
+
+        Row(Modifier.padding(top = 8.dp)) {
+            Button(onClick = { store.setDecision(item.id, Decision.ACCEPT) }) { Text("Accept") }
+            Button(onClick = { store.setDecision(item.id, Decision.REJECT) }) { Text("Reject") }
+            Button(onClick = { store.setDecision(item.id, Decision.SKIP) }) { Text("Skip") }
+        }
+    }
+}
+
+@Composable
+private fun MultiField(
+    field: String,
+    values: List<String>,
+    item: ReviewItem,
+    store: MergeReviewStore,
+) {
+    if (values.isEmpty()) return
+    Text(field, Modifier.padding(top = 4.dp))
+    Row {
+        values.forEach { value ->
+            val ev =
+                com.robsartin.contactotomy.core.apply
+                    .ExcludedValue(field, value)
+            val included = ev !in item.excludedValues
+            val mark = if (included) "☑" else "☐"
+            Button(onClick = { store.toggleField(item.id, ev) }) { Text("$mark $value") }
+        }
+    }
 }
