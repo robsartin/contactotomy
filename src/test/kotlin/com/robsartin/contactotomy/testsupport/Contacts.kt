@@ -22,9 +22,10 @@ fun contact(
     emails: List<String> = emptyList(),
     org: String? = null,
     modifiedAt: Instant? = null,
+    source: Source = Source.APPLE,
 ) = Contact(
     id = id,
-    source = Source.APPLE,
+    source = source,
     name = ContactName(given = given, family = family),
     phones = phones,
     rawPhones = phones,

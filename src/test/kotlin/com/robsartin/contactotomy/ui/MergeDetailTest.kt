@@ -41,10 +41,11 @@ class MergeDetailTest {
             setContent { MergeScreen(s, onCommit = {}) }
             // open the detail
             onNodeWithText("Sartin", substring = true).performClick()
-            // a merged phone chip is shown
-            onNodeWithText("+15125551234", substring = true).assertExists()
+            // a merged phone include/exclude chip is shown (the ☑-prefixed button,
+            // distinct from the before-cards phone line)
+            onNodeWithText("☑ +15125551234", substring = true).assertExists()
             // exclude it
-            onNodeWithText("+15125551234", substring = true).performClick()
+            onNodeWithText("☑ +15125551234", substring = true).performClick()
             kotlin.test.assertTrue(
                 s.state.value.items
                     .single()

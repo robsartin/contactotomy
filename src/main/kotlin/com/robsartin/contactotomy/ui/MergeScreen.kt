@@ -16,7 +16,9 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 
 @Composable
 fun MergeScreen(
@@ -70,10 +72,20 @@ private fun ClusterRow(
         }
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Button(onClick = onClick) {
-            val name =
-                item.proposal.merged.name
-                    .let { it.formatted ?: listOfNotNull(it.given, it.family).joinToString(" ") }
-            Text("$mark  $name · ${item.proposal.cluster.members.size} cards")
+            val label =
+                if (item.origin == Origin.UNCERTAIN) {
+                    val names =
+                        item.proposal.cluster.members
+                            .joinToString(" ↔ ") { displayName(it.name) }
+                    val reasons =
+                        item.proposal.cluster.reasons
+                            .joinToString(", ")
+                    "$mark  $names · $reasons"
+                } else {
+                    val name = displayName(item.proposal.merged.name)
+                    "$mark  $name · ${item.proposal.cluster.members.size} cards"
+                }
+            Text(label)
         }
     }
 }
@@ -85,10 +97,9 @@ private fun MergeDetail(
 ) {
     val p = item.proposal
     Column(Modifier.padding(start = 4.dp)) {
-        val name =
-            p.merged.name
-                .let { it.formatted ?: listOfNotNull(it.given, it.family).joinToString(" ") }
-        Text("Merged: $name", Modifier.padding(bottom = 6.dp))
+        BeforeCards(p.cluster.members)
+
+        Text("Merged: ${displayName(p.merged.name)}", Modifier.padding(bottom = 6.dp))
 
         // multi-value fields as include/exclude chips
         MultiField("phones", p.merged.phones, item, store)
@@ -116,6 +127,21 @@ private fun MergeDetail(
 }
 
 @Composable
+private fun BeforeCards(members: List<Contact>) {
+    val sorted = members.sortedWith(compareByDescending(nullsLast()) { it.modifiedAt })
+    Text("Before (${sorted.size} cards)", Modifier.padding(bottom = 4.dp))
+    sorted.forEachIndexed { index, member ->
+        val name = displayName(member.name)
+        val label = if (index == 0) "primary" else "card"
+        Text("$label · $name · ${member.source}")
+        val contactLine = (member.phones + member.emails).joinToString(", ")
+        if (contactLine.isNotEmpty()) Text(contactLine, Modifier.padding(bottom = 4.dp))
+    }
+}
+
+private fun displayName(name: ContactName): String = name.formatted ?: listOfNotNull(name.given, name.family).joinToString(" ")
+
+@Composable
 private fun MultiField(
     field: String,
     values: List<String>,
@@ -126,9 +152,7 @@ private fun MultiField(
     Text(field, Modifier.padding(top = 4.dp))
     Row {
         values.forEach { value ->
-            val ev =
-                com.robsartin.contactotomy.core.apply
-                    .ExcludedValue(field, value)
+            val ev = ExcludedValue(field, value)
             val included = ev !in item.excludedValues
             val mark = if (included) "☑" else "☐"
             Button(onClick = { store.toggleField(item.id, ev) }) { Text("$mark $value") }

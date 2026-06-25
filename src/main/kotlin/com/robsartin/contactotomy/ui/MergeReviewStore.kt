@@ -1,5 +1,9 @@
 package com.robsartin.contactotomy.ui
 
+import com.robsartin.contactotomy.core.apply.Action
+import com.robsartin.contactotomy.core.apply.DecisionApplier
+import com.robsartin.contactotomy.core.apply.ExcludedValue
+import com.robsartin.contactotomy.core.apply.MergeDecision
 import com.robsartin.contactotomy.core.matcher.Cluster
 import com.robsartin.contactotomy.core.matcher.Confidence
 import com.robsartin.contactotomy.core.matcher.ContactMatcher
@@ -49,7 +53,7 @@ class MergeReviewStore(
 
     fun toggleField(
         itemId: String,
-        value: com.robsartin.contactotomy.core.apply.ExcludedValue,
+        value: ExcludedValue,
     ) = updateItem(itemId) {
         val next = if (value in it.excludedValues) it.excludedValues - value else it.excludedValues + value
         it.copy(excludedValues = next)
@@ -92,15 +96,15 @@ class MergeReviewStore(
         }
         val decisions =
             finalAccepted.map {
-                com.robsartin.contactotomy.core.apply.MergeDecision(
+                MergeDecision(
                     clusterId = it.proposal.cluster.id,
-                    action = com.robsartin.contactotomy.core.apply.Action.ACCEPT,
+                    action = Action.ACCEPT,
                     excludedValues = it.excludedValues,
                     conflictChoices = it.conflictChoices,
                 )
             }
         val result =
-            com.robsartin.contactotomy.core.apply.DecisionApplier().applyDecisions(
+            DecisionApplier().applyDecisions(
                 contacts,
                 finalAccepted.map { it.proposal },
                 decisions,
