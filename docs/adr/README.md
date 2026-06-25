@@ -25,4 +25,5 @@ Status is one of: Proposed, Accepted, Superseded, Deprecated.
 | [0009](0009-merge-quality-gates.md) | Merge quality gates: CI (tests/coverage/format/Konsist), agent review, human-merged | Accepted |
 | [0010](0010-issue-driven-pull-requests.md) | Issue-driven pull requests: a GitHub issue per change, linked in the PR | Accepted |
 | [0011](0011-deletion-rule-engine-details.md) | Deletion-rule engine: JSON AST with NOT, national-number phone matching | Accepted |
-| [0012](0012-ui-testing-and-coverage-strategy.md) | UI testing & coverage: testable state holders, rendering excluded, run-the-app verification | Accepted |
+| [0012](0012-ui-testing-and-coverage-strategy.md) | UI testing & coverage: testable state holders, UI tested via Compose, raised floors | Accepted |
+| [0013](0013-merge-review-store.md) | Merge-review state in a dedicated MergeReviewStore delegating to core | Accepted |

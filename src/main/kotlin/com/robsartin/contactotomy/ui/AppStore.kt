@@ -46,6 +46,8 @@ class AppStore(
 
     fun goTo(screen: Screen) = _state.update { it.copy(screen = screen) }
 
+    fun setMergedContacts(merged: List<Contact>) = _state.update { it.copy(mergedContacts = merged) }
+
     suspend fun importFile(
         path: String,
         source: Source,
