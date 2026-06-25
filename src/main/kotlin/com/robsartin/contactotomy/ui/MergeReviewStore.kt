@@ -11,6 +11,7 @@ import com.robsartin.contactotomy.core.model.Contact
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
 
 /** Holds merge-review state built from the imported contacts via the core engine. */
 class MergeReviewStore(
@@ -39,6 +40,37 @@ class MergeReviewStore(
                 ReviewItem(id = cluster.id, origin = Origin.UNCERTAIN, proposal = merger.merge(cluster), decision = Decision.REJECT)
             }
         return high + uncertain
+    }
+
+    fun setDecision(
+        itemId: String,
+        decision: Decision,
+    ) = updateItem(itemId) { it.copy(decision = decision) }
+
+    fun toggleField(
+        itemId: String,
+        value: com.robsartin.contactotomy.core.apply.ExcludedValue,
+    ) = updateItem(itemId) {
+        val next = if (value in it.excludedValues) it.excludedValues - value else it.excludedValues + value
+        it.copy(excludedValues = next)
+    }
+
+    fun chooseConflict(
+        itemId: String,
+        field: String,
+        value: String,
+    ) = updateItem(itemId) { it.copy(conflictChoices = it.conflictChoices + (field to value)) }
+
+    fun acceptAllHighConfidence() =
+        _state.update { st ->
+            st.copy(items = st.items.map { if (it.origin == Origin.HIGH) it.copy(decision = Decision.ACCEPT) else it })
+        }
+
+    private fun updateItem(
+        itemId: String,
+        transform: (ReviewItem) -> ReviewItem,
+    ) = _state.update { st ->
+        st.copy(items = st.items.map { if (it.id == itemId) transform(it) else it })
     }
 
     companion object {
