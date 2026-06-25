@@ -2,9 +2,12 @@ package com.robsartin.contactotomy.core.apply
 
 import com.robsartin.contactotomy.core.merger.MergeProposal
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 
 /** Applies accept/reject/field decisions to produce the final deduplicated contact list. */
 class DecisionApplier {
+    private val phoneNormalizer = PhoneNormalizer()
+
     fun applyDecisions(
         allContacts: List<Contact>,
         proposals: List<MergeProposal>,
@@ -60,7 +63,13 @@ class DecisionApplier {
         value: String,
     ): Contact =
         when (field) {
-            "phones" -> c.copy(phones = c.phones - value)
+            // Drop the normalized phone and any rawPhones original that normalizes to it,
+            // so an excluded number can't be resurrected from rawPhones on export.
+            "phones" ->
+                c.copy(
+                    phones = c.phones - value,
+                    rawPhones = c.rawPhones.filterNot { phoneNormalizer.normalize(it) == value },
+                )
             "rawPhones" -> c.copy(rawPhones = c.rawPhones - value)
             "emails" -> c.copy(emails = c.emails - value)
             "addresses" -> c.copy(addresses = c.addresses - value)
