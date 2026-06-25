@@ -49,7 +49,7 @@ enum class Confidence { HIGH, UNCERTAIN }   // no edge at all == "never merge"
 
 enum class MatchReason {
     SHARED_PHONE, SHARED_EMAIL,
-    NAME_EXACT, NAME_NICKNAME, NAME_DROPPED_MIDDLE, NAME_INITIAL,
+    NAME_EXACT, NAME_NICKNAME, NAME_INITIAL,
     SURNAME_CHANGE, NAME_ONLY,
 }
 
