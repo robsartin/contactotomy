@@ -19,3 +19,6 @@ gradle.properties
 !src/test/resources/fixtures/*.vcf
 /data/
 /scratch/
+
+# Visual brainstorm scratch (not committed)
+.superpowers/
