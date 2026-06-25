@@ -73,6 +73,47 @@ class MergeReviewStore(
         st.copy(items = st.items.map { if (it.id == itemId) transform(it) else it })
     }
 
+    /** Applies accepted merges and returns the resulting contact list; idempotent guard against double-touch. */
+    fun commit(): List<Contact> {
+        val accepted = _state.value.items.filter { it.decision == Decision.ACCEPT }
+        val seen = mutableSetOf<String>()
+        val downgraded = mutableSetOf<String>()
+        val finalAccepted = mutableListOf<ReviewItem>()
+        for (item in accepted) {
+            val memberIds =
+                item.proposal.cluster.members
+                    .map { it.id }
+            if (memberIds.any { it in seen }) {
+                downgraded += item.id
+            } else {
+                seen += memberIds
+                finalAccepted += item
+            }
+        }
+        val decisions =
+            finalAccepted.map {
+                com.robsartin.contactotomy.core.apply.MergeDecision(
+                    clusterId = it.proposal.cluster.id,
+                    action = com.robsartin.contactotomy.core.apply.Action.ACCEPT,
+                    excludedValues = it.excludedValues,
+                    conflictChoices = it.conflictChoices,
+                )
+            }
+        val result =
+            com.robsartin.contactotomy.core.apply.DecisionApplier().applyDecisions(
+                contacts,
+                finalAccepted.map { it.proposal },
+                decisions,
+            )
+        _state.update { st ->
+            st.copy(
+                items = st.items.map { if (it.id in downgraded) it.copy(decision = Decision.SKIP) else it },
+                committed = true,
+            )
+        }
+        return result
+    }
+
     companion object {
         fun defaultMatcher(): ContactMatcher = ContactMatcher(EdgeClassifier(NameMatcher(NicknameDictionary.fromResource())))
     }
