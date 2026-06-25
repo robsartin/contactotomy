@@ -34,7 +34,14 @@ fun App(
             when (state.screen) {
                 Screen.IMPORT ->
                     ImportScreen(store, applePicker, googlePicker, otherPicker)
-                Screen.MERGE -> Text("Merge review — built in 4b")
+                Screen.MERGE -> {
+                    val reviewStore =
+                        androidx.compose.runtime.remember(state.contacts) { MergeReviewStore(state.contacts) }
+                    MergeScreen(reviewStore) { merged ->
+                        store.setMergedContacts(merged)
+                        store.next()
+                    }
+                }
                 Screen.DELETION -> Text("Deletion review — built in 4c")
                 Screen.EXPORT -> Text("Export — built in 4d")
             }

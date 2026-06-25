@@ -34,10 +34,10 @@ class AppShellTest {
         }
 
     @Test
-    fun `next advances to the merge stub when contacts exist`() =
+    fun `next advances to the merge screen when contacts exist`() =
         runComposeUiTest {
             setContent { App(storeWithOneContact()) }
             onNodeWithText("Next").performClick()
-            onNodeWithText("Merge review — built in 4b").assertExists()
+            onNodeWithText("Will merge", substring = true).assertExists()
         }
 }
