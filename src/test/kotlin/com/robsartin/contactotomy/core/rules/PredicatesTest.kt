@@ -1,8 +1,7 @@
 package com.robsartin.contactotomy.core.rules
 
-import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.testsupport.contact
 import java.time.Instant
 import kotlin.test.Test
 import kotlin.test.assertFalse
@@ -53,24 +52,4 @@ class PredicatesTest {
         )
         assertFalse(Predicates.evaluate(p(PredicateKind.NEVER_CONTACTED), contact("1")))
     }
-
-    private fun contact(
-        id: String,
-        given: String? = null,
-        phones: List<String> = emptyList(),
-        emails: List<String> = emptyList(),
-        notes: String? = null,
-        source: Source = Source.APPLE,
-        createdAt: Instant? = null,
-    ) = Contact(
-        id = id,
-        source = source,
-        name = ContactName(given = given),
-        phones = phones,
-        rawPhones = phones,
-        emails = emails,
-        notes = notes,
-        createdAt = createdAt,
-        rawVCard = "",
-    )
 }

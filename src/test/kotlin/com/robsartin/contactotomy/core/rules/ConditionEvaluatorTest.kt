@@ -1,8 +1,6 @@
 package com.robsartin.contactotomy.core.rules
 
-import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
-import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -43,19 +41,4 @@ class ConditionEvaluatorTest {
         assertTrue(eval.matchReason(And(emptyList()), c) != null)
         assertNull(eval.matchReason(Or(emptyList()), c))
     }
-
-    private fun contact(
-        id: String,
-        given: String? = null,
-        emails: List<String> = emptyList(),
-        phones: List<String> = emptyList(),
-    ) = Contact(
-        id = id,
-        source = Source.APPLE,
-        name = ContactName(given = given),
-        phones = phones,
-        rawPhones = phones,
-        emails = emails,
-        rawVCard = "",
-    )
 }
