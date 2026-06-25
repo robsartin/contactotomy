@@ -45,29 +45,135 @@ class AppStore(...) { val state: StateFlow<AppState>; fun next(); fun goTo(scree
 data class AppState(screen, imported, contacts, importing, error)  // 4a
 ```
 
-A test contact factory (define as a `private` member of each test class that needs it):
+**Shared test contact factory (no per-class duplication).** A single `contact(...)`
+lives in its own test-only package and is imported by every test that needs it.
+A dedicated package (not under `...core` or a test package that already has a
+top-level `contact`) avoids the same-package overload collision we hit earlier,
+and being test source it is excluded from coverage and outside the Konsist `core`
+rule. It is created once in the **prerequisite task below**, then imported:
 
 ```kotlin
-private fun contact(
-    id: String, given: String? = null, family: String? = null,
-    phones: List<String> = emptyList(), emails: List<String> = emptyList(),
-    org: String? = null, source: com.robsartin.contactotomy.core.model.Source = com.robsartin.contactotomy.core.model.Source.APPLE,
-    modifiedAt: java.time.Instant? = null,
-) = com.robsartin.contactotomy.core.model.Contact(
-    id = id, source = source,
-    name = com.robsartin.contactotomy.core.model.ContactName(given = given, family = family),
-    phones = phones, rawPhones = phones, emails = emails, org = org, modifiedAt = modifiedAt, rawVCard = "",
-)
+import com.robsartin.contactotomy.testsupport.contact
 ```
+
+**Important for every task below:** the test snippets show their `contact(...)`
+calls using this shared factory. Do **not** redeclare a private `contact(...)` in
+any test class — add the import above instead. (If you see an inline factory in a
+snippet from an earlier draft, replace it with the import.)
 
 ## File Structure
 
+- `src/test/kotlin/com/robsartin/contactotomy/testsupport/Contacts.kt` — shared `contact(...)` test factory (Task 0).
 - `ui/AppState.kt`, `ui/AppStore.kt` — add `mergedContacts` + setter (Task 1).
 - `ui/MergeReviewTypes.kt` — `Origin`, `Decision`, `ReviewItem`, `MergeReviewState` (Task 2).
 - `ui/MergeReviewStore.kt` — store (Tasks 3–5).
 - `ui/MergeScreen.kt` — list + detail composables (Tasks 6–7).
 - `ui/App.kt` — wire `MergeScreen` into the MERGE branch (Task 6).
 - Tests mirror under `src/test/kotlin/...`.
+
+---
+
+### Task 0: Shared test contact factory
+
+**Files:**
+- Create: `src/test/kotlin/com/robsartin/contactotomy/testsupport/Contacts.kt`
+- Test: `src/test/kotlin/com/robsartin/contactotomy/testsupport/ContactsTest.kt`
+
+- [ ] **Step 1: Write the failing test**
+
+`src/test/kotlin/com/robsartin/contactotomy/testsupport/ContactsTest.kt`:
+```kotlin
+package com.robsartin.contactotomy.testsupport
+
+import com.robsartin.contactotomy.core.model.Source
+import kotlin.test.Test
+import kotlin.test.assertEquals
+
+class ContactsTest {
+    @Test
+    fun `factory builds a contact with the given fields`() {
+        val c = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1"), org = "Acme")
+        assertEquals("a", c.id)
+        assertEquals("Rob", c.name.given)
+        assertEquals(listOf("+1"), c.phones)
+        assertEquals(listOf("+1"), c.rawPhones)
+        assertEquals("Acme", c.org)
+        assertEquals(Source.APPLE, c.source)
+    }
+}
+```
+
+- [ ] **Step 2: Run test to verify it fails**
+
+Run: `./gradlew test --tests "com.robsartin.contactotomy.testsupport.ContactsTest"`
+Expected: FAIL — `contact` unresolved.
+
+- [ ] **Step 3: Create the shared factory**
+
+`src/test/kotlin/com/robsartin/contactotomy/testsupport/Contacts.kt`:
+```kotlin
+package com.robsartin.contactotomy.testsupport
+
+import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.Source
+import java.time.Instant
+
+/**
+ * Single shared test factory for Contact — imported by tests; never redeclared per class.
+ * Parameter order is chosen so the common positional call `contact(id, given, family, phones)`
+ * works, with everything else passed by name.
+ */
+fun contact(
+    id: String,
+    given: String? = null,
+    family: String? = null,
+    phones: List<String> = emptyList(),
+    emails: List<String> = emptyList(),
+    org: String? = null,
+    modifiedAt: Instant? = null,
+    middle: String? = null,
+    formatted: String? = null,
+    addresses: List<String> = emptyList(),
+    title: String? = null,
+    notes: String? = null,
+    categories: List<String> = emptyList(),
+    source: Source = Source.APPLE,
+    createdAt: Instant? = null,
+) = Contact(
+    id = id,
+    source = source,
+    name = ContactName(given = given, middle = middle, family = family, formatted = formatted),
+    phones = phones,
+    rawPhones = phones,
+    emails = emails,
+    addresses = addresses,
+    org = org,
+    title = title,
+    notes = notes,
+    categories = categories,
+    createdAt = createdAt,
+    modifiedAt = modifiedAt,
+    rawVCard = "",
+)
+```
+
+- [ ] **Step 4: Run test to verify it passes**
+
+Run: `./gradlew test --tests "com.robsartin.contactotomy.testsupport.ContactsTest"`
+Expected: PASS.
+
+- [ ] **Step 5: Format, gate, commit**
+
+```bash
+./gradlew spotlessApply && ./gradlew check
+git add src/test/kotlin/com/robsartin/contactotomy/testsupport/Contacts.kt src/test/kotlin/com/robsartin/contactotomy/testsupport/ContactsTest.kt
+git commit -m "test(ui): add shared contact test factory (#10)"
+```
+
+In the tasks that follow, every test that builds contacts adds
+`import com.robsartin.contactotomy.testsupport.contact` and uses this factory —
+**delete the per-class `private fun contact(...)`** shown in the snippets below.
 
 ---
 
