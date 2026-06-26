@@ -22,4 +22,5 @@ data class AppState(
     val importing: Boolean = false,
     val error: String? = null,
     val mergedContacts: List<Contact>? = null,
+    val finalContacts: List<Contact>? = null,
 )
