@@ -50,7 +50,7 @@ class AppNavigationTest {
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
             onAllNodesWithText("Sartin", substring = true).onFirst().performClick() // select the cluster
-            onNodeWithText("Accept").performClick() // the detail-pane Accept button
+            onNodeWithText("Accept merge", substring = true).performClick() // the detail-pane Accept button
             onNodeWithText("Next").performClick()
 
             // the two duplicates collapse to one merged contact, and we advance to Deletion
