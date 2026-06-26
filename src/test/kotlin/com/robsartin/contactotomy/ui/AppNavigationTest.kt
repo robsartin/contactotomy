@@ -2,6 +2,8 @@ package com.robsartin.contactotomy.ui
 
 import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.onAllNodesWithText
+import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -47,6 +49,8 @@ class AppNavigationTest {
             store.goTo(Screen.MERGE)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
+            onAllNodesWithText("Sartin", substring = true).onFirst().performClick() // select the cluster
+            onNodeWithText("Accept merge", substring = true).performClick() // the detail-pane Accept button
             onNodeWithText("Next").performClick()
 
             // the two duplicates collapse to one merged contact, and we advance to Deletion

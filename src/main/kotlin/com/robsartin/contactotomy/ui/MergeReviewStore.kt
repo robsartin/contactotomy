@@ -12,6 +12,7 @@ import com.robsartin.contactotomy.core.matcher.NameMatcher
 import com.robsartin.contactotomy.core.matcher.NicknameDictionary
 import com.robsartin.contactotomy.core.merger.ContactMerger
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -30,7 +31,7 @@ class MergeReviewStore(
         val result = matcher.match(contacts)
         val high =
             result.clusters.map { cluster ->
-                ReviewItem(id = cluster.id, origin = Origin.HIGH, proposal = merger.merge(cluster), decision = Decision.ACCEPT)
+                ReviewItem(id = cluster.id, origin = Origin.HIGH, proposal = merger.merge(cluster))
             }
         val uncertain =
             result.uncertainPairs.map { edge ->
@@ -41,15 +42,21 @@ class MergeReviewStore(
                         confidence = Confidence.UNCERTAIN,
                         reasons = edge.reasons,
                     )
-                ReviewItem(id = cluster.id, origin = Origin.UNCERTAIN, proposal = merger.merge(cluster), decision = Decision.REJECT)
+                ReviewItem(id = cluster.id, origin = Origin.UNCERTAIN, proposal = merger.merge(cluster))
             }
         return high + uncertain
     }
 
-    fun setDecision(
+    fun accept(itemId: String) = updateItem(itemId) { it.copy(decision = Decision.ACCEPT) }
+
+    fun reject(itemId: String) = updateItem(itemId) { it.copy(decision = Decision.REJECT) }
+
+    fun undo(itemId: String) = updateItem(itemId) { it.copy(decision = Decision.PENDING) }
+
+    fun chooseName(
         itemId: String,
-        decision: Decision,
-    ) = updateItem(itemId) { it.copy(decision = decision) }
+        memberId: String,
+    ) = updateItem(itemId) { it.copy(nameChoiceId = memberId) }
 
     fun toggleField(
         itemId: String,
@@ -109,13 +116,25 @@ class MergeReviewStore(
                 finalAccepted.map { it.proposal },
                 decisions,
             )
+        // Apply per-cluster name overrides (chosen source card's name) — kept in the UI, engine untouched.
+        val nameOverrides: Map<String, ContactName> =
+            finalAccepted
+                .mapNotNull { item ->
+                    val memberId = item.nameChoiceId ?: return@mapNotNull null
+                    val member =
+                        item.proposal.cluster.members
+                            .firstOrNull { it.id == memberId } ?: return@mapNotNull null
+                    item.proposal.merged.id to member.name
+                }.toMap()
+        val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
+
         _state.update { st ->
             st.copy(
-                items = st.items.map { if (it.id in downgraded) it.copy(decision = Decision.SKIP) else it },
+                items = st.items.map { if (it.id in downgraded) it.copy(decision = Decision.PENDING) else it },
                 committed = true,
             )
         }
-        return result
+        return withNames
     }
 
     companion object {

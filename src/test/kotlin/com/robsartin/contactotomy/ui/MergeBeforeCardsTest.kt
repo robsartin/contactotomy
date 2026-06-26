@@ -34,16 +34,16 @@ class MergeBeforeCardsTest {
     }
 
     @Test
-    fun `detail shows a before-cards panel with each member's source and a phone`() =
+    fun `detail shows a source-cards panel with each member's source and a phone`() =
         runComposeUiTest {
             setContent { MergeScreen(store()) }
             // open the detail
             onAllNodesWithText("Sartin", substring = true).onFirst().performClick()
-            // the before-cards section header
-            onNodeWithText("Before", substring = true).assertExists()
-            // a member source label
+            // the source-cards section header
+            onNodeWithText("Source cards", substring = true).assertExists()
+            // a member source label ([GOOGLE])
             onNodeWithText("GOOGLE", substring = true).assertExists()
-            // a member's phone (rendered on the Google before-card and the merged chip)
+            // a member's phone (rendered on the Google source card and the merged checkbox)
             onAllNodesWithText("+15125559999", substring = true).onFirst().assertExists()
         }
 }

@@ -14,15 +14,32 @@ class MergeReviewStoreIntentsTest {
     }
 
     @Test
-    fun `setDecision changes a single item`() {
+    fun `reject changes a single item`() {
         val store = dupStore()
         val id =
             store.state.value.items
                 .single()
                 .id
-        store.setDecision(id, Decision.REJECT)
+        store.reject(id)
         assertEquals(
             Decision.REJECT,
+            store.state.value.items
+                .single()
+                .decision,
+        )
+    }
+
+    @Test
+    fun `undo returns an item to PENDING`() {
+        val store = dupStore()
+        val id =
+            store.state.value.items
+                .single()
+                .id
+        store.accept(id)
+        store.undo(id)
+        assertEquals(
+            Decision.PENDING,
             store.state.value.items
                 .single()
                 .decision,
@@ -76,7 +93,7 @@ class MergeReviewStoreIntentsTest {
             store.state.value.items
                 .single()
                 .id
-        store.setDecision(id, Decision.REJECT)
+        store.reject(id)
         store.acceptAllHighConfidence()
         assertEquals(
             Decision.ACCEPT,
