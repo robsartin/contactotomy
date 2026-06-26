@@ -48,6 +48,8 @@ class AppStore(
 
     fun setMergedContacts(merged: List<Contact>) = _state.update { it.copy(mergedContacts = merged) }
 
+    fun setFinalContacts(final: List<Contact>) = _state.update { it.copy(finalContacts = final) }
+
     suspend fun importFile(
         path: String,
         source: Source,
