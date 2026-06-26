@@ -54,7 +54,13 @@ fun App(
                         store.next()
                     }
                 }
-                Screen.EXPORT -> Text("Export — built in 4d")
+                Screen.EXPORT -> {
+                    val exportStore =
+                        androidx.compose.runtime.remember(workingContacts(state)) {
+                            ExportStore(workingContacts(state))
+                        }
+                    ExportScreen(exportStore, savePicker = AwtFilePicker("Save cleaned vCard (.vcf)", save = true))
+                }
             }
         }
     }
