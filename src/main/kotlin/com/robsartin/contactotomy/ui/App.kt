@@ -28,8 +28,10 @@ fun App(
             StepIndicator(state.screen)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Button(onClick = { store.back() }, enabled = state.screen != Screen.IMPORT) { Text("Back") }
-                val nextEnabled =
-                    state.screen != Screen.EXPORT && !(state.screen == Screen.IMPORT && state.contacts.isEmpty())
+                // Next only advances from Import. Merge and Deletion must advance via their own
+                // "Apply … & continue" buttons, which commit the result — otherwise the global Next
+                // would skip the commit and the merge/deletion would silently not be applied.
+                val nextEnabled = state.screen == Screen.IMPORT && state.contacts.isNotEmpty()
                 Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
             }
             when (state.screen) {
