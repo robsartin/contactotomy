@@ -28,7 +28,8 @@ fun App(
             StepIndicator(state.screen)
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Button(onClick = { store.back() }, enabled = state.screen != Screen.IMPORT) { Text("Back") }
-                val nextEnabled = !(state.screen == Screen.IMPORT && state.contacts.isEmpty())
+                val nextEnabled =
+                    state.screen != Screen.EXPORT && !(state.screen == Screen.IMPORT && state.contacts.isEmpty())
                 Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
             }
             when (state.screen) {
@@ -54,7 +55,17 @@ fun App(
                         store.next()
                     }
                 }
-                Screen.EXPORT -> Text("Export — built in 4d")
+                Screen.EXPORT -> {
+                    val exportStore =
+                        androidx.compose.runtime.remember(workingContacts(state)) {
+                            ExportStore(workingContacts(state))
+                        }
+                    ExportScreen(
+                        exportStore,
+                        savePicker =
+                            AwtFilePicker("Save cleaned vCard (.vcf)", save = true, defaultName = "contacts-clean.vcf"),
+                    )
+                }
             }
         }
     }
