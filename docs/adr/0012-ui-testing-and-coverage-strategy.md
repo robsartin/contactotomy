@@ -22,7 +22,7 @@ code, rather than excluding it.
 
 ## Decision
 
-- **Raise the coverage floors to line ≥ 90%, branch ≥ 65%** (updates ADR-0009's
+- **Raise the coverage floors to line ≥ 90%, branch ≥ 70%** (updates ADR-0009's
   figures). Still floors to raise over time, never lowered to make a build pass.
 - **Logic lives in framework-free state holders** (e.g. `AppStore`) and pure
   helpers, separate from composables; unit-tested as before.
@@ -38,7 +38,9 @@ code, rather than excluding it.
 
 ## Consequences
 
-- Higher floors (90/65) keep quality rising; current coverage clears them.
+- Higher floors (90/70) keep quality rising; current coverage clears them. (The
+  branch floor was raised 65 → 70 on 2026-06-26 once coverage was comfortably above
+  it; the line floor stays 90.)
 - The UI is actually tested, headlessly and in CI, not assumed-correct.
 - Composables must stay thin and driven by injectable state so `runComposeUiTest`
   can exercise them with fakes (no real window/file dialog).
