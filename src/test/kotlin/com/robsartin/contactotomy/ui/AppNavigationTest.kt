@@ -10,6 +10,7 @@ import com.robsartin.contactotomy.testsupport.contact
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNotNull
 
 @OptIn(ExperimentalTestApi::class)
 class AppNavigationTest {
@@ -31,31 +32,22 @@ class AppNavigationTest {
     private val noPickers = arrayOf(FilePicker { null }, FilePicker { null }, FilePicker { null })
 
     @Test
-    fun `global Next is disabled on the Merge screen so it cannot bypass the merge commit`() =
+    fun `Next on Import advances to Merge`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
-            store.goTo(Screen.MERGE)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
-            onNodeWithText("Next").assertIsNotEnabled()
+            onNodeWithText("Next").performClick()
+            assertEquals(Screen.MERGE, store.state.value.screen)
         }
 
     @Test
-    fun `global Next is disabled on the Deletion screen`() =
-        runComposeUiTest {
-            val store = appStoreWithDuplicates()
-            store.goTo(Screen.DELETION)
-            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
-            onNodeWithText("Next").assertIsNotEnabled()
-        }
-
-    @Test
-    fun `Apply merges and continue applies the merge and advances`() =
+    fun `Next on Merge commits the merge and advances to Deletion`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
             store.goTo(Screen.MERGE)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Apply merges", substring = true).performClick()
+            onNodeWithText("Next").performClick()
 
             // the two duplicates collapse to one merged contact, and we advance to Deletion
             assertEquals(
@@ -64,5 +56,28 @@ class AppNavigationTest {
                     ?.size,
             )
             assertEquals(Screen.DELETION, store.state.value.screen)
+        }
+
+    @Test
+    fun `Next on Deletion commits and advances to Export`() =
+        runComposeUiTest {
+            val store = appStoreWithDuplicates()
+            store.goTo(Screen.DELETION)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick()
+
+            // default starter rules with no approvals => contacts pass through
+            assertNotNull(store.state.value.finalContacts)
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+        }
+
+    @Test
+    fun `Next is disabled on Export`() =
+        runComposeUiTest {
+            val store = appStoreWithDuplicates()
+            store.goTo(Screen.EXPORT)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+            onNodeWithText("Next").assertIsNotEnabled()
         }
 }

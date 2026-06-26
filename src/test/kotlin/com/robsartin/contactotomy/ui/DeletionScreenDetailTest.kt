@@ -26,7 +26,7 @@ class DeletionScreenDetailTest {
     fun `selecting a flagged row shows its card and reason`() =
         runComposeUiTest {
             val store = store()
-            setContent { DeletionScreen(store, onCommit = {}) }
+            setContent { DeletionScreen(store) }
             onNodeWithText("Run").performClick()
             onAllNodesWithText("Al", substring = true).onFirst().performClick()
             onNodeWithText("al@indeed.com", substring = true).assertExists()
@@ -39,7 +39,7 @@ class DeletionScreenDetailTest {
             val store = store()
             store.state.value.rules
                 .forEach { store.toggleRule(it.rule.name) }
-            setContent { DeletionScreen(store, onCommit = {}) }
+            setContent { DeletionScreen(store) }
             onNodeWithText("Run").performClick()
             onNodeWithText("No matches").assertExists()
         }
@@ -51,7 +51,7 @@ class DeletionScreenDetailTest {
         val file = tempDir.resolve("rules.json").toFile()
         file.writeText(RuleStore.toJson(RuleSet(RuleSet.starter().rules.take(1))))
         val store = store()
-        setContent { DeletionScreen(store, loadPicker = FilePicker { file.absolutePath }, onCommit = {}) }
+        setContent { DeletionScreen(store, loadPicker = FilePicker { file.absolutePath }) }
         onNodeWithText("Load", substring = true).performClick()
         assertTrue(store.state.value.rules.size == 1)
     }
