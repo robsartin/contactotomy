@@ -34,6 +34,17 @@ class DeletionScreenDetailTest {
         }
 
     @Test
+    fun `No matches renders when nothing is flagged`() =
+        runComposeUiTest {
+            val store = store()
+            store.state.value.rules
+                .forEach { store.toggleRule(it.rule.name) }
+            setContent { DeletionScreen(store, onCommit = {}) }
+            onNodeWithText("Run").performClick()
+            onNodeWithText("No matches").assertExists()
+        }
+
+    @Test
     fun `Load reads a rules file via the picker`(
         @TempDir tempDir: Path,
     ) = runComposeUiTest {

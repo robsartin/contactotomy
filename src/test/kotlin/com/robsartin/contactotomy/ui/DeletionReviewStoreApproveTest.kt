@@ -46,6 +46,28 @@ class DeletionReviewStoreApproveTest {
     }
 
     @Test
+    fun `run clears prior approvals`() {
+        val store = ranStore()
+        store.approve("a")
+        assertTrue("a" in store.state.value.approvedIds)
+        store.run()
+        assertTrue(
+            store.state.value.approvedIds
+                .isEmpty(),
+        )
+    }
+
+    @Test
+    fun `approveAllForRule with an unknown rule name is a no-op`() {
+        val store = ranStore()
+        store.approveAllForRule("does-not-exist")
+        assertTrue(
+            store.state.value.approvedIds
+                .isEmpty(),
+        )
+    }
+
+    @Test
     fun `approveAll then clearApprovals`() {
         val store = ranStore()
         store.approveAll()
