@@ -42,7 +42,18 @@ fun App(
                         store.next()
                     }
                 }
-                Screen.DELETION -> Text("Deletion review — built in 4c")
+                Screen.DELETION -> {
+                    val source = state.mergedContacts ?: state.contacts
+                    val deletionStore = androidx.compose.runtime.remember(source) { DeletionReviewStore(source) }
+                    DeletionScreen(
+                        deletionStore,
+                        loadPicker = AwtFilePicker("Load rules (.json)"),
+                        savePicker = AwtFilePicker("Save rules (.json)", save = true),
+                    ) { final ->
+                        store.setFinalContacts(final)
+                        store.next()
+                    }
+                }
                 Screen.EXPORT -> Text("Export — built in 4d")
             }
         }
