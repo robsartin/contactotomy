@@ -31,19 +31,19 @@ class MergeReviewStoreOverlapTest {
         assertEquals(setOf("b"), highIds.intersect(uncertainIds))
 
         // accept BOTH
-        store.setDecision(high.id, Decision.ACCEPT)
-        store.setDecision(uncertain.id, Decision.ACCEPT)
+        store.accept(high.id)
+        store.accept(uncertain.id)
 
         val result = store.commit()
 
         // no contact id appears twice in the committed result
         assertEquals(result.map { it.id }, result.map { it.id }.distinct())
 
-        // the overlapping (uncertain) item was downgraded to SKIP in state
+        // the overlapping (uncertain) item was downgraded to PENDING in state
         val uncertainAfter =
             store.state.value.items
                 .single { it.id == uncertain.id }
-        assertEquals(Decision.SKIP, uncertainAfter.decision)
+        assertEquals(Decision.PENDING, uncertainAfter.decision)
         // the HIGH item kept its acceptance
         val highAfter =
             store.state.value.items

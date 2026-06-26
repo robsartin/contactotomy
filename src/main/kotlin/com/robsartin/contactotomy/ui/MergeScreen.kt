@@ -60,9 +60,9 @@ private fun ClusterRow(
 ) {
     val mark =
         when (item.decision) {
+            Decision.PENDING -> "•"
             Decision.ACCEPT -> "✓"
             Decision.REJECT -> "✕"
-            Decision.SKIP -> "◷"
         }
     Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
         Button(onClick = onClick) {
@@ -113,9 +113,8 @@ private fun MergeDetail(
         }
 
         Row(Modifier.padding(top = 8.dp)) {
-            Button(onClick = { store.setDecision(item.id, Decision.ACCEPT) }) { Text("Accept") }
-            Button(onClick = { store.setDecision(item.id, Decision.REJECT) }) { Text("Reject") }
-            Button(onClick = { store.setDecision(item.id, Decision.SKIP) }) { Text("Skip") }
+            Button(onClick = { store.accept(item.id) }) { Text("Accept") }
+            Button(onClick = { store.reject(item.id) }) { Text("Keep separate") }
         }
     }
 }
