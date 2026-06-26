@@ -3,6 +3,8 @@ package com.robsartin.contactotomy.ui
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.rules.RuleEngine
 import com.robsartin.contactotomy.core.rules.RuleSet
+import com.robsartin.contactotomy.core.rules.RuleStore
+import com.robsartin.contactotomy.core.rules.applyDeletions
 import com.robsartin.contactotomy.core.rules.starter
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -55,4 +57,20 @@ class DeletionReviewStore(
     fun approveAll() = _state.update { st -> st.copy(approvedIds = st.flagged.map { it.contact.id }.toSet()) }
 
     fun clearApprovals() = _state.update { it.copy(approvedIds = emptySet()) }
+
+    fun loadRules(json: String) =
+        _state.update {
+            DeletionReviewState(
+                rules = RuleStore.fromJson(json).rules.map { r -> RuleToggle(r) },
+                totalContacts = contacts.size,
+            )
+        }
+
+    fun rulesToJson(): String = RuleStore.toJson(RuleSet(_state.value.rules.map { it.rule }))
+
+    fun commit(): List<Contact> {
+        val result = applyDeletions(contacts, _state.value.approvedIds)
+        _state.update { it.copy(committed = true) }
+        return result
+    }
 }
