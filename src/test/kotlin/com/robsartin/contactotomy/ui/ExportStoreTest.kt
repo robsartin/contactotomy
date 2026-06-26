@@ -26,9 +26,11 @@ class ExportStoreTest {
     }
 
     @Test
-    fun `recordError sets the error`() {
+    fun `recordError sets the error and clears any prior exported path`() {
         val store = ExportStore(emptyList())
+        store.recordExported("/tmp/out.vcf")
         store.recordError("disk full")
         assertEquals("disk full", store.state.value.error)
+        assertEquals(null, store.state.value.exportedPath)
     }
 }

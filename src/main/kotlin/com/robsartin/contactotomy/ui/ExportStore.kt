@@ -25,5 +25,5 @@ class ExportStore(
 
     fun recordExported(path: String) = _state.update { it.copy(exportedPath = path, error = null) }
 
-    fun recordError(message: String) = _state.update { it.copy(error = message) }
+    fun recordError(message: String) = _state.update { it.copy(error = message, exportedPath = null) }
 }

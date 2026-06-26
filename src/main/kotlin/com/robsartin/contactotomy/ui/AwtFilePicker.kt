@@ -7,10 +7,12 @@ import java.awt.Frame
 class AwtFilePicker(
     private val title: String,
     private val save: Boolean = false,
+    private val defaultName: String? = null,
 ) : FilePicker {
     override fun pick(): String? {
         val mode = if (save) FileDialog.SAVE else FileDialog.LOAD
         val dialog = FileDialog(null as Frame?, title, mode)
+        if (defaultName != null) dialog.file = defaultName
         dialog.isVisible = true
         val dir = dialog.directory ?: return null
         val file = dialog.file ?: return null
