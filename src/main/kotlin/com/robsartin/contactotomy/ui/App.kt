@@ -12,6 +12,7 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 
@@ -26,48 +27,57 @@ fun App(
     MaterialTheme {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             StepIndicator(state.screen)
+
+            // Hoist the per-screen stores so the single top Next can commit the current
+            // screen before advancing, replacing the old per-screen commit buttons.
+            val mergeStore = remember(state.contacts) { MergeReviewStore(state.contacts) }
+            val deletionSource = state.mergedContacts ?: state.contacts
+            val deletionStore = remember(deletionSource) { DeletionReviewStore(deletionSource) }
+            val exportSource = workingContacts(state)
+            val exportStore = remember(exportSource) { ExportStore(exportSource) }
+
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Button(onClick = { store.back() }, enabled = state.screen != Screen.IMPORT) { Text("Back") }
-                // Next only advances from Import. Merge and Deletion must advance via their own
-                // "Apply … & continue" buttons, which commit the result — otherwise the global Next
-                // would skip the commit and the merge/deletion would silently not be applied.
-                val nextEnabled = state.screen == Screen.IMPORT && state.contacts.isNotEmpty()
-                Button(onClick = { store.next() }, enabled = nextEnabled) { Text("Next") }
+                val nextEnabled =
+                    when (state.screen) {
+                        Screen.EXPORT -> false
+                        Screen.IMPORT -> state.contacts.isNotEmpty()
+                        else -> true
+                    }
+                Button(
+                    onClick = {
+                        when (state.screen) {
+                            Screen.MERGE -> {
+                                store.setMergedContacts(mergeStore.commit())
+                                store.next()
+                            }
+                            Screen.DELETION -> {
+                                store.setFinalContacts(deletionStore.commit())
+                                store.next()
+                            }
+                            else -> store.next()
+                        }
+                    },
+                    enabled = nextEnabled,
+                ) { Text("Next") }
             }
             when (state.screen) {
                 Screen.IMPORT ->
                     ImportScreen(store, applePicker, googlePicker, otherPicker)
-                Screen.MERGE -> {
-                    val reviewStore =
-                        androidx.compose.runtime.remember(state.contacts) { MergeReviewStore(state.contacts) }
-                    MergeScreen(reviewStore) { merged ->
-                        store.setMergedContacts(merged)
-                        store.next()
-                    }
-                }
-                Screen.DELETION -> {
-                    val source = state.mergedContacts ?: state.contacts
-                    val deletionStore = androidx.compose.runtime.remember(source) { DeletionReviewStore(source) }
+                Screen.MERGE ->
+                    MergeScreen(mergeStore)
+                Screen.DELETION ->
                     DeletionScreen(
                         deletionStore,
                         loadPicker = AwtFilePicker("Load rules (.json)"),
                         savePicker = AwtFilePicker("Save rules (.json)", save = true),
-                    ) { final ->
-                        store.setFinalContacts(final)
-                        store.next()
-                    }
-                }
-                Screen.EXPORT -> {
-                    val exportStore =
-                        androidx.compose.runtime.remember(workingContacts(state)) {
-                            ExportStore(workingContacts(state))
-                        }
+                    )
+                Screen.EXPORT ->
                     ExportScreen(
                         exportStore,
                         savePicker =
                             AwtFilePicker("Save cleaned vCard (.vcf)", save = true, defaultName = "contacts-clean.vcf"),
                     )
-                }
             }
         }
     }

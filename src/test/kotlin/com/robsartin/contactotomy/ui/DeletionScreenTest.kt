@@ -6,10 +6,8 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
-import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
-import kotlin.test.assertEquals
 
 @OptIn(ExperimentalTestApi::class)
 class DeletionScreenTest {
@@ -22,17 +20,14 @@ class DeletionScreenTest {
         )
 
     @Test
-    fun `run shows the flagged contact, approve and apply commits the deletion`() =
+    fun `run shows the flagged contact and approving updates the summary`() =
         runComposeUiTest {
             val store = store()
-            var committed: List<Contact>? = null
-            setContent { DeletionScreen(store, onCommit = { committed = it }) }
+            setContent { DeletionScreen(store) }
 
             onNodeWithText("Run").performClick()
             onNodeWithText("Al", substring = true).assertExists() // flagged contact appears
             onAllNodesWithText("Approve all", substring = true).onFirst().performClick()
-            onNodeWithText("Apply deletions", substring = true).performClick()
-
-            assertEquals(listOf("b"), committed?.map { it.id })
+            onNodeWithText("1 approved", substring = true).assertExists()
         }
 }

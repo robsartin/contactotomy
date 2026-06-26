@@ -21,10 +21,7 @@ import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
 
 @Composable
-fun MergeScreen(
-    store: MergeReviewStore,
-    onCommit: (List<Contact>) -> Unit,
-) {
+fun MergeScreen(store: MergeReviewStore) {
     val state by store.state.collectAsState()
     var selectedId by remember { mutableStateOf<String?>(null) }
 
@@ -47,9 +44,6 @@ fun MergeScreen(
                     item { Text("Possible matches (${uncertain.size})", Modifier.padding(top = 8.dp)) }
                 }
                 items(uncertain) { item -> ClusterRow(item) { selectedId = item.id } }
-            }
-            Button(onClick = { onCommit(store.commit()) }, modifier = Modifier.padding(top = 8.dp)) {
-                Text("Apply merges & continue")
             }
         }
         Column(Modifier.padding(start = 12.dp)) {

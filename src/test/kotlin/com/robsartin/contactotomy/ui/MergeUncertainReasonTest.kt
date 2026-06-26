@@ -14,7 +14,7 @@ class MergeUncertainReasonTest {
             // name-only match (no shared phone/email) => UNCERTAIN pair with NAME_ONLY reason.
             val a = contact("a", given = "Jane", family = "Doe")
             val b = contact("b", given = "Jane", family = "Doe")
-            setContent { MergeScreen(MergeReviewStore(listOf(a, b)), onCommit = {}) }
+            setContent { MergeScreen(MergeReviewStore(listOf(a, b))) }
             onNodeWithText("Possible matches", substring = true).assertExists()
             // the reason text appears on the row
             onNodeWithText("NAME_ONLY", substring = true).assertExists()

@@ -38,7 +38,7 @@ class MergeDetailTest {
     fun `detail shows merged values and a conflict, and toggling updates state`() =
         runComposeUiTest {
             val s = store()
-            setContent { MergeScreen(s, onCommit = {}) }
+            setContent { MergeScreen(s) }
             // open the detail
             onNodeWithText("Sartin", substring = true).performClick()
             // a merged phone include/exclude chip is shown (the ☑-prefixed button,

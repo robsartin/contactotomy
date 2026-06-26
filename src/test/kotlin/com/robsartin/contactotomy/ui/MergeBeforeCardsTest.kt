@@ -36,7 +36,7 @@ class MergeBeforeCardsTest {
     @Test
     fun `detail shows a before-cards panel with each member's source and a phone`() =
         runComposeUiTest {
-            setContent { MergeScreen(store(), onCommit = {}) }
+            setContent { MergeScreen(store()) }
             // open the detail
             onAllNodesWithText("Sartin", substring = true).onFirst().performClick()
             // the before-cards section header

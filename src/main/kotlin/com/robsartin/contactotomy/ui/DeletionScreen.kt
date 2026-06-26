@@ -28,7 +28,6 @@ fun DeletionScreen(
     store: DeletionReviewStore,
     loadPicker: FilePicker = NoopPicker,
     savePicker: FilePicker = NoopPicker,
-    onCommit: (List<Contact>) -> Unit,
 ) {
     val state by store.state.collectAsState()
     var selectedId by remember { mutableStateOf<String?>(null) }
@@ -104,9 +103,6 @@ fun DeletionScreen(
                 "${state.flagged.size} flagged · ${state.approvedIds.size} approved → " +
                     "${state.totalContacts - state.approvedIds.size} remain",
             )
-            Button(onClick = { onCommit(store.commit()) }, modifier = Modifier.padding(start = 8.dp)) {
-                Text("Apply deletions & continue")
-            }
         }
     }
 }
