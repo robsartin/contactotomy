@@ -1,11 +1,11 @@
 package com.robsartin.contactotomy.ui
 
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
-import androidx.compose.ui.test.performScrollTo
 import androidx.compose.ui.test.runComposeUiTest
 import com.robsartin.contactotomy.core.model.Source
 import kotlinx.coroutines.runBlocking
@@ -41,8 +41,8 @@ class AppFlowTest {
 
             onNodeWithText("Next").performClick() // Import -> Merge
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
-            // The detail-pane Accept button sits below the fold in the scrollable detail column.
-            onNodeWithText("Accept merge", substring = true).performScrollTo().performClick()
+            // The detail-pane Accept button is a pinned footer, visible without scrolling.
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
             onNodeWithText("Next").performClick() // commit merge -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
@@ -80,8 +80,8 @@ class AppFlowTest {
 
             onNodeWithText("Next").performClick() // Import -> Merge
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
-            // The detail-pane Accept button sits below the fold in the scrollable detail column.
-            onNodeWithText("Accept merge", substring = true).performScrollTo().performClick()
+            // The detail-pane Accept button is a pinned footer, visible without scrolling.
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
             onNodeWithText("Next").performClick() // commit merge -> Deletion
 
             onNodeWithText("Run").performClick() // starter "austin area code" flags the 512 number
