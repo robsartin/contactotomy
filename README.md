@@ -28,3 +28,6 @@ Design phase. See:
 The full export → clean → import workflow (including the back-up-and-wipe step
 required by the mirror-into-both approach) lives in the design spec and will be
 surfaced in-app.
+
+- Export / clean / import guide (also shown in-app on the Export screen):
+  [`src/main/resources/export-instructions.md`](src/main/resources/export-instructions.md)

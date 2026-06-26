@@ -24,3 +24,7 @@ data class AppState(
     val mergedContacts: List<Contact>? = null,
     val finalContacts: List<Contact>? = null,
 )
+
+/** The most-processed contact set available: final, else merged, else imported. */
+fun workingContacts(state: AppState): List<com.robsartin.contactotomy.core.model.Contact> =
+    state.finalContacts ?: state.mergedContacts ?: state.contacts
