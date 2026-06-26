@@ -38,4 +38,21 @@ class DeletionReviewStore(
         val flagged = RuleEngine.evaluate(contacts, enabled)
         _state.update { it.copy(flagged = flagged, approvedIds = emptySet(), hasRun = true) }
     }
+
+    fun approve(id: String) =
+        _state.update { st ->
+            if (st.flagged.any { it.contact.id == id }) st.copy(approvedIds = st.approvedIds + id) else st
+        }
+
+    fun unapprove(id: String) = _state.update { it.copy(approvedIds = it.approvedIds - id) }
+
+    fun approveAllForRule(ruleName: String) =
+        _state.update { st ->
+            val ids = st.flagged.filter { f -> f.matches.any { it.ruleName == ruleName } }.map { it.contact.id }
+            st.copy(approvedIds = st.approvedIds + ids)
+        }
+
+    fun approveAll() = _state.update { st -> st.copy(approvedIds = st.flagged.map { it.contact.id }.toSet()) }
+
+    fun clearApprovals() = _state.update { it.copy(approvedIds = emptySet()) }
 }
