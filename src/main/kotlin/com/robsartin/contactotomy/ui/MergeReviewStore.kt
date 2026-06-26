@@ -12,6 +12,7 @@ import com.robsartin.contactotomy.core.matcher.NameMatcher
 import com.robsartin.contactotomy.core.matcher.NicknameDictionary
 import com.robsartin.contactotomy.core.merger.ContactMerger
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -116,7 +117,7 @@ class MergeReviewStore(
                 decisions,
             )
         // Apply per-cluster name overrides (chosen source card's name) — kept in the UI, engine untouched.
-        val nameOverrides: Map<String, com.robsartin.contactotomy.core.model.ContactName> =
+        val nameOverrides: Map<String, ContactName> =
             finalAccepted
                 .mapNotNull { item ->
                     val memberId = item.nameChoiceId ?: return@mapNotNull null

@@ -41,4 +41,23 @@ class MergeScreenListTest {
                     .decision,
             )
         }
+
+    @Test
+    fun `undo returns a resolved cluster to needs-review`() =
+        runComposeUiTest {
+            val s = dupStore()
+            setContent { MergeScreen(s) }
+            onNodeWithText("Accept merge", substring = true).performClick()
+            onNodeWithText("Resolved", substring = true).assertExists()
+
+            onNodeWithText("Undo", substring = true).performClick()
+
+            onNodeWithText("Needs review (1)", substring = true).assertExists()
+            assertEquals(
+                Decision.PENDING,
+                s.state.value.items
+                    .single()
+                    .decision,
+            )
+        }
 }
