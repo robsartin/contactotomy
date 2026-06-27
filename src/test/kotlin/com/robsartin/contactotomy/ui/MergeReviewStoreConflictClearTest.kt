@@ -12,7 +12,7 @@ import kotlin.test.assertTrue
 class MergeReviewStoreConflictClearTest {
     /**
      * Two cards that share a phone (so they cluster HIGH) but differ in both notes and title.
-     * Contacts are built directly because the factory lacks a `title` param.
+     * Contacts are built directly to set differing `title` and `notes` values.
      */
     private fun notesTitleStore(): Pair<MergeReviewStore, String> {
         val a =
