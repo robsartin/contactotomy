@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -31,9 +32,11 @@ import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.ui.components.ClusterRow
+import com.robsartin.contactotomy.ui.components.FieldGroup
 import com.robsartin.contactotomy.ui.components.LabeledProgress
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.components.SourceCard
+import com.robsartin.contactotomy.ui.components.ValueChip
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -153,13 +156,14 @@ private fun MergeDetailContent(
         // Name: pick which source card's name wins; company-like names are badged.
         val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
         if (namedMembers.isNotEmpty()) {
-            Text("Name (pick one)")
-            namedMembers.forEach { m ->
-                val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
-                val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
-                    Text(displayName(m.name) + badge)
+            FieldGroup("Name (pick one)") {
+                namedMembers.forEach { m ->
+                    val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                    val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                        Text(displayName(m.name) + badge)
+                    }
                 }
             }
         }
@@ -174,15 +178,16 @@ private fun MergeDetailContent(
 
         // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
         p.conflicts.filter { it.field != "org" }.forEach { conflict ->
-            Text("${conflict.field} (pick one)", Modifier.padding(top = 4.dp))
-            conflict.candidates.map { it.value }.distinct().forEach { value ->
-                val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = value == chosen,
-                        onClick = { store.chooseConflict(item.id, conflict.field, value) },
-                    )
-                    Text(value)
+            FieldGroup("${conflict.field} (pick one)") {
+                conflict.candidates.map { it.value }.distinct().forEach { value ->
+                    val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        RadioButton(
+                            selected = value == chosen,
+                            onClick = { store.chooseConflict(item.id, conflict.field, value) },
+                        )
+                        Text(value)
+                    }
                 }
             }
         }
@@ -232,6 +237,7 @@ private fun SourceCards(members: List<Contact>) {
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun MultiField(
     field: String,
@@ -240,13 +246,18 @@ private fun MultiField(
     store: MergeReviewStore,
 ) {
     if (values.isEmpty()) return
-    Text("$field (keep any)", Modifier.padding(top = 4.dp))
-    values.forEach { value ->
-        val ev = ExcludedValue(field, value)
-        val included = ev !in item.excludedValues
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = included, onCheckedChange = { store.toggleField(item.id, ev) })
-            Text(value)
+    FieldGroup("$field (keep any)") {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            values.forEach { value ->
+                val ev = ExcludedValue(field, value)
+                val included = ev !in item.excludedValues
+                ValueChip(
+                    label = value,
+                    selected = included,
+                    onToggle = { store.toggleField(item.id, ev) },
+                    tag = "$field:$value",
+                )
+            }
         }
     }
 }
