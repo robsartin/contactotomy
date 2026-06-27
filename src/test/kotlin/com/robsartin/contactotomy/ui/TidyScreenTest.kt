@@ -59,4 +59,12 @@ class TidyScreenTest {
             // "Jane Smith" filtered out
             onAllNodesWithText("Jane Smith", substring = true).assertCountEquals(0)
         }
+
+    @Test
+    fun `an email-name row shows the name preview when marked`() =
+        runComposeUiTest {
+            val emailOnly = contact("e", emails = listOf("lonely@example.com"))
+            setContent { TidyScreen(TidyStore(listOf(emailOnly))) }
+            onNodeWithText("→ name: lonely@example.com", substring = true).assertIsDisplayed()
+        }
 }
