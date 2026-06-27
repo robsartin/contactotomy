@@ -54,6 +54,8 @@ class MergeReviewStore(
 
     fun undo(itemId: String) = updateItem(itemId) { it.copy(decision = Decision.PENDING) }
 
+    fun deleteItem(itemId: String) = _state.update { st -> st.copy(items = st.items.filterNot { it.id == itemId }) }
+
     fun chooseName(
         itemId: String,
         memberId: String,
