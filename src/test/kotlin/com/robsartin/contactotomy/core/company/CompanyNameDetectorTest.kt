@@ -48,4 +48,13 @@ class CompanyNameDetectorTest {
         assertEquals(CompanySignal.LEGAL_SUFFIX, CompanyNameDetector.detect(named(formatted = "ACME PLUMBING INC")))
         assertEquals(CompanySignal.LEGAL_SUFFIX, CompanyNameDetector.detect(named(formatted = "Smith & Sons LLC")))
     }
+
+    @Test
+    fun `school districts are detected`() {
+        assertEquals(CompanySignal.KEYWORD, CompanyNameDetector.detect(named(formatted = "Round Rock ISD")))
+        assertEquals(
+            CompanySignal.KEYWORD,
+            CompanyNameDetector.detect(named(formatted = "Pflugerville Independent School District")),
+        )
+    }
 }
