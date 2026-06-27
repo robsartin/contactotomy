@@ -35,4 +35,8 @@ class StarterRulesTest {
         assertEquals(TextMatch(TextField.NAME, "*@*"), by["name is an email address"]?.condition)
         assertEquals(PhoneMatch("900-???-????"), by["premium rate (1-900)"]?.condition)
     }
+
+    @Test fun `starter set round-trips through json`() {
+        assertEquals(starter, RuleStore.fromJson(RuleStore.toJson(starter)))
+    }
 }
