@@ -11,4 +11,7 @@ object CompanyNormalizer {
         } else {
             contact.copy(name = ContactName())
         }
+
+    /** Names a card from its first email (caller ensures emails is non-empty); emails are untouched. */
+    fun nameFromEmail(contact: Contact): Contact = contact.copy(name = ContactName(formatted = contact.emails.first()))
 }
