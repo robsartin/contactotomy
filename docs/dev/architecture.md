@@ -77,7 +77,9 @@ comparisons are made. `PhoneNormalizer` maps phone strings to E.164 format.
 `VcfImporter` parses vCard text using the **ez-vcard** library, applies
 `PhoneNormalizer` and `EmailNormalizer` to every card, and returns a list of
 `Contact` objects tagged with the caller-supplied `Source`. Contact IDs assigned
-here are positional (`"$source-$index"`) and are namespaced by `AppStore` at
+here are positional with the source enum name lowercased
+(`"${source.name.lowercase()}-$index"`, e.g. `apple-0`, `google-0`) and are
+namespaced by `AppStore` at
 import time with a per-file prefix (`"imp0:"`, `"imp1:"`, …) so contacts from
 different import sessions never collide.
 
@@ -118,13 +120,14 @@ A serialisable condition AST for the deletion rule engine. The sealed interface
 `And`, `Or`, and `Not`. `RuleEngine` evaluates a `RuleSet` (list of named `Rule`s
 each carrying a root `Condition`) against a contact list and returns `Flagged`
 records. `RuleStore` serialises/deserialises rule sets as JSON (kotlinx.serialization).
-`StarterRules` ships a default `RuleSet`. `Glob` and `PhonePattern` are the matching
-primitives.
+A `starter()` extension on `RuleSet.Companion` provides the default `RuleSet`.
+`Glob` and `PhonePattern` are the matching primitives.
 
 ### `core/company`
 
 `CompanyNameDetector` heuristically identifies whether a `ContactName` looks like a
-company name and classifies confidence. `CompanyNormalizer` applies two tidy
+company name and classifies the signal strength, returning a `CompanySignal`.
+`CompanyNormalizer` applies two tidy
 transforms: `markAsCompany` moves a company-looking name into the `org` field;
 `nameFromEmail` derives a display name from an email address when the name field
 is blank.
