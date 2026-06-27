@@ -1,7 +1,7 @@
 package com.robsartin.contactotomy.core.rules
 
 import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.PostalAddress
+import com.robsartin.contactotomy.core.model.toDisplayString
 
 /** Evaluates a Condition against a Contact, returning a human reason when it matches. */
 internal class ConditionEvaluator {
@@ -67,5 +67,3 @@ internal class ConditionEvaluator {
             TextField.NOTES -> listOfNotNull(c.notes)
         }
 }
-
-private fun PostalAddress.toDisplayString(): String = listOfNotNull(street, city, region, postalCode, country).joinToString(", ")

@@ -9,3 +9,6 @@ data class PostalAddress(
     val postalCode: String? = null,
     val country: String? = null,
 )
+
+/** Comma-joined rendering used as the identity key for dedup, value-removal, and glob matching. */
+fun PostalAddress.toDisplayString(): String = listOfNotNull(street, city, region, postalCode, country).joinToString(", ")

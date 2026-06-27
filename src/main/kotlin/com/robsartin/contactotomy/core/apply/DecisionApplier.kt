@@ -2,7 +2,7 @@ package com.robsartin.contactotomy.core.apply
 
 import com.robsartin.contactotomy.core.merger.MergeProposal
 import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.PostalAddress
+import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 
 /** Applies accept/reject/field decisions to produce the final deduplicated contact list. */
@@ -82,5 +82,3 @@ class DecisionApplier {
             else -> c
         }
 }
-
-private fun PostalAddress.toDisplayString(): String = listOfNotNull(street, city, region, postalCode, country).joinToString(", ")

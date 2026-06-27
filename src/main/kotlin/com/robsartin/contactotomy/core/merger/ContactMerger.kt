@@ -4,6 +4,7 @@ import com.robsartin.contactotomy.core.matcher.Cluster
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.PostalAddress
+import com.robsartin.contactotomy.core.model.toDisplayString
 import java.time.Instant
 
 /** Builds a MergeProposal for a cluster, with provenance, conflicts, and most-complete name. */
@@ -123,8 +124,6 @@ class ContactMerger {
                 members.filter { addr in it.addresses }.map { it.id },
             )
         }
-
-    private fun PostalAddress.toDisplayString(): String = listOfNotNull(street, city, region, postalCode, country).joinToString(", ")
 
     private fun mergedId(cluster: Cluster): String =
         "merged-" +
