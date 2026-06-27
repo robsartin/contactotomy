@@ -77,6 +77,39 @@ class MergeReviewStore(
             st.copy(items = st.items.map { if (it.origin == Origin.HIGH) it.copy(decision = Decision.ACCEPT) else it })
         }
 
+    /** Contacts not already a member of any current review item — the manual-merge pool. */
+    fun eligibleForManualMerge(): List<Contact> {
+        val claimed =
+            _state.value.items
+                .flatMap { it.proposal.cluster.members }
+                .map { it.id }
+                .toSet()
+        return contacts.filter { it.id !in claimed }
+    }
+
+    /**
+     * Force-merges [memberIds] (>= 2 eligible contacts) into a new PENDING MANUAL item.
+     * Returns the new item id, or null if fewer than two eligible contacts were given.
+     */
+    fun manualMerge(memberIds: List<String>): String? {
+        val eligible = eligibleForManualMerge().associateBy { it.id }
+        val members = memberIds.distinct().mapNotNull { eligible[it] }
+        if (members.size < 2) return null
+        // No id collision with an auto cluster: the merged contact's id derives from member
+        // ids, and eligibility (un-clustered members only) + commit()'s double-touch guard
+        // ensure the same member set is never in two clusters at once.
+        val cluster =
+            Cluster(
+                id = "manual-" + members.map { it.id }.sorted().joinToString("+"),
+                members = members,
+                confidence = Confidence.HIGH,
+                reasons = emptyList(),
+            )
+        val item = ReviewItem(id = cluster.id, origin = Origin.MANUAL, proposal = merger.merge(cluster))
+        _state.update { st -> st.copy(items = st.items + item) }
+        return item.id
+    }
+
     private fun updateItem(
         itemId: String,
         transform: (ReviewItem) -> ReviewItem,

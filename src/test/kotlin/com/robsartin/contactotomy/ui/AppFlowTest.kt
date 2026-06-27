@@ -73,6 +73,31 @@ class AppFlowTest {
         }
 
     @Test
+    fun `manual merge combines two un-clustered cards across the whole flow`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("manual-merge.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (zero auto clusters)
+            onNodeWithText("+ Manual merge").performClick()
+            onNodeWithText("Morgan Quill", substring = true).performClick()
+            onNodeWithText("Devon Vasquez", substring = true).performClick()
+            onNodeWithText("Create merge").performClick()
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
+            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            assertEquals(
+                1,
+                store.state.value.finalContacts
+                    ?.size,
+            )
+        }
+
+    @Test
     fun `deletion path removes an approved card`() =
         runComposeUiTest {
             val store = importedStore()

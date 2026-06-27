@@ -1,0 +1,14 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Quill;Morgan;;;
+FN:Morgan Quill
+TEL;TYPE=CELL:+1 305-555-2020
+EMAIL;TYPE=INTERNET:morgan@quill.example
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Vasquez;Devon;;;
+FN:Devon Vasquez
+TEL;TYPE=CELL:+1 415-555-3030
+EMAIL;TYPE=INTERNET:devon@vasquez.example
+END:VCARD
