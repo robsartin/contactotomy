@@ -8,6 +8,7 @@ import androidx.compose.ui.test.runComposeUiTest
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.ui.Origin
 import kotlin.test.Test
 import kotlin.test.assertTrue
 
@@ -31,16 +32,27 @@ class CardsTest {
         }
 
     @Test
+    fun `source card non-primary non-selected still shows name`() =
+        runComposeUiTest {
+            setContent { SourceCard(rob, primary = false, selected = false) }
+            onNodeWithText("Rob Sartin").assertIsDisplayed()
+        }
+
+    @Test
     fun `cluster row click fires onClick`() =
         runComposeUiTest {
             var clicked = false
             setContent {
-                ClusterRow(title = "Rob Sartin · 2 cards", origin = com.robsartin.contactotomy.ui.Origin.HIGH, selected = false, onClick = {
-                    clicked =
-                        true
-                })
+                ClusterRow(title = "Rob Sartin · 2 cards", origin = Origin.HIGH, selected = false, onClick = { clicked = true })
             }
             onNodeWithText("Rob Sartin · 2 cards").performClick()
             assertTrue(clicked)
+        }
+
+    @Test
+    fun `cluster row selected uncertain renders title`() =
+        runComposeUiTest {
+            setContent { ClusterRow(title = "X", origin = Origin.UNCERTAIN, selected = true, onClick = {}) }
+            onNodeWithText("X").assertIsDisplayed()
         }
 }

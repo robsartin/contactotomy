@@ -18,9 +18,37 @@ class BadgesTest {
         }
 
     @Test
+    fun `source badge apple and file labels`() =
+        runComposeUiTest {
+            setContent { SourceBadge(Source.APPLE) }
+            onNodeWithText("Apple").assertIsDisplayed()
+        }
+
+    @Test
+    fun `source badge file label`() =
+        runComposeUiTest {
+            setContent { SourceBadge(Source.FILE) }
+            onNodeWithText("File").assertIsDisplayed()
+        }
+
+    @Test
     fun `confidence chip label by origin`() =
         runComposeUiTest {
             setContent { ConfidenceChip(Origin.UNCERTAIN) }
             onNodeWithText("maybe").assertIsDisplayed()
+        }
+
+    @Test
+    fun `confidence chip high label`() =
+        runComposeUiTest {
+            setContent { ConfidenceChip(Origin.HIGH) }
+            onNodeWithText("HIGH").assertIsDisplayed()
+        }
+
+    @Test
+    fun `confidence chip manual label`() =
+        runComposeUiTest {
+            setContent { ConfidenceChip(Origin.MANUAL) }
+            onNodeWithText("manual").assertIsDisplayed()
         }
 }

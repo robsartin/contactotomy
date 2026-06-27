@@ -63,12 +63,13 @@ fun ClusterRow(
             else -> BorderStroke(Dimens.hairline, c.cardBorder)
         }
     Card(
+        backgroundColor = if (origin == Origin.UNCERTAIN) c.maybeCardBg else androidx.compose.material.MaterialTheme.colors.surface,
         border = border,
         shape = RoundedCornerShape(Dimens.cardRadius),
         modifier = Modifier.fillMaxWidth().padding(vertical = 3.dp).clickable { onClick() },
     ) {
         Row(Modifier.fillMaxWidth().padding(8.dp), verticalAlignment = Alignment.CenterVertically) {
-            Text(title, modifier = Modifier.fillMaxWidth(0.78f))
+            Text(title, modifier = Modifier.fillMaxWidth(0.78f)) // leave ~22% for the trailing ConfidenceChip
             ConfidenceChip(origin)
         }
     }

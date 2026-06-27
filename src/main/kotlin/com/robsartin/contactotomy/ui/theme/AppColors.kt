@@ -8,8 +8,8 @@ import androidx.compose.ui.graphics.Color
 /** App-specific colors Material's [androidx.compose.material.Colors] does not model. */
 data class AppColors(
     val accent: Color = Color(0xFF4A90D9),
-    val appleBadge: Color = Color(0xFF4A90D9),
-    val googleBadge: Color = Color(0xFF777777),
+    val appleBadge: Color = Color(0xFF2A70C0),
+    val googleBadge: Color = Color(0xFF6B6B6B),
     val highChipBg: Color = Color(0xFFE7F0FF),
     val highChipFg: Color = Color(0xFF185FA5),
     val maybeChipBg: Color = Color(0xFFFFF3D6),

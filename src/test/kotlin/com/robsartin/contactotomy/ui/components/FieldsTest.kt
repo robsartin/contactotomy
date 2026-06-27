@@ -19,6 +19,13 @@ class FieldsTest {
         }
 
     @Test
+    fun `labeled progress handles zero total`() =
+        runComposeUiTest {
+            setContent { LabeledProgress(reviewed = 0, total = 0) }
+            onNodeWithText("0 of 0 reviewed").assertIsDisplayed()
+        }
+
+    @Test
     fun `value chip toggle fires its callback`() =
         runComposeUiTest {
             var toggled = false

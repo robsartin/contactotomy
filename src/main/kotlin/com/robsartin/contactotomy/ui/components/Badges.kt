@@ -21,6 +21,7 @@ fun SourceBadge(source: Source) {
         when (source) {
             Source.APPLE -> c.appleBadge to "Apple"
             Source.GOOGLE -> c.googleBadge to "Google"
+            // File shares the grey badge with Google (no dedicated color)
             Source.FILE -> c.googleBadge to "File"
         }
     Text(
