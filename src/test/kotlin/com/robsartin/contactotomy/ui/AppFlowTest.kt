@@ -8,10 +8,12 @@ import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
 import com.robsartin.contactotomy.core.exporter.VcfExporter
+import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.Source
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
@@ -125,6 +127,32 @@ class AppFlowTest {
             val vcard = VcfExporter().export(final)
             assertTrue(vcard.contains("ORG:Acme Inc"), "exported vCard should carry the promoted org:\n$vcard")
             assertTrue(vcard.contains("FN:Jane Smith"), "exported vCard should carry the person name:\n$vcard")
+        }
+
+    @Test
+    fun `company-only cluster exports ORG with no name`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("round-rock-isd.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (one HIGH cluster, auto-suggested company-only)
+            onAllNodesWithText("Round Rock ISD", substring = true).onFirst().performClick() // select the cluster
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
+            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertEquals("Round Rock ISD", final.single().org)
+            assertEquals(ContactName(), final.single().name)
+
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("ORG:Round Rock ISD"), "exported vCard should carry the org:\n$vcard")
+            assertFalse(vcard.contains("FN:Round Rock ISD"), "company-only card should have no FN name:\n$vcard")
         }
 
     @Test
