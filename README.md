@@ -24,6 +24,8 @@ Design phase.
 
 - **User guide** (end-to-end: export → clean → import → ongoing sync):
   [`docs/user-guide.md`](docs/user-guide.md)
+- **Developer docs** (architecture, module map, data-flow diagrams):
+  [`docs/dev/architecture.md`](docs/dev/architecture.md)
 - Export / clean / import guide (also shown in-app on the Export screen):
   [`src/main/resources/export-instructions.md`](src/main/resources/export-instructions.md)
 - Design spec: [`docs/superpowers/specs/2026-06-23-contactotomy-design.md`](docs/superpowers/specs/2026-06-23-contactotomy-design.md)
