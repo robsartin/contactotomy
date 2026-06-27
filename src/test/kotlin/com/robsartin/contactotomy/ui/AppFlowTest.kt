@@ -46,7 +46,8 @@ class AppFlowTest {
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
             // The detail-pane Accept button is a pinned footer, visible without scrolling.
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -64,7 +65,8 @@ class AppFlowTest {
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
             onNodeWithText("Next").performClick() // Import -> Merge
-            onNodeWithText("Next").performClick() // commit with zero accepted -> Deletion
+            onNodeWithText("Next").performClick() // commit with zero accepted -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -89,7 +91,8 @@ class AppFlowTest {
             onNodeWithText("Devon Vasquez", substring = true).performClick()
             onNodeWithText("Create merge").performClick()
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -115,7 +118,8 @@ class AppFlowTest {
             onNodeWithText("Create merge").performClick()
             // auto-suggest: name = Jane Smith, org = Acme Inc (promoted from the company card's name)
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -140,7 +144,8 @@ class AppFlowTest {
             onNodeWithText("Next").performClick() // Import -> Merge (one HIGH cluster, auto-suggested company-only)
             onAllNodesWithText("Round Rock ISD", substring = true).onFirst().performClick() // select the cluster
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -165,7 +170,8 @@ class AppFlowTest {
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
             // The detail-pane Accept button is a pinned footer, visible without scrolling.
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
 
             onNodeWithText("Run").performClick() // starter "austin area code" flags the 512 number
             onAllNodesWithText("Approve all").onFirst().performClick()

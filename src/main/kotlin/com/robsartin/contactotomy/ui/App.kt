@@ -31,7 +31,9 @@ fun App(
             // Hoist the per-screen stores so the single top Next can commit the current
             // screen before advancing, replacing the old per-screen commit buttons.
             val mergeStore = remember(state.contacts) { MergeReviewStore(state.contacts) }
-            val deletionSource = state.mergedContacts ?: state.contacts
+            val companySource = state.mergedContacts ?: state.contacts
+            val companyStore = remember(companySource) { CompanyReviewStore(companySource) }
+            val deletionSource = state.companyContacts ?: state.mergedContacts ?: state.contacts
             val deletionStore = remember(deletionSource) { DeletionReviewStore(deletionSource) }
             val exportSource = workingContacts(state)
             val exportStore = remember(exportSource) { ExportStore(exportSource) }
@@ -51,6 +53,10 @@ fun App(
                                 store.setMergedContacts(mergeStore.commit())
                                 store.next()
                             }
+                            Screen.COMPANIES -> {
+                                store.setCompanyContacts(companyStore.commit())
+                                store.next()
+                            }
                             Screen.DELETION -> {
                                 store.setFinalContacts(deletionStore.commit())
                                 store.next()
@@ -66,6 +72,8 @@ fun App(
                     ImportScreen(store, applePicker, googlePicker, otherPicker)
                 Screen.MERGE ->
                     MergeScreen(mergeStore)
+                Screen.COMPANIES ->
+                    CompanyScreen(companyStore)
                 Screen.DELETION ->
                     DeletionScreen(
                         deletionStore,
@@ -89,6 +97,7 @@ private fun StepIndicator(current: Screen) {
         listOf(
             Screen.IMPORT to "Import",
             Screen.MERGE to "Merge",
+            Screen.COMPANIES to "Companies",
             Screen.DELETION to "Deletion",
             Screen.EXPORT to "Export",
         )
