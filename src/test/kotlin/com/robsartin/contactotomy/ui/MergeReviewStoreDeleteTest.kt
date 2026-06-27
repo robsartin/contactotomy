@@ -3,7 +3,6 @@ package com.robsartin.contactotomy.ui
 import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
-import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
 class MergeReviewStoreDeleteTest {
@@ -48,11 +47,11 @@ class MergeReviewStoreDeleteTest {
         store.accept(manualId)
         store.deleteItem(manualId)
         val result = store.commit()
-        // a & b still present (2 cards, HIGH cluster still pending => not merged)
-        // c & d still present as individuals (not merged) => 4 total
+        // No merge happened: all four contacts pass through as individuals.
+        // (HIGH cluster a/b still pending; deleted manual item c/d never merged.)
+        assertEquals(4, result.size)
         val ids = result.map { it.id }.toSet()
         assertTrue("c" in ids)
         assertTrue("d" in ids)
-        assertFalse(ids.any { it.contains("manual") })
     }
 }
