@@ -3,6 +3,7 @@ package com.robsartin.contactotomy.core.merger
 import com.robsartin.contactotomy.core.matcher.Cluster
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.PostalAddress
 import java.time.Instant
 
 /** Builds a MergeProposal for a cluster, with provenance, conflicts, and most-complete name. */
@@ -18,7 +19,7 @@ class ContactMerger {
         val phones = union(ordered.map { it.phones })
         val rawPhones = union(ordered.map { it.rawPhones })
         val emails = union(ordered.map { it.emails })
-        val addresses = union(ordered.map { it.addresses })
+        val addresses = unionOf(ordered.map { it.addresses })
         val urls = union(ordered.map { it.urls })
         val categories = union(ordered.map { it.categories })
 
@@ -49,7 +50,7 @@ class ContactMerger {
             buildList {
                 addAll(multiProvenance("phones", phones, ordered) { it.phones })
                 addAll(multiProvenance("emails", emails, ordered) { it.emails })
-                addAll(multiProvenance("addresses", addresses, ordered) { it.addresses })
+                addAll(addressProvenance(addresses, ordered))
                 addAll(multiProvenance("urls", urls, ordered) { it.urls })
                 addAll(multiProvenance("categories", categories, ordered) { it.categories })
                 org?.let { add(singleProvenance("org", it, ordered) { c -> c.org }) }
@@ -104,6 +105,26 @@ class ContactMerger {
         lists.forEach { out.addAll(it) }
         return out.toList()
     }
+
+    private fun unionOf(lists: List<List<PostalAddress>>): List<PostalAddress> {
+        val out = LinkedHashSet<PostalAddress>()
+        lists.forEach { out.addAll(it) }
+        return out.toList()
+    }
+
+    private fun addressProvenance(
+        addresses: List<PostalAddress>,
+        members: List<Contact>,
+    ): List<FieldProvenance> =
+        addresses.map { addr ->
+            FieldProvenance(
+                "addresses",
+                addr.toDisplayString(),
+                members.filter { addr in it.addresses }.map { it.id },
+            )
+        }
+
+    private fun PostalAddress.toDisplayString(): String = listOfNotNull(street, city, region, postalCode, country).joinToString(", ")
 
     private fun mergedId(cluster: Cluster): String =
         "merged-" +
