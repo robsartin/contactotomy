@@ -4,6 +4,8 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -26,7 +28,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
@@ -36,6 +37,7 @@ import com.robsartin.contactotomy.ui.components.FieldGroup
 import com.robsartin.contactotomy.ui.components.LabeledProgress
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.components.SourceCard
+import com.robsartin.contactotomy.ui.components.ValuePill
 import com.robsartin.contactotomy.ui.theme.appColors
 
 @Composable
@@ -258,6 +260,7 @@ private fun SourceCards(members: List<Contact>) {
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MultiField(
     field: String,
@@ -267,15 +270,18 @@ private fun MultiField(
 ) {
     if (values.isEmpty()) return
     FieldGroup("$field (keep any)") {
-        values.forEach { value ->
-            val ev = ExcludedValue(field, value)
-            val included = ev !in item.excludedValues
-            Row(
-                Modifier.testTag("$field:$value").clickable { store.toggleField(item.id, ev) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                Checkbox(checked = included, onCheckedChange = null)
-                Text(value)
+        FlowRow(
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+            verticalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            values.forEach { value ->
+                val ev = ExcludedValue(field, value)
+                ValuePill(
+                    label = value,
+                    removed = ev in item.excludedValues,
+                    onToggle = { store.toggleField(item.id, ev) },
+                    tag = "$field:$value",
+                )
             }
         }
     }
