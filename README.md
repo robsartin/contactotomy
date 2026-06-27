@@ -20,6 +20,24 @@ Your contacts never leave your machine.
 
 Design phase.
 
+## Running and building
+
+**Run from source (development):**
+
+```bash
+./gradlew run
+```
+
+**Build a distributable macOS DMG:**
+
+```bash
+./gradlew packageDmg
+```
+
+The DMG is written to `build/compose/binaries/main/dmg/`. Open it and drag Contactotomy to Applications as usual.
+
+> **Note:** The DMG built above is for local use only. Distributing it to other machines requires Apple Developer code signing and notarization, which are not configured here.
+
 ## Documentation
 
 - **User guide** (end-to-end: export → clean → import → ongoing sync):
