@@ -45,6 +45,17 @@ class ExportScreenTest {
             onNodeWithText("Imported 120", substring = true).assertExists()
             onNodeWithText("−18", substring = true).assertExists()
             onNodeWithText("−7", substring = true).assertExists()
-            onNodeWithText("95", substring = true).assertExists()
+            onNodeWithText("exporting 95", substring = true).assertExists()
+        }
+
+    @Test
+    fun `shows zero deltas when nothing was merged or removed`() =
+        runComposeUiTest {
+            val store = ExportStore(listOf(contact("a")))
+            val summary = ExportSummary(imported = 5, merged = 0, removed = 0, exporting = 5)
+            setContent { ExportScreen(store, summary = summary, instructions = "guide") }
+            onNodeWithText("merged 0", substring = true).assertExists()
+            onNodeWithText("removed 0", substring = true).assertExists()
+            onNodeWithText("−0", substring = false).assertDoesNotExist()
         }
 }

@@ -18,9 +18,9 @@ data class ExportSummary(
  */
 fun exportSummary(state: AppState): ExportSummary {
     val imported = state.contacts.size
-    val merged = if (state.mergedContacts != null) imported - state.mergedContacts.size else 0
+    val merged = if (state.mergedContacts != null) maxOf(0, imported - state.mergedContacts.size) else 0
     val preDeletionSize = (state.tidyContacts ?: state.mergedContacts ?: state.contacts).size
-    val removed = if (state.finalContacts != null) preDeletionSize - state.finalContacts.size else 0
+    val removed = if (state.finalContacts != null) maxOf(0, preDeletionSize - state.finalContacts.size) else 0
     val exporting = state.finalContacts?.size ?: preDeletionSize
     return ExportSummary(imported = imported, merged = merged, removed = removed, exporting = exporting)
 }
