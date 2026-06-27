@@ -28,4 +28,30 @@ class ContactPhotoTest {
         assertNull(photo.url)
         assertNull(photo.contentType)
     }
+
+    @Test
+    fun `Contact photo field defaults to null`() {
+        val contact =
+            Contact(
+                id = "1",
+                source = Source.APPLE,
+                name = ContactName(given = "Alice"),
+                rawVCard = "",
+            )
+        assertNull(contact.photo)
+    }
+
+    @Test
+    fun `Contact stores a non-null ContactPhoto`() {
+        val photo = ContactPhoto(base64 = "data", contentType = "image/jpeg")
+        val contact =
+            Contact(
+                id = "1",
+                source = Source.APPLE,
+                name = ContactName(given = "Alice"),
+                rawVCard = "",
+                photo = photo,
+            )
+        assertEquals(photo, contact.photo)
+    }
 }
