@@ -128,8 +128,8 @@ Accepted and rejected clusters move to the "Resolved" list. Click **Undo** next 
 
 #### Shortcuts
 
-- **Accept all high-confidence** — appears when there are clusters the matcher identified with high confidence. Accepts all of them in one click.
-- **+ Manual merge** — opens a picker where you can search by name, phone, or email and select two or more cards to merge manually. Useful for duplicates the automatic matcher did not catch. Select at least two cards, then click **Create merge**.
+- **+ Manual merge** — always available; opens a picker where you can search by name, phone, or email and select two or more cards to merge manually. Useful for duplicates the automatic matcher did not catch. Select at least two cards, then click **Create merge**.
+- **Accept all high-confidence** — appears only when there are clusters the matcher identified with high confidence. Accepts all of them in one click.
 
 When all clusters are reviewed the right panel shows "All clusters reviewed". Click **Next** to commit your decisions and proceed.
 
@@ -249,7 +249,6 @@ Both accounts now hold the identical cleaned set.
 - **Names, phones, emails, org, title, notes** — preserved.
 - **Google labels** — carried in the vCard `CATEGORIES` field; they survive the round-trip through Google.
 - **Apple group membership** — **not preserved**. Apple's vCard export does not include group data.
-- **Contact photos** — preserved if the original vCard contained them.
 - **Creation dates** — reset on re-import. Each contact's creation date will reflect the import date, not the original.
 
 ---
