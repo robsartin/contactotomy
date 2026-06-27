@@ -41,10 +41,11 @@ fun MergeScreen(store: MergeReviewStore) {
     val selected = state.items.firstOrNull { it.id == selectedId } ?: pending.firstOrNull()
 
     var showPicker by remember { mutableStateOf(false) }
+    val eligible = remember(state) { store.eligibleForManualMerge() }
 
     if (showPicker) {
         ManualMergePicker(
-            eligible = store.eligibleForManualMerge(),
+            eligible = eligible,
             onCancel = { showPicker = false },
             onCreate = { ids ->
                 store.manualMerge(ids)?.let { selectedId = it }
@@ -258,7 +259,7 @@ private fun ManualMergePicker(
                 }
             }
         }
-        Row(Modifier.padding(top = 8.dp)) {
+        Row(Modifier.padding(top = 8.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Button(onClick = { onCreate(selected.toList()) }, enabled = selected.size >= 2) { Text("Create merge") }
             Button(onClick = onCancel) { Text("Cancel") }
         }
