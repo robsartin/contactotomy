@@ -35,4 +35,27 @@ class ExportScreenTest {
         assertTrue(store.state.value.exportedPath == out.absolutePath)
         onNodeWithText("Exported", substring = true).assertExists()
     }
+
+    @Test
+    fun `shows export summary line`() =
+        runComposeUiTest {
+            val store = ExportStore(listOf(contact("a"), contact("b"), contact("c")))
+            val summary = ExportSummary(imported = 120, merged = 18, removed = 7, exporting = 95)
+            setContent { ExportScreen(store, summary = summary, instructions = "guide") }
+            onNodeWithText("Imported 120", substring = true).assertExists()
+            onNodeWithText("−18", substring = true).assertExists()
+            onNodeWithText("−7", substring = true).assertExists()
+            onNodeWithText("exporting 95", substring = true).assertExists()
+        }
+
+    @Test
+    fun `shows zero deltas when nothing was merged or removed`() =
+        runComposeUiTest {
+            val store = ExportStore(listOf(contact("a")))
+            val summary = ExportSummary(imported = 5, merged = 0, removed = 0, exporting = 5)
+            setContent { ExportScreen(store, summary = summary, instructions = "guide") }
+            onNodeWithText("merged 0", substring = true).assertExists()
+            onNodeWithText("removed 0", substring = true).assertExists()
+            onNodeWithText("−0", substring = false).assertDoesNotExist()
+        }
 }
