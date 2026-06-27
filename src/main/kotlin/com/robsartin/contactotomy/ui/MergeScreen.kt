@@ -212,7 +212,7 @@ private fun CompanyOrgField(
     promotions.forEach { candidates.putIfAbsent(it, "$it (from name)") }
     candidates[""] = "(none)"
 
-    val chosen = item.orgChoice ?: orgs.firstOrNull() ?: ""
+    val chosen = item.orgChoice ?: item.proposal.merged.org ?: ""
     Text("Company / org (pick one)", Modifier.padding(top = 4.dp))
     candidates.forEach { (value, label) ->
         Row(
