@@ -7,15 +7,12 @@ import kotlin.test.assertTrue
 class StarterRulesTest {
     private val starter = RuleSet.starter()
 
-    @Test fun `starter set has the ten curated rules`() {
-        assertEquals(10, starter.rules.size)
+    @Test fun `starter set has the seven curated rules`() {
+        assertEquals(7, starter.rules.size)
         val names = starter.rules.map { it.name }.toSet()
         assertTrue(
             names.containsAll(
                 setOf(
-                    "old job (indeed)",
-                    "my own addresses",
-                    "austin area code",
                     "no name and no phone",
                     "empty cards",
                     "name is an email address",

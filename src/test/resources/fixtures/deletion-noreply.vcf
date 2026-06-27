@@ -1,0 +1,13 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Smith;Alice;;;
+FN:Alice Smith
+TEL;TYPE=CELL:+1 555-555-1234
+EMAIL;TYPE=INTERNET:alice@example.com
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Sender;NoReply;;;
+FN:NoReply Sender
+EMAIL;TYPE=INTERNET:no-reply@newsletter.com
+END:VCARD
