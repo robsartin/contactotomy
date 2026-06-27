@@ -4,16 +4,11 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material.ChipDefaults
-import androidx.compose.material.ExperimentalMaterialApi
-import androidx.compose.material.FilterChip
 import androidx.compose.material.LinearProgressIndicator
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -45,31 +40,5 @@ fun LabeledProgress(
     Column {
         LinearProgressIndicator(progress = fraction, modifier = Modifier.fillMaxWidth().height(6.dp))
         Text("$reviewed of $total reviewed", fontSize = 10.sp, color = appColors.muted, modifier = Modifier.padding(top = 2.dp))
-    }
-}
-
-@OptIn(ExperimentalMaterialApi::class)
-@Composable
-fun ValueChip(
-    label: String,
-    selected: Boolean,
-    onToggle: () -> Unit,
-    tag: String,
-    fontSize: TextUnit = 11.sp,
-) {
-    FilterChip(
-        selected = selected,
-        onClick = onToggle,
-        modifier = Modifier.testTag(tag),
-        colors =
-            ChipDefaults.filterChipColors(
-                selectedBackgroundColor =
-                    androidx.compose.ui.graphics
-                        .Color(0xFFEAF3E9),
-                selectedContentColor = appColors.accept,
-            ),
-        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, appColors.cardBorder),
-    ) {
-        Text(label, fontSize = fontSize)
     }
 }
