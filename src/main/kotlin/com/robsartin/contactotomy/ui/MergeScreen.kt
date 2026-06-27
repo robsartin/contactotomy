@@ -32,6 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.ui.components.ClusterRow
 import com.robsartin.contactotomy.ui.components.FieldGroup
 import com.robsartin.contactotomy.ui.components.LabeledProgress
@@ -202,6 +203,8 @@ private fun MergeDetailContent(
                 // Multi-value fields: include/exclude each value with a checkbox.
                 MultiField("phones", p.merged.phones, item, store)
                 MultiField("emails", p.merged.emails, item, store)
+                MultiField("urls", p.merged.urls, item, store)
+                MultiField("addresses", p.merged.addresses.map { it.toDisplayString() }, item, store)
                 MultiField("categories", p.merged.categories, item, store)
 
                 // Company / org has its own control (supports promoting a mis-filed company name).
