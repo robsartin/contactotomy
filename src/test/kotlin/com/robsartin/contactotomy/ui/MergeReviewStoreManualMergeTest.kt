@@ -24,7 +24,9 @@ class MergeReviewStoreManualMergeTest {
     fun `manualMerge appends a PENDING MANUAL item over the chosen members`() {
         val store = store()
         val id = store.manualMerge(listOf("c", "d"))
-        val item = store.state.value.items.first { it.id == id }
+        val item =
+            store.state.value.items
+                .first { it.id == id }
         assertEquals(Origin.MANUAL, item.origin)
         assertEquals(Decision.PENDING, item.decision)
         assertEquals(
@@ -50,5 +52,18 @@ class MergeReviewStoreManualMergeTest {
         // ids not in the eligible pool are ignored (a & b are already clustered)
         assertEquals(null, store.manualMerge(listOf("c", "a")))
         assertEquals(before, store.state.value.items.size)
+    }
+
+    @Test
+    fun `accepting then committing a manual item collapses its cards`() {
+        val store = store()
+        val id = store.manualMerge(listOf("c", "d"))!!
+        store.accept(id)
+        val result = store.commit()
+        // a & b untouched (2), c & d collapse into 1 merged contact => 3 total.
+        assertEquals(3, result.size)
+        val ids = result.map { it.id }.toSet()
+        assertEquals(false, ids.contains("c"))
+        assertEquals(false, ids.contains("d"))
     }
 }
