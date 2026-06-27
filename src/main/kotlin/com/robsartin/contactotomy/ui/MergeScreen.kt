@@ -175,8 +175,11 @@ private fun MergeDetailContent(
         MultiField("emails", p.merged.emails, item, store)
         MultiField("categories", p.merged.categories, item, store)
 
-        // Single-value conflicts (org/title/notes): pick one with a radio.
-        p.conflicts.forEach { conflict ->
+        // Company / org has its own control (supports promoting a mis-filed company name).
+        CompanyOrgField(store, item)
+
+        // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
+        p.conflicts.filter { it.field != "org" }.forEach { conflict ->
             Text("${conflict.field} (pick one)", Modifier.padding(top = 4.dp))
             conflict.candidates.map { it.value }.distinct().forEach { value ->
                 val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
@@ -188,6 +191,36 @@ private fun MergeDetailContent(
                     Text(value)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CompanyOrgField(
+    store: MergeReviewStore,
+    item: ReviewItem,
+) {
+    val members = item.proposal.cluster.members
+    val orgs = members.mapNotNull { it.org?.takeIf { o -> o.isNotBlank() } }
+    val promotions =
+        members.mapNotNull { m ->
+            if (CompanyNameDetector.detect(m.name) != null) displayName(m.name).takeIf { it.isNotBlank() } else null
+        }
+    // value -> label, insertion-ordered, de-duplicated; promotions tagged "(from name)"; "" = none.
+    val candidates = LinkedHashMap<String, String>()
+    orgs.forEach { candidates.putIfAbsent(it, it) }
+    promotions.forEach { candidates.putIfAbsent(it, "$it (from name)") }
+    candidates[""] = "(none)"
+
+    val chosen = item.orgChoice ?: orgs.firstOrNull() ?: ""
+    Text("Company / org (pick one)", Modifier.padding(top = 4.dp))
+    candidates.forEach { (value, label) ->
+        Row(
+            Modifier.clickable { store.chooseOrg(item.id, value) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = value == chosen, onClick = { store.chooseOrg(item.id, value) })
+            Text(label)
         }
     }
 }
