@@ -38,6 +38,7 @@ import com.robsartin.contactotomy.ui.components.LabeledProgress
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.components.SourceCard
 import com.robsartin.contactotomy.ui.components.ValueChip
+import com.robsartin.contactotomy.ui.theme.appColors
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -117,14 +118,27 @@ fun MergeScreen(store: MergeReviewStore) {
                 }
                 // Pinned footer: decision buttons stay on-screen regardless of detail length.
                 Row(Modifier.padding(top = 10.dp)) {
-                    Button(onClick = {
-                        store.accept(selected.id)
-                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
-                    }) { Text("✓ Accept merge") }
-                    Button(onClick = {
-                        store.reject(selected.id)
-                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
-                    }) { Text("✕ Keep separate") }
+                    Button(
+                        onClick = {
+                            store.accept(selected.id)
+                            selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                        },
+                        colors =
+                            androidx.compose.material.ButtonDefaults.buttonColors(
+                                backgroundColor = appColors.accept,
+                                contentColor = androidx.compose.ui.graphics.Color.White,
+                            ),
+                    ) { Text("✓ Accept merge") }
+                    androidx.compose.material.OutlinedButton(
+                        onClick = {
+                            store.reject(selected.id)
+                            selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                        },
+                        border = androidx.compose.foundation.BorderStroke(1.dp, appColors.reject),
+                        colors =
+                            androidx.compose.material.ButtonDefaults
+                                .outlinedButtonColors(contentColor = appColors.reject),
+                    ) { Text("✕ Keep separate") }
                 }
             }
         }
@@ -152,42 +166,52 @@ private fun MergeDetailContent(
     Column {
         SourceCards(p.cluster.members)
 
-        Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
+        androidx.compose.material.Card(
+            border = androidx.compose.foundation.BorderStroke(com.robsartin.contactotomy.ui.theme.Dimens.selected, appColors.mergedBorder),
+            shape =
+                androidx.compose.foundation.shape
+                    .RoundedCornerShape(com.robsartin.contactotomy.ui.theme.Dimens.cardRadius),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            Column(Modifier.padding(com.robsartin.contactotomy.ui.theme.Dimens.md)) {
+                Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
 
-        // Name: pick which source card's name wins; company-like names are badged.
-        val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
-        if (namedMembers.isNotEmpty()) {
-            FieldGroup("Name (pick one)") {
-                namedMembers.forEach { m ->
-                    val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
-                    val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
-                        Text(displayName(m.name) + badge)
+                // Name: pick which source card's name wins; company-like names are badged.
+                val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
+                if (namedMembers.isNotEmpty()) {
+                    FieldGroup("Name (pick one)") {
+                        namedMembers.forEach { m ->
+                            val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                            val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                                Text(displayName(m.name) + badge)
+                            }
+                        }
                     }
                 }
-            }
-        }
 
-        // Multi-value fields: include/exclude each value with a checkbox.
-        MultiField("phones", p.merged.phones, item, store)
-        MultiField("emails", p.merged.emails, item, store)
-        MultiField("categories", p.merged.categories, item, store)
+                // Multi-value fields: include/exclude each value with a checkbox.
+                MultiField("phones", p.merged.phones, item, store)
+                MultiField("emails", p.merged.emails, item, store)
+                MultiField("categories", p.merged.categories, item, store)
 
-        // Company / org has its own control (supports promoting a mis-filed company name).
-        CompanyOrgField(store, item)
+                // Company / org has its own control (supports promoting a mis-filed company name).
+                CompanyOrgField(store, item)
 
-        // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
-        p.conflicts.filter { it.field != "org" }.forEach { conflict ->
-            FieldGroup("${conflict.field} (pick one)") {
-                conflict.candidates.map { it.value }.distinct().forEach { value ->
-                    val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        RadioButton(
-                            selected = value == chosen,
-                            onClick = { store.chooseConflict(item.id, conflict.field, value) },
-                        )
-                        Text(value)
+                // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
+                p.conflicts.filter { it.field != "org" }.forEach { conflict ->
+                    FieldGroup("${conflict.field} (pick one)") {
+                        conflict.candidates.map { it.value }.distinct().forEach { value ->
+                            val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = value == chosen,
+                                    onClick = { store.chooseConflict(item.id, conflict.field, value) },
+                                )
+                                Text(value)
+                            }
+                        }
                     }
                 }
             }

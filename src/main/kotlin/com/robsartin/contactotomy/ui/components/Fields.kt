@@ -61,7 +61,14 @@ fun ValueChip(
         selected = selected,
         onClick = onToggle,
         modifier = Modifier.testTag(tag),
-        colors = ChipDefaults.filterChipColors(),
+        colors =
+            ChipDefaults.filterChipColors(
+                selectedBackgroundColor =
+                    androidx.compose.ui.graphics
+                        .Color(0xFFEAF3E9),
+                selectedContentColor = appColors.accept,
+            ),
+        border = if (selected) null else androidx.compose.foundation.BorderStroke(1.dp, appColors.cardBorder),
     ) {
         Text(label, fontSize = fontSize)
     }
