@@ -139,6 +139,12 @@ fun MergeScreen(store: MergeReviewStore) {
                             androidx.compose.material.ButtonDefaults
                                 .outlinedButtonColors(contentColor = appColors.reject),
                     ) { Text("✕ Keep separate") }
+                    androidx.compose.material.OutlinedButton(
+                        onClick = {
+                            store.deleteItem(selected.id)
+                            selectedId = null
+                        },
+                    ) { Text("🗑 Delete") }
                 }
             }
         }
