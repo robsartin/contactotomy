@@ -48,7 +48,7 @@ class AppStore(
 
     fun setMergedContacts(merged: List<Contact>) = _state.update { it.copy(mergedContacts = merged) }
 
-    fun setCompanyContacts(companies: List<Contact>) = _state.update { it.copy(companyContacts = companies) }
+    fun setTidyContacts(tidy: List<Contact>) = _state.update { it.copy(tidyContacts = tidy) }
 
     fun setFinalContacts(final: List<Contact>) = _state.update { it.copy(finalContacts = final) }
 

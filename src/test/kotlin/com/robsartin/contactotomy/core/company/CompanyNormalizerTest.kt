@@ -21,4 +21,12 @@ class CompanyNormalizerTest {
         assertEquals("Acme Incorporated", out.org)
         assertEquals(ContactName(), out.name)
     }
+
+    @Test
+    fun `nameFromEmail sets the formatted name to the first email and keeps emails`() {
+        val c = contact("a", emails = listOf("lonely@example.com", "other@example.com"))
+        val out = CompanyNormalizer.nameFromEmail(c)
+        assertEquals(ContactName(formatted = "lonely@example.com"), out.name)
+        assertEquals(listOf("lonely@example.com", "other@example.com"), out.emails)
+    }
 }

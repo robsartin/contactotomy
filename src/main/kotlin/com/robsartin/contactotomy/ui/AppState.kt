@@ -3,7 +3,7 @@ package com.robsartin.contactotomy.ui
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.Source
 
-enum class Screen { IMPORT, MERGE, COMPANIES, DELETION, EXPORT }
+enum class Screen { IMPORT, MERGE, TIDY, DELETION, EXPORT }
 
 data class ImportedFile(
     val path: String,
@@ -22,10 +22,10 @@ data class AppState(
     val importing: Boolean = false,
     val error: String? = null,
     val mergedContacts: List<Contact>? = null,
-    val companyContacts: List<Contact>? = null,
+    val tidyContacts: List<Contact>? = null,
     val finalContacts: List<Contact>? = null,
 )
 
-/** The most-processed contact set available: final, else company-reviewed, else merged, else imported. */
+/** The most-processed contact set available: final, else tidy-reviewed, else merged, else imported. */
 fun workingContacts(state: AppState): List<com.robsartin.contactotomy.core.model.Contact> =
-    state.finalContacts ?: state.companyContacts ?: state.mergedContacts ?: state.contacts
+    state.finalContacts ?: state.tidyContacts ?: state.mergedContacts ?: state.contacts

@@ -33,7 +33,7 @@ import com.robsartin.contactotomy.ui.theme.Dimens
 import com.robsartin.contactotomy.ui.theme.appColors
 
 @Composable
-fun CompanyScreen(store: CompanyReviewStore) {
+fun TidyScreen(store: TidyStore) {
     val state by store.state.collectAsState()
     var query by remember { mutableStateOf("") }
     var selectedId by remember { mutableStateOf<String?>(null) }
@@ -43,9 +43,9 @@ fun CompanyScreen(store: CompanyReviewStore) {
     Row(Modifier.fillMaxSize().padding(top = 8.dp)) {
         // --- Left: list ---
         Column(Modifier.weight(1f)) {
-            SectionHeader("Mark companies")
+            SectionHeader("Tidy cards")
             OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text("Filter") })
-            Text("${state.markedIds.size} of ${all.size} marked as companies", Modifier.padding(vertical = 6.dp))
+            Text("${state.markedIds.size} of ${all.size} marked", Modifier.padding(vertical = 6.dp))
             LazyColumn(Modifier.weight(1f)) {
                 items(rows) { c ->
                     val marked = c.id in state.markedIds
@@ -59,14 +59,14 @@ fun CompanyScreen(store: CompanyReviewStore) {
                             modifier = Modifier.testTag("mark:${c.id}"),
                         )
                         SourceBadge(c.source)
-                        Text("  ${displayName(c.name)}")
+                        Text("  ${displayName(c.name).ifBlank { "(no name)" }}")
                         if (marked) {
-                            Text(
-                                "  → org: ${companyNameText(c.name)}",
-                                color = appColors.muted,
-                                fontSize = 11.sp,
-                                modifier = Modifier.padding(start = 6.dp),
-                            )
+                            val hint =
+                                when (store.actionFor(c)) {
+                                    TidyAction.EMAIL_NAME -> "→ name: ${c.emails.first()}"
+                                    TidyAction.COMPANY -> "→ org: ${companyNameText(c.name)}"
+                                }
+                            Text("  $hint", color = appColors.muted, fontSize = 11.sp, modifier = Modifier.padding(start = 6.dp))
                         }
                     }
                 }
@@ -81,7 +81,7 @@ fun CompanyScreen(store: CompanyReviewStore) {
                 Text("Select a card")
             } else {
                 Card(shape = RoundedCornerShape(Dimens.cardRadius)) {
-                    Box(Modifier.padding(10.dp)) { CompanyCardDetail(selected) }
+                    Box(Modifier.padding(10.dp)) { TidyCardDetail(selected) }
                 }
             }
         }
@@ -89,7 +89,7 @@ fun CompanyScreen(store: CompanyReviewStore) {
 }
 
 @Composable
-private fun CompanyCardDetail(c: Contact) {
+private fun TidyCardDetail(c: Contact) {
     Column {
         Text(displayName(c.name))
         if (c.emails.isNotEmpty()) Text(c.emails.joinToString())

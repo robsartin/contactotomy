@@ -15,7 +15,7 @@ import kotlin.test.Test
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalTestApi::class)
-class CompanyScreenTest {
+class TidyScreenTest {
     private val acme = contact("acme").copy(name = ContactName(formatted = "Acme Inc"))
     private val jane =
         contact(
@@ -29,15 +29,15 @@ class CompanyScreenTest {
     @Test
     fun `a suspect row shows the to-org hint (pre-marked)`() =
         runComposeUiTest {
-            setContent { CompanyScreen(CompanyReviewStore(listOf(acme, jane))) }
+            setContent { TidyScreen(TidyStore(listOf(acme, jane))) }
             onNodeWithText("→ org: Acme Inc", substring = true).assertIsDisplayed()
         }
 
     @Test
     fun `toggling a row updates the store`() =
         runComposeUiTest {
-            val store = CompanyReviewStore(listOf(jane))
-            setContent { CompanyScreen(store) }
+            val store = TidyStore(listOf(jane))
+            setContent { TidyScreen(store) }
             onNodeWithTag("mark:jane").performClick()
             assertTrue("jane" in store.state.value.markedIds)
         }
@@ -45,7 +45,7 @@ class CompanyScreenTest {
     @Test
     fun `clicking a row body selects the card and shows its detail`() =
         runComposeUiTest {
-            setContent { CompanyScreen(CompanyReviewStore(listOf(acme, jane))) }
+            setContent { TidyScreen(TidyStore(listOf(acme, jane))) }
             onNodeWithText("Jane Smith", substring = true).performClick()
             onNodeWithText("jane.smith.unique@example.com", substring = true).assertIsDisplayed()
         }
@@ -53,10 +53,18 @@ class CompanyScreenTest {
     @Test
     fun `filter narrows the list`() =
         runComposeUiTest {
-            setContent { CompanyScreen(CompanyReviewStore(listOf(acme, jane))) }
+            setContent { TidyScreen(TidyStore(listOf(acme, jane))) }
             onNodeWithText("Filter").performTextInput("Acme")
             onNodeWithText("Acme Inc", substring = true).assertIsDisplayed()
             // "Jane Smith" filtered out
             onAllNodesWithText("Jane Smith", substring = true).assertCountEquals(0)
+        }
+
+    @Test
+    fun `an email-name row shows the name preview when marked`() =
+        runComposeUiTest {
+            val emailOnly = contact("e", emails = listOf("lonely@example.com"))
+            setContent { TidyScreen(TidyStore(listOf(emailOnly))) }
+            onNodeWithText("→ name: lonely@example.com", substring = true).assertIsDisplayed()
         }
 }

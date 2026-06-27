@@ -43,7 +43,7 @@ class AppNavigationTest {
         }
 
     @Test
-    fun `Next on Merge commits the merge and advances to Companies`() =
+    fun `Next on Merge commits the merge and advances to Tidy`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
             store.goTo(Screen.MERGE)
@@ -53,23 +53,23 @@ class AppNavigationTest {
             onNodeWithText("Accept merge", substring = true).performClick() // the detail-pane Accept button
             onNodeWithText("Next").performClick()
 
-            // the two duplicates collapse to one merged contact, and we advance to Companies
+            // the two duplicates collapse to one merged contact, and we advance to Tidy
             assertEquals(
                 1,
                 store.state.value.mergedContacts
                     ?.size,
             )
-            assertEquals(Screen.COMPANIES, store.state.value.screen)
+            assertEquals(Screen.TIDY, store.state.value.screen)
         }
 
     @Test
-    fun `Next on Companies commits and advances to Deletion`() =
+    fun `Next on Tidy commits and advances to Deletion`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
-            store.goTo(Screen.COMPANIES)
+            store.goTo(Screen.TIDY)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
             onNodeWithText("Next").performClick()
-            assertNotNull(store.state.value.companyContacts)
+            assertNotNull(store.state.value.tidyContacts)
             assertEquals(Screen.DELETION, store.state.value.screen)
         }
 
