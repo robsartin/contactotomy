@@ -27,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
+import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
 
 @Composable
@@ -155,18 +156,16 @@ private fun MergeDetailContent(
 
         Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
 
-        // Name: pick which source card's name wins (most-complete pre-selected = merged.name).
-        val names =
-            p.cluster.members
-                .associate { it.id to displayName(it.name) }
-                .filterValues { it.isNotBlank() }
-        if (names.isNotEmpty()) {
+        // Name: pick which source card's name wins; company-like names are badged.
+        val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
+        if (namedMembers.isNotEmpty()) {
             Text("Name (pick one)")
-            names.forEach { (memberId, name) ->
+            namedMembers.forEach { m ->
                 val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = memberId == chosen, onClick = { store.chooseName(item.id, memberId) })
-                    Text(name)
+                    RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                    Text(displayName(m.name) + badge)
                 }
             }
         }
