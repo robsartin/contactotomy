@@ -20,7 +20,7 @@ data class Contact(
     val phones: List<String> = emptyList(), // E.164-normalized
     val rawPhones: List<String> = emptyList(), // original strings
     val emails: List<String> = emptyList(), // lowercased, trimmed
-    val addresses: List<String> = emptyList(),
+    val addresses: List<PostalAddress> = emptyList(),
     val org: String? = null,
     val title: String? = null,
     val urls: List<String> = emptyList(),
