@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.core.importer
 
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.PostalAddress
 import com.robsartin.contactotomy.core.model.Source
 import com.robsartin.contactotomy.core.normalize.EmailNormalizer
 import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
@@ -36,7 +37,7 @@ class VcfImporter(
             phones = rawPhones.mapNotNull { phoneNormalizer.normalize(it) },
             rawPhones = rawPhones,
             emails = rawEmails.mapNotNull { EmailNormalizer.normalize(it) },
-            addresses = card.addresses.mapNotNull { it.streetAddress },
+            addresses = card.addresses.map { toPostalAddress(it) },
             org =
                 card.organization
                     ?.values
@@ -50,6 +51,17 @@ class VcfImporter(
             rawVCard = Ezvcard.write(card).version(card.version ?: VCardVersion.V3_0).go(),
         )
     }
+
+    private fun toPostalAddress(addr: ezvcard.property.Address): PostalAddress =
+        PostalAddress(
+            poBox = addr.poBox?.takeIf { it.isNotEmpty() },
+            extended = addr.extendedAddress?.takeIf { it.isNotEmpty() },
+            street = addr.streetAddress?.takeIf { it.isNotEmpty() },
+            city = addr.locality?.takeIf { it.isNotEmpty() },
+            region = addr.region?.takeIf { it.isNotEmpty() },
+            postalCode = addr.postalCode?.takeIf { it.isNotEmpty() },
+            country = addr.country?.takeIf { it.isNotEmpty() },
+        )
 
     private fun toName(card: VCard): ContactName {
         val n = card.structuredName

@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.core.apply
 
 import com.robsartin.contactotomy.core.merger.MergeProposal
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 
 /** Applies accept/reject/field decisions to produce the final deduplicated contact list. */
@@ -72,7 +73,7 @@ class DecisionApplier {
                 )
             "rawPhones" -> c.copy(rawPhones = c.rawPhones - value)
             "emails" -> c.copy(emails = c.emails - value)
-            "addresses" -> c.copy(addresses = c.addresses - value)
+            "addresses" -> c.copy(addresses = c.addresses.filterNot { it.toDisplayString() == value })
             "urls" -> c.copy(urls = c.urls - value)
             "categories" -> c.copy(categories = c.categories - value)
             "org" -> if (c.org == value) c.copy(org = null) else c
