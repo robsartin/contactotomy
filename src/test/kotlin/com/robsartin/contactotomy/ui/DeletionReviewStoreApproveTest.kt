@@ -10,8 +10,8 @@ class DeletionReviewStoreApproveTest {
         val store =
             DeletionReviewStore(
                 listOf(
-                    contact("a", given = "Al", emails = listOf("al@indeed.com")),
-                    contact("b", given = "Bo", emails = listOf("bo@indeed.com")),
+                    contact("a", given = "Al", emails = listOf("no-reply@example.com")),
+                    contact("b", given = "Bo", emails = listOf("noreply@example.com")),
                     contact("c"), // no name, no phone -> flagged by the "no name and no phone" rule
                 ),
             )
@@ -41,7 +41,7 @@ class DeletionReviewStoreApproveTest {
     @Test
     fun `approveAllForRule approves exactly that rule's matches`() {
         val store = ranStore()
-        store.approveAllForRule("old job (indeed)")
+        store.approveAllForRule("no-reply senders")
         assertEquals(setOf("a", "b"), store.state.value.approvedIds)
     }
 

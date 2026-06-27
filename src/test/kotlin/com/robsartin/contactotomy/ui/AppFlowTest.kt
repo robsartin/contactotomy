@@ -163,27 +163,26 @@ class AppFlowTest {
     @Test
     fun `deletion path removes an approved card`() =
         runComposeUiTest {
-            val store = importedStore()
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("deletion-noreply.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge
-            onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
-            // The detail-pane Accept button is a pinned footer, visible without scrolling.
-            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
+            onNodeWithText("Next").performClick() // commit merge (no accepts) -> Companies
             onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
 
-            onNodeWithText("Run").performClick() // starter "austin area code" flags the 512 number
+            onNodeWithText("Run").performClick() // starter "no-reply senders" flags the noreply contact
             onAllNodesWithText("Approve all").onFirst().performClick()
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
             val final = store.state.value.finalContacts
             assertNotNull(final)
-            assertTrue(final.size < 4, "expected fewer than 4 after merge-then-delete, was ${final.size}")
+            assertEquals(1, final.size)
             assertTrue(
-                final.none { c -> c.phones.any { it.filter(Char::isDigit).contains("512") } },
-                "no surviving contact should keep a 512 phone",
+                final.none { c -> c.emails.any { it.contains("no-reply") } },
+                "no surviving contact should keep a no-reply email",
             )
         }
 

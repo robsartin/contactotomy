@@ -19,7 +19,7 @@ import kotlin.test.assertTrue
 class DeletionScreenDetailTest {
     private fun store() =
         DeletionReviewStore(
-            listOf(contact("a", given = "Al", emails = listOf("al@indeed.com"))),
+            listOf(contact("a", given = "Al", emails = listOf("no-reply@example.com"))),
         )
 
     @Test
@@ -29,7 +29,7 @@ class DeletionScreenDetailTest {
             setContent { DeletionScreen(store) }
             onNodeWithText("Run").performClick()
             onAllNodesWithText("Al", substring = true).onFirst().performClick()
-            onNodeWithText("al@indeed.com", substring = true).assertExists()
+            onNodeWithText("no-reply@example.com", substring = true).assertExists()
             onNodeWithText("flagged:", substring = true).assertExists()
         }
 
