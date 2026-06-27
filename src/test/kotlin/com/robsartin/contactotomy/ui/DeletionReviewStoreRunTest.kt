@@ -9,7 +9,7 @@ class DeletionReviewStoreRunTest {
     private fun store() =
         DeletionReviewStore(
             listOf(
-                contact("a", given = "Al", emails = listOf("al@indeed.com")),
+                contact("a", given = "Al", emails = listOf("no-reply@example.com")),
                 contact("b", given = "Bo", emails = listOf("bo@personal.com")),
             ),
         )
@@ -29,7 +29,7 @@ class DeletionReviewStoreRunTest {
         store.run()
         val s = store.state.value
         assertTrue(s.hasRun)
-        // the starter "*@indeed.com" rule flags contact a
+        // the starter "no-reply senders" rule flags contact a
         assertEquals(listOf("a"), s.flagged.map { it.contact.id })
     }
 

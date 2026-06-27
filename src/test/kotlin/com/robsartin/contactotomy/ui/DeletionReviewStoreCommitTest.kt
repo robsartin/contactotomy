@@ -12,7 +12,7 @@ class DeletionReviewStoreCommitTest {
     private fun store() =
         DeletionReviewStore(
             listOf(
-                contact("a", given = "Al", emails = listOf("al@indeed.com")),
+                contact("a", given = "Al", emails = listOf("no-reply@example.com")),
                 contact("b", given = "Bo", emails = listOf("bo@personal.com")),
             ),
         )
