@@ -87,6 +87,26 @@ class MergeReviewStore(
         return contacts.filter { it.id !in claimed }
     }
 
+    /**
+     * Force-merges [memberIds] (>= 2 eligible contacts) into a new PENDING MANUAL item.
+     * Returns the new item id, or null if fewer than two eligible contacts were given.
+     */
+    fun manualMerge(memberIds: List<String>): String? {
+        val eligible = eligibleForManualMerge().associateBy { it.id }
+        val members = memberIds.distinct().mapNotNull { eligible[it] }
+        if (members.size < 2) return null
+        val cluster =
+            Cluster(
+                id = "manual-" + members.map { it.id }.sorted().joinToString("+"),
+                members = members,
+                confidence = Confidence.HIGH,
+                reasons = emptyList(),
+            )
+        val item = ReviewItem(id = cluster.id, origin = Origin.MANUAL, proposal = merger.merge(cluster))
+        _state.update { st -> st.copy(items = st.items + item) }
+        return item.id
+    }
+
     private fun updateItem(
         itemId: String,
         transform: (ReviewItem) -> ReviewItem,
