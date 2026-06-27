@@ -65,12 +65,17 @@ object CompanyNameDetector {
 ```
 
 It evaluates the name's display string (formatted, else given+family joined),
-returning the **highest-precision** matching signal (checked in this order):
+returning the **first** matching signal in this check order (`null` if none). The
+`CompanySignal` enum is still ordered LEGAL_SUFFIX→AMPERSAND→KEYWORD→WEAK for the
+auto-suggest tie-break (§5), which is independent of the check order below:
 
-1. **`LEGAL_SUFFIX`** — the last token (stripped of trailing `.`) is one of a
+1. **`AMPERSAND`** — contains `&`, or a whitespace-delimited `and Co` / `& Co`.
+   (Checked before `LEGAL_SUFFIX` so "Jones and Co" reports `AMPERSAND` rather than
+   matching on the trailing "Co"; both mean "company", so the distinction only
+   affects the reported enum, which is cosmetic.)
+2. **`LEGAL_SUFFIX`** — the last token (stripped of trailing `.`) is one of a
    fixed set, case-insensitive: `Inc, LLC, L.L.C., Ltd, Corp, Co, GmbH, PLC, SA,
    S.A., LLP, LP, Group, Holdings, Corporation, Incorporated, Company`.
-2. **`AMPERSAND`** — contains `&`, or a whitespace-delimited `and Co` / `& Co`.
 3. **`KEYWORD`** — contains (whole-word, case-insensitive) one of a fixed keyword
    set: `Services, Solutions, Restaurant, Plumbing, Salon, Clinic, Studio, Bank,
    Agency, Consulting, Systems, Technologies, Enterprises, Industries`.
