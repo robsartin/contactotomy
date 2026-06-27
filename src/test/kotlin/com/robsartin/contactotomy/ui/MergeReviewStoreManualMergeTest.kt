@@ -4,6 +4,7 @@ import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertTrue
 
 class MergeReviewStoreManualMergeTest {
     // a & b cluster (shared phone + nickname); c & d are lone singletons.
@@ -60,6 +61,22 @@ class MergeReviewStoreManualMergeTest {
         // ids not in the eligible pool are ignored (a is already clustered)
         assertEquals(null, store.manualMerge(listOf("c", "a")))
         assertEquals(before, store.state.value.items.size)
+    }
+
+    @Test
+    fun `acceptAllHighConfidence does not sweep a manual item`() {
+        val store = store()
+        val manualId = store.manualMerge(listOf("c", "d"))!!
+        store.acceptAllHighConfidence()
+        val manual =
+            store.state.value.items
+                .first { it.id == manualId }
+        assertEquals(Decision.PENDING, manual.decision)
+        // the HIGH cluster (a,b) WAS swept to ACCEPT
+        assertTrue(
+            store.state.value.items
+                .any { it.origin == Origin.HIGH && it.decision == Decision.ACCEPT },
+        )
     }
 
     @Test

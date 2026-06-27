@@ -95,6 +95,9 @@ class MergeReviewStore(
         val eligible = eligibleForManualMerge().associateBy { it.id }
         val members = memberIds.distinct().mapNotNull { eligible[it] }
         if (members.size < 2) return null
+        // No id collision with an auto cluster: the merged contact's id derives from member
+        // ids, and eligibility (un-clustered members only) + commit()'s double-touch guard
+        // ensure the same member set is never in two clusters at once.
         val cluster =
             Cluster(
                 id = "manual-" + members.map { it.id }.sorted().joinToString("+"),
