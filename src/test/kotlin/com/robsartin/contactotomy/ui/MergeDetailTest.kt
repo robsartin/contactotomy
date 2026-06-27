@@ -1,9 +1,9 @@
 package com.robsartin.contactotomy.ui
 
 import androidx.compose.ui.test.ExperimentalTestApi
-import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
@@ -51,8 +51,8 @@ class MergeDetailTest {
             onNodeWithText("Source cards", substring = true).assertExists()
             // the merged phone renders (source card line + merged checkbox row → assert at least one)
             onAllNodesWithText("+15125551234", substring = true).onFirst().assertExists()
-            // toggle the first toggleable control — the phone checkbox is rendered before emails
-            onAllNodes(isToggleable()).onFirst().performClick()
+            // toggle the phone chip by tag — phones are rendered before emails
+            onNodeWithTag("phones:+15125551234").performClick()
             assertTrue(
                 s.state.value.items
                     .single()

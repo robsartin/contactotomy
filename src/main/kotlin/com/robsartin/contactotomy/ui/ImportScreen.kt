@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.model.Source
+import com.robsartin.contactotomy.ui.components.SectionHeader
 import kotlinx.coroutines.launch
 
 @Composable
@@ -26,6 +27,7 @@ fun ImportScreen(
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        SectionHeader("Import your vCard exports")
         PickerRow("Choose Apple export") { applePicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.APPLE) } } }
         PickerRow("Choose Google export") { googlePicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.GOOGLE) } } }
         PickerRow("Add another file…") { otherPicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.FILE) } } }

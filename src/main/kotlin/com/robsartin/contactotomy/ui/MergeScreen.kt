@@ -2,7 +2,10 @@ package com.robsartin.contactotomy.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +32,13 @@ import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.ui.components.ClusterRow
+import com.robsartin.contactotomy.ui.components.FieldGroup
+import com.robsartin.contactotomy.ui.components.LabeledProgress
+import com.robsartin.contactotomy.ui.components.SectionHeader
+import com.robsartin.contactotomy.ui.components.SourceCard
+import com.robsartin.contactotomy.ui.components.ValueChip
+import com.robsartin.contactotomy.ui.theme.appColors
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -67,10 +77,25 @@ fun MergeScreen(store: MergeReviewStore) {
                     }
                 }
             }
-            Text("${resolved.size} of ${state.items.size} reviewed", Modifier.padding(vertical = 4.dp))
+            LabeledProgress(reviewed = resolved.size, total = state.items.size)
             LazyColumn(Modifier.weight(1f)) {
                 items(pending) { item ->
-                    ClusterRow(item, selected = item.id == (selected?.id)) { selectedId = item.id }
+                    val label =
+                        if (item.origin == Origin.UNCERTAIN) {
+                            item.proposal.cluster.members
+                                .joinToString(" ↔ ") { displayName(it.name) } +
+                                " · " +
+                                item.proposal.cluster.reasons
+                                    .joinToString(", ")
+                        } else {
+                            "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
+                        }
+                    ClusterRow(
+                        title = label,
+                        origin = item.origin,
+                        selected = item.id == selected?.id,
+                        onClick = { selectedId = item.id },
+                    )
                 }
                 if (resolved.isNotEmpty()) {
                     item { Text("Resolved (${resolved.size})", Modifier.padding(top = 10.dp)) }
@@ -93,43 +118,30 @@ fun MergeScreen(store: MergeReviewStore) {
                 }
                 // Pinned footer: decision buttons stay on-screen regardless of detail length.
                 Row(Modifier.padding(top = 10.dp)) {
-                    Button(onClick = {
-                        store.accept(selected.id)
-                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
-                    }) { Text("✓ Accept merge") }
-                    Button(onClick = {
-                        store.reject(selected.id)
-                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
-                    }) { Text("✕ Keep separate") }
+                    Button(
+                        onClick = {
+                            store.accept(selected.id)
+                            selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                        },
+                        colors =
+                            androidx.compose.material.ButtonDefaults.buttonColors(
+                                backgroundColor = appColors.accept,
+                                contentColor = androidx.compose.ui.graphics.Color.White,
+                            ),
+                    ) { Text("✓ Accept merge") }
+                    androidx.compose.material.OutlinedButton(
+                        onClick = {
+                            store.reject(selected.id)
+                            selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                        },
+                        border = androidx.compose.foundation.BorderStroke(1.dp, appColors.reject),
+                        colors =
+                            androidx.compose.material.ButtonDefaults
+                                .outlinedButtonColors(contentColor = appColors.reject),
+                    ) { Text("✕ Keep separate") }
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ClusterRow(
-    item: ReviewItem,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val tag =
-        when (item.origin) {
-            Origin.UNCERTAIN -> "maybe"
-            Origin.MANUAL -> "manual"
-            Origin.HIGH -> "HIGH"
-        }
-    val label =
-        if (item.origin == Origin.UNCERTAIN) {
-            val names =
-                item.proposal.cluster.members
-                    .joinToString(" ↔ ") { displayName(it.name) }
-            "$names · ${item.proposal.cluster.reasons.joinToString(", ")}"
-        } else {
-            "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
-        }
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-        Button(onClick = onClick) { Text((if (selected) "▸ " else "") + "$label  [$tag]") }
     }
 }
 
@@ -154,41 +166,53 @@ private fun MergeDetailContent(
     Column {
         SourceCards(p.cluster.members)
 
-        Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
+        androidx.compose.material.Card(
+            border = androidx.compose.foundation.BorderStroke(com.robsartin.contactotomy.ui.theme.Dimens.selected, appColors.mergedBorder),
+            shape =
+                androidx.compose.foundation.shape
+                    .RoundedCornerShape(com.robsartin.contactotomy.ui.theme.Dimens.cardRadius),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            Column(Modifier.padding(com.robsartin.contactotomy.ui.theme.Dimens.md)) {
+                Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
 
-        // Name: pick which source card's name wins; company-like names are badged.
-        val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
-        if (namedMembers.isNotEmpty()) {
-            Text("Name (pick one)")
-            namedMembers.forEach { m ->
-                val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
-                val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
-                    Text(displayName(m.name) + badge)
+                // Name: pick which source card's name wins; company-like names are badged.
+                val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
+                if (namedMembers.isNotEmpty()) {
+                    FieldGroup("Name (pick one)") {
+                        namedMembers.forEach { m ->
+                            val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                            val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                                Text(displayName(m.name) + badge)
+                            }
+                        }
+                    }
                 }
-            }
-        }
 
-        // Multi-value fields: include/exclude each value with a checkbox.
-        MultiField("phones", p.merged.phones, item, store)
-        MultiField("emails", p.merged.emails, item, store)
-        MultiField("categories", p.merged.categories, item, store)
+                // Multi-value fields: include/exclude each value with a checkbox.
+                MultiField("phones", p.merged.phones, item, store)
+                MultiField("emails", p.merged.emails, item, store)
+                MultiField("categories", p.merged.categories, item, store)
 
-        // Company / org has its own control (supports promoting a mis-filed company name).
-        CompanyOrgField(store, item)
+                // Company / org has its own control (supports promoting a mis-filed company name).
+                CompanyOrgField(store, item)
 
-        // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
-        p.conflicts.filter { it.field != "org" }.forEach { conflict ->
-            Text("${conflict.field} (pick one)", Modifier.padding(top = 4.dp))
-            conflict.candidates.map { it.value }.distinct().forEach { value ->
-                val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
-                Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(
-                        selected = value == chosen,
-                        onClick = { store.chooseConflict(item.id, conflict.field, value) },
-                    )
-                    Text(value)
+                // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
+                p.conflicts.filter { it.field != "org" }.forEach { conflict ->
+                    FieldGroup("${conflict.field} (pick one)") {
+                        conflict.candidates.map { it.value }.distinct().forEach { value ->
+                            val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
+                            Row(verticalAlignment = Alignment.CenterVertically) {
+                                RadioButton(
+                                    selected = value == chosen,
+                                    onClick = { store.chooseConflict(item.id, conflict.field, value) },
+                                )
+                                Text(value)
+                            }
+                        }
+                    }
                 }
             }
         }
@@ -213,14 +237,15 @@ private fun CompanyOrgField(
     candidates[""] = "(none)"
 
     val chosen = item.orgChoice ?: item.proposal.merged.org ?: ""
-    Text("Company / org (pick one)", Modifier.padding(top = 4.dp))
-    candidates.forEach { (value, label) ->
-        Row(
-            Modifier.clickable { store.chooseOrg(item.id, value) },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(selected = value == chosen, onClick = null)
-            Text(label)
+    FieldGroup("Company / org (pick one)") {
+        candidates.forEach { (value, label) ->
+            Row(
+                Modifier.clickable { store.chooseOrg(item.id, value) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = value == chosen, onClick = null)
+                Text(label)
+            }
         }
     }
 }
@@ -228,19 +253,17 @@ private fun CompanyOrgField(
 @Composable
 private fun SourceCards(members: List<Contact>) {
     val sorted = members.sortedWith(compareByDescending(nullsLast()) { it.modifiedAt })
-    Text("Source cards (${sorted.size})", Modifier.padding(bottom = 4.dp))
-    sorted.forEachIndexed { index, m ->
-        Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-            val primary = if (index == 0) " ★ primary" else ""
-            val date = m.modifiedAt?.toString()?.take(10) ?: "—"
-            Text("[${m.source}]$primary · $date")
-            Text(displayName(m.name))
-            val line = (m.phones + m.emails + listOfNotNull(m.org)).joinToString(" · ")
-            if (line.isNotEmpty()) Text(line)
+    SectionHeader("Source cards (${sorted.size})")
+    Row(Modifier.fillMaxWidth()) {
+        sorted.forEachIndexed { index, m ->
+            Box(Modifier.weight(1f)) {
+                SourceCard(contact = m, primary = index == 0, selected = index == 0)
+            }
         }
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MultiField(
     field: String,
@@ -249,13 +272,18 @@ private fun MultiField(
     store: MergeReviewStore,
 ) {
     if (values.isEmpty()) return
-    Text("$field (keep any)", Modifier.padding(top = 4.dp))
-    values.forEach { value ->
-        val ev = ExcludedValue(field, value)
-        val included = ev !in item.excludedValues
-        Row(verticalAlignment = Alignment.CenterVertically) {
-            Checkbox(checked = included, onCheckedChange = { store.toggleField(item.id, ev) })
-            Text(value)
+    FieldGroup("$field (keep any)") {
+        FlowRow(horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+            values.forEach { value ->
+                val ev = ExcludedValue(field, value)
+                val included = ev !in item.excludedValues
+                ValueChip(
+                    label = value,
+                    selected = included,
+                    onToggle = { store.toggleField(item.id, ev) },
+                    tag = "$field:$value",
+                )
+            }
         }
     }
 }

@@ -4,14 +4,18 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.robsartin.contactotomy.ui.components.SectionHeader
+import com.robsartin.contactotomy.ui.theme.Dimens
 import java.io.File
 
 private val NoopPicker = FilePicker { null }
@@ -24,6 +28,7 @@ fun ExportScreen(
 ) {
     val state by store.state.collectAsState()
     Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
+        SectionHeader("Export your cleaned contacts")
         Text("Ready to export ${state.contactCount} cleaned contacts")
         Button(
             onClick = {
@@ -40,8 +45,13 @@ fun ExportScreen(
         state.error?.let { Text("Error: $it") }
 
         Text("How to import your cleaned contacts", Modifier.padding(top = 8.dp))
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            Text(instructions)
+        Card(
+            shape = RoundedCornerShape(Dimens.cardRadius),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(10.dp)) {
+                Text(instructions)
+            }
         }
     }
 }

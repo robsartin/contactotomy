@@ -41,8 +41,8 @@ class MergeBeforeCardsTest {
             onAllNodesWithText("Sartin", substring = true).onFirst().performClick()
             // the source-cards section header
             onNodeWithText("Source cards", substring = true).assertExists()
-            // a member source label ([GOOGLE])
-            onNodeWithText("GOOGLE", substring = true).assertExists()
+            // a member source label (Google badge)
+            onNodeWithText("Google", substring = true).assertExists()
             // a member's phone (rendered on the Google source card and the merged checkbox)
             onAllNodesWithText("+15125559999", substring = true).onFirst().assertExists()
         }
