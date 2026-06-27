@@ -104,5 +104,10 @@ class MergeReviewStoreCompanyTest {
                 .single()
                 .orgChoice,
         )
+        assertNull(
+            store.state.value.items
+                .single()
+                .nameChoiceId,
+        )
     }
 }

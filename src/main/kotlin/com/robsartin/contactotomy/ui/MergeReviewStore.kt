@@ -141,7 +141,7 @@ class MergeReviewStore(
         if (members.any { !it.org.isNullOrBlank() }) return null to null
         val companyMembers = members.mapNotNull { m -> CompanyNameDetector.detect(m.name)?.let { m to it } }
         if (companyMembers.isEmpty()) return null to null
-        val company = companyMembers.minByOrNull { it.second.ordinal }!!.first
+        val company = companyMembers.minBy { it.second.ordinal }.first
         val personId =
             members
                 .firstOrNull {
@@ -205,6 +205,8 @@ class MergeReviewStore(
                 }.toMap()
         val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
         // Apply per-cluster org overrides (chosen company/org, or "" to clear) — engine untouched.
+        // orgChoice is the single source of truth for the merged org; it supersedes any
+        // conflictChoices["org"] (the UI routes org through chooseOrg, not chooseConflict).
         val orgOverrides: Map<String, String> =
             finalAccepted.mapNotNull { item -> item.orgChoice?.let { item.proposal.merged.id to it } }.toMap()
         val withOrg =
