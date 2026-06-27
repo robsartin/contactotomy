@@ -77,6 +77,16 @@ class MergeReviewStore(
             st.copy(items = st.items.map { if (it.origin == Origin.HIGH) it.copy(decision = Decision.ACCEPT) else it })
         }
 
+    /** Contacts not already a member of any current review item — the manual-merge pool. */
+    fun eligibleForManualMerge(): List<Contact> {
+        val claimed =
+            _state.value.items
+                .flatMap { it.proposal.cluster.members }
+                .map { it.id }
+                .toSet()
+        return contacts.filter { it.id !in claimed }
+    }
+
     private fun updateItem(
         itemId: String,
         transform: (ReviewItem) -> ReviewItem,
