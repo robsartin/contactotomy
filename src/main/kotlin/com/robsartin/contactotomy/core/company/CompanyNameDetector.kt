@@ -5,6 +5,11 @@ import com.robsartin.contactotomy.core.model.ContactName
 /** Which signal flagged a name as company-like (precision order: LEGAL_SUFFIX highest). */
 enum class CompanySignal { LEGAL_SUFFIX, AMPERSAND, KEYWORD, WEAK }
 
+/** The company string a name field holds: formatted if present, else given + family. */
+fun companyNameText(name: ContactName): String =
+    name.formatted?.takeIf { it.isNotBlank() }
+        ?: listOfNotNull(name.given, name.family).joinToString(" ")
+
 /** Pure heuristic: does a name field actually hold a company name? Returns the strongest signal, or null. */
 object CompanyNameDetector {
     private val SUFFIXES =
@@ -46,9 +51,7 @@ object CompanyNameDetector {
     private val AND_CO = Regex("(?i)\\b(and|&)\\s+co\\b")
 
     fun detect(name: ContactName): CompanySignal? {
-        val display =
-            name.formatted?.takeIf { it.isNotBlank() }
-                ?: listOfNotNull(name.given, name.family).joinToString(" ")
+        val display = companyNameText(name)
         if (display.isBlank()) return null
         val tokens = display.split(Regex("\\s+")).filter { it.isNotBlank() }
         val cleaned = tokens.map { it.replace(".", "").replace(",", "").uppercase() }
@@ -63,4 +66,11 @@ object CompanyNameDetector {
         if (allCaps || singleToken) return CompanySignal.WEAK
         return null
     }
+
+    /** True only for the strong signals safe to auto-pre-check (never WEAK). */
+    fun isHighPrecision(name: ContactName): Boolean =
+        when (detect(name)) {
+            CompanySignal.LEGAL_SUFFIX, CompanySignal.AMPERSAND, CompanySignal.KEYWORD -> true
+            CompanySignal.WEAK, null -> false
+        }
 }

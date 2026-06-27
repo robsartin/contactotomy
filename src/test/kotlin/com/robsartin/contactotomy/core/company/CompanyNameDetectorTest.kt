@@ -57,4 +57,21 @@ class CompanyNameDetectorTest {
             CompanyNameDetector.detect(named(formatted = "Pflugerville Independent School District")),
         )
     }
+
+    @Test
+    fun `companyNameText prefers formatted then given-family`() {
+        assertEquals("Acme Inc", companyNameText(ContactName(formatted = "Acme Inc")))
+        assertEquals("Jane Smith", companyNameText(ContactName(given = "Jane", family = "Smith")))
+        assertEquals("", companyNameText(ContactName()))
+    }
+
+    @Test
+    fun `isHighPrecision is true for strong signals only`() {
+        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Acme Inc")))     // LEGAL_SUFFIX
+        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Smith & Sons"))) // AMPERSAND
+        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Round Rock ISD")))// KEYWORD
+        assertEquals(false, CompanyNameDetector.isHighPrecision(named(formatted = "ACME")))         // WEAK
+        assertEquals(false, CompanyNameDetector.isHighPrecision(named(given = "Dave")))             // WEAK
+        assertEquals(false, CompanyNameDetector.isHighPrecision(named(given = "Jane", family = "Smith"))) // null
+    }
 }
