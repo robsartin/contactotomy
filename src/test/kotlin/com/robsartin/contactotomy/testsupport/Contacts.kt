@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.testsupport
 
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.PostalAddress
 import com.robsartin.contactotomy.core.model.Source
 import java.time.Instant
 
@@ -27,6 +28,8 @@ fun contact(
     modifiedAt: Instant? = null,
     createdAt: Instant? = null,
     source: Source = Source.APPLE,
+    addresses: List<PostalAddress> = emptyList(),
+    urls: List<String> = emptyList(),
 ) = Contact(
     id = id,
     source = source,
@@ -34,8 +37,10 @@ fun contact(
     phones = phones,
     rawPhones = phones,
     emails = emails,
+    addresses = addresses,
     org = org,
     notes = notes,
+    urls = urls,
     categories = categories,
     modifiedAt = modifiedAt,
     createdAt = createdAt,
