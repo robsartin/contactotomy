@@ -46,7 +46,8 @@ class AppFlowTest {
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
             // The detail-pane Accept button is a pinned footer, visible without scrolling.
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -64,7 +65,8 @@ class AppFlowTest {
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
             onNodeWithText("Next").performClick() // Import -> Merge
-            onNodeWithText("Next").performClick() // commit with zero accepted -> Deletion
+            onNodeWithText("Next").performClick() // commit with zero accepted -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -89,7 +91,8 @@ class AppFlowTest {
             onNodeWithText("Devon Vasquez", substring = true).performClick()
             onNodeWithText("Create merge").performClick()
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -115,7 +118,8 @@ class AppFlowTest {
             onNodeWithText("Create merge").performClick()
             // auto-suggest: name = Jane Smith, org = Acme Inc (promoted from the company card's name)
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -140,7 +144,8 @@ class AppFlowTest {
             onNodeWithText("Next").performClick() // Import -> Merge (one HIGH cluster, auto-suggested company-only)
             onAllNodesWithText("Round Rock ISD", substring = true).onFirst().performClick() // select the cluster
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -165,7 +170,8 @@ class AppFlowTest {
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
             // The detail-pane Accept button is a pinned footer, visible without scrolling.
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit merge -> Companies
+            onNodeWithText("Next").performClick() // Companies (pass-through) -> Deletion
 
             onNodeWithText("Run").performClick() // starter "austin area code" flags the 512 number
             onAllNodesWithText("Approve all").onFirst().performClick()
@@ -179,5 +185,32 @@ class AppFlowTest {
                 final.none { c -> c.phones.any { it.filter(Char::isDigit).contains("512") } },
                 "no surviving contact should keep a 512 phone",
             )
+        }
+
+    @Test
+    fun `standalone company is normalized by the Companies step and exported as org only`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("lone-company.vcf"), Source.APPLE) }
+            assertEquals(1, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
+            onNodeWithText("Next").performClick() // commit merge (no accepts) -> Companies
+            // "Round Rock ISD" is high-precision (ISD) => pre-checked on the Companies step
+            onNodeWithText("→ org: Round Rock ISD", substring = true).assertIsDisplayed()
+            onNodeWithText("Next").performClick() // commit Companies -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertEquals("Round Rock ISD", final.single().org)
+            assertEquals(ContactName(), final.single().name)
+
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("ORG:Round Rock ISD"), "expected ORG:\n$vcard")
+            assertFalse(vcard.contains("FN:Round Rock ISD"), "company-only card should have no FN:\n$vcard")
         }
 }
