@@ -4,6 +4,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -212,14 +213,15 @@ private fun CompanyOrgField(
     candidates[""] = "(none)"
 
     val chosen = item.orgChoice ?: item.proposal.merged.org ?: ""
-    Text("Company / org (pick one)", Modifier.padding(top = 4.dp))
-    candidates.forEach { (value, label) ->
-        Row(
-            Modifier.clickable { store.chooseOrg(item.id, value) },
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            RadioButton(selected = value == chosen, onClick = null)
-            Text(label)
+    FieldGroup("Company / org (pick one)") {
+        candidates.forEach { (value, label) ->
+            Row(
+                Modifier.clickable { store.chooseOrg(item.id, value) },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                RadioButton(selected = value == chosen, onClick = null)
+                Text(label)
+            }
         }
     }
 }
@@ -237,7 +239,7 @@ private fun SourceCards(members: List<Contact>) {
     }
 }
 
-@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun MultiField(
     field: String,
