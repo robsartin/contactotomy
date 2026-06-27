@@ -29,5 +29,7 @@ The full export → clean → import workflow (including the back-up-and-wipe st
 required by the mirror-into-both approach) lives in the design spec and will be
 surfaced in-app.
 
+- Developer docs (architecture, module map, data-flow diagrams):
+  [`docs/dev/architecture.md`](docs/dev/architecture.md)
 - Export / clean / import guide (also shown in-app on the Export screen):
   [`src/main/resources/export-instructions.md`](src/main/resources/export-instructions.md)
