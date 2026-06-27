@@ -219,7 +219,7 @@ private fun CompanyOrgField(
             Modifier.clickable { store.chooseOrg(item.id, value) },
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            RadioButton(selected = value == chosen, onClick = { store.chooseOrg(item.id, value) })
+            RadioButton(selected = value == chosen, onClick = null)
             Text(label)
         }
     }
