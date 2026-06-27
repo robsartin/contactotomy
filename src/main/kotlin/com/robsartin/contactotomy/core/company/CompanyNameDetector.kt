@@ -41,6 +41,7 @@ object CompanyNameDetector {
             "TECHNOLOGIES",
             "ENTERPRISES",
             "INDUSTRIES",
+            "ISD",
         )
     private val AND_CO = Regex("(?i)\\b(and|&)\\s+co\\b")
 
@@ -54,7 +55,9 @@ object CompanyNameDetector {
 
         if (cleaned.isNotEmpty() && cleaned.last() in SUFFIXES) return CompanySignal.LEGAL_SUFFIX
         if (display.contains("&") || AND_CO.containsMatchIn(display)) return CompanySignal.AMPERSAND
-        if (cleaned.any { it in KEYWORDS }) return CompanySignal.KEYWORD
+        if (cleaned.any { it in KEYWORDS } || display.contains("independent school district", ignoreCase = true)) {
+            return CompanySignal.KEYWORD
+        }
         val allCaps = display.any { it.isLetter() } && display == display.uppercase()
         val singleToken = tokens.size == 1 && name.family.isNullOrBlank()
         if (allCaps || singleToken) return CompanySignal.WEAK

@@ -57,7 +57,9 @@ class MergeReviewStore(
     fun chooseName(
         itemId: String,
         memberId: String,
-    ) = updateItem(itemId) { it.copy(nameChoiceId = memberId) }
+    ) = updateItem(itemId) { it.copy(nameChoiceId = memberId, nameCleared = false) }
+
+    fun clearName(itemId: String) = updateItem(itemId) { it.copy(nameCleared = true, nameChoiceId = null) }
 
     fun chooseOrg(
         itemId: String,
@@ -122,36 +124,43 @@ class MergeReviewStore(
         origin: Origin,
         cluster: Cluster,
     ): ReviewItem {
-        val (nameChoiceId, orgChoice) = companyAutoSuggest(cluster.members)
+        val suggest = companyAutoSuggest(cluster.members)
         return ReviewItem(
             id = id,
             origin = origin,
             proposal = merger.merge(cluster),
-            nameChoiceId = nameChoiceId,
-            orgChoice = orgChoice,
+            nameChoiceId = suggest.nameChoiceId,
+            nameCleared = suggest.nameCleared,
+            orgChoice = suggest.orgChoice,
         )
     }
 
+    private data class AutoSuggest(
+        val nameChoiceId: String?,
+        val nameCleared: Boolean,
+        val orgChoice: String?,
+    )
+
     /**
      * When no member has an org but some member's name looks like a company, suggest promoting that
-     * name into org, and (if a different member has a non-company name) using that as the person name.
-     * Returns (nameChoiceId, orgChoice); both null if nothing to suggest.
+     * name into org. If a different member has a non-company name, use it as the person name;
+     * otherwise (company-only) clear the name.
      */
-    private fun companyAutoSuggest(members: List<Contact>): Pair<String?, String?> {
-        if (members.any { !it.org.isNullOrBlank() }) return null to null
+    private fun companyAutoSuggest(members: List<Contact>): AutoSuggest {
+        if (members.any { !it.org.isNullOrBlank() }) return AutoSuggest(nameChoiceId = null, nameCleared = false, orgChoice = null)
         val companyMembers = members.mapNotNull { m -> CompanyNameDetector.detect(m.name)?.let { m to it } }
-        if (companyMembers.isEmpty()) return null to null
+        if (companyMembers.isEmpty()) return AutoSuggest(nameChoiceId = null, nameCleared = false, orgChoice = null)
         val company = companyMembers.minBy { it.second.ordinal }.first
         val personId =
             members
                 .firstOrNull {
-                    it.id != company.id &&
-                        CompanyNameDetector.detect(
-                            it.name,
-                        ) == null &&
-                        displayName(it.name).isNotBlank()
+                    it.id != company.id && CompanyNameDetector.detect(it.name) == null && displayName(it.name).isNotBlank()
                 }?.id
-        return personId to displayName(company.name)
+        return if (personId != null) {
+            AutoSuggest(nameChoiceId = personId, nameCleared = false, orgChoice = displayName(company.name))
+        } else {
+            AutoSuggest(nameChoiceId = null, nameCleared = true, orgChoice = displayName(company.name))
+        }
     }
 
     private fun updateItem(
@@ -197,11 +206,16 @@ class MergeReviewStore(
         val nameOverrides: Map<String, ContactName> =
             finalAccepted
                 .mapNotNull { item ->
-                    val memberId = item.nameChoiceId ?: return@mapNotNull null
-                    val member =
-                        item.proposal.cluster.members
-                            .firstOrNull { it.id == memberId } ?: return@mapNotNull null
-                    item.proposal.merged.id to member.name
+                    when {
+                        item.nameCleared -> item.proposal.merged.id to ContactName()
+                        item.nameChoiceId != null -> {
+                            val member =
+                                item.proposal.cluster.members
+                                    .firstOrNull { it.id == item.nameChoiceId }
+                            member?.let { item.proposal.merged.id to it.name }
+                        }
+                        else -> null
+                    }
                 }.toMap()
         val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
         // Apply per-cluster org overrides (chosen company/org, or "" to clear) — engine untouched.

@@ -139,5 +139,77 @@ class MergeReviewStoreCompanyTest {
                 .single()
                 .nameChoiceId,
         )
+        assertEquals(
+            true,
+            store.state.value.items
+                .single()
+                .nameCleared,
+        )
+    }
+
+    @Test
+    fun `clearName sets nameCleared and chooseName resets it`() {
+        val store = orgCluster()
+        val id =
+            store.state.value.items
+                .single()
+                .id
+        store.clearName(id)
+        assertEquals(
+            true,
+            store.state.value.items
+                .single()
+                .nameCleared,
+        )
+        store.chooseName(id, "a")
+        assertEquals(
+            false,
+            store.state.value.items
+                .single()
+                .nameCleared,
+        )
+    }
+
+    @Test
+    fun `commit empties the merged name when cleared`() {
+        val store = orgCluster()
+        val id =
+            store.state.value.items
+                .single()
+                .id
+        store.clearName(id)
+        store.accept(id)
+        val result = store.commit()
+        assertEquals(
+            com.robsartin.contactotomy.core.model
+                .ContactName(),
+            result.single().name,
+        )
+    }
+
+    @Test
+    fun `company-only auto-suggest clears the name`() {
+        val c1 = contact("c1", given = "Bobs", family = "Plumbing", phones = listOf("+15125550000"))
+        val c2 = contact("c2", given = "Bobs", family = "Plumbing", phones = listOf("+15125550000"))
+        val item =
+            MergeReviewStore(listOf(c1, c2))
+                .state.value.items
+                .single()
+        assertEquals(true, item.nameCleared)
+        assertNull(item.nameChoiceId)
+        assertEquals("Bobs Plumbing", item.orgChoice)
+    }
+
+    @Test
+    fun `person-plus-company auto-suggest does not clear the name`() {
+        val jane = contact("jane", given = "Jane", family = "Smith", emails = listOf("jane@acme.com"))
+        val acme = contact("acme", given = "Acme", family = "Inc", emails = listOf("info@acme.com"))
+        val store = MergeReviewStore(listOf(jane, acme))
+        val id = store.manualMerge(listOf("jane", "acme"))!!
+        val item =
+            store.state.value.items
+                .first { it.id == id }
+        assertEquals(false, item.nameCleared)
+        assertEquals("jane", item.nameChoiceId)
     }
 }
