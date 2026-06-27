@@ -67,11 +67,11 @@ class CompanyNameDetectorTest {
 
     @Test
     fun `isHighPrecision is true for strong signals only`() {
-        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Acme Inc")))     // LEGAL_SUFFIX
+        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Acme Inc"))) // LEGAL_SUFFIX
         assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Smith & Sons"))) // AMPERSAND
-        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Round Rock ISD")))// KEYWORD
-        assertEquals(false, CompanyNameDetector.isHighPrecision(named(formatted = "ACME")))         // WEAK
-        assertEquals(false, CompanyNameDetector.isHighPrecision(named(given = "Dave")))             // WEAK
+        assertEquals(true, CompanyNameDetector.isHighPrecision(named(formatted = "Round Rock ISD"))) // KEYWORD
+        assertEquals(false, CompanyNameDetector.isHighPrecision(named(formatted = "ACME"))) // WEAK
+        assertEquals(false, CompanyNameDetector.isHighPrecision(named(given = "Dave"))) // WEAK
         assertEquals(false, CompanyNameDetector.isHighPrecision(named(given = "Jane", family = "Smith"))) // null
     }
 }
