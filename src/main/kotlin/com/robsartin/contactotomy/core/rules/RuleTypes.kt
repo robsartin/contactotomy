@@ -15,7 +15,6 @@ enum class PredicateKind {
     EMPTY_CARD,
     CREATED_BEFORE,
     SOURCE_IS,
-    NEVER_CONTACTED,
 }
 
 @Serializable
