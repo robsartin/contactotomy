@@ -186,4 +186,31 @@ class AppFlowTest {
                 "no surviving contact should keep a 512 phone",
             )
         }
+
+    @Test
+    fun `standalone company is normalized by the Companies step and exported as org only`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("lone-company.vcf"), Source.APPLE) }
+            assertEquals(1, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
+            onNodeWithText("Next").performClick() // commit merge (no accepts) -> Companies
+            // "Round Rock ISD" is high-precision (ISD) => pre-checked on the Companies step
+            onNodeWithText("→ org: Round Rock ISD", substring = true).assertIsDisplayed()
+            onNodeWithText("Next").performClick() // commit Companies -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertEquals("Round Rock ISD", final.single().org)
+            assertEquals(ContactName(), final.single().name)
+
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("ORG:Round Rock ISD"), "expected ORG:\n$vcard")
+            assertFalse(vcard.contains("FN:Round Rock ISD"), "company-only card should have no FN:\n$vcard")
+        }
 }
