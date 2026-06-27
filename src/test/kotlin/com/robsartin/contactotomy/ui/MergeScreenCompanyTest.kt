@@ -69,4 +69,28 @@ class MergeScreenCompanyTest {
             )
             onAllNodesWithText("org (pick one)").assertCountEquals(0)
         }
+
+    @Test
+    fun `name picker offers (no name) and selecting it clears the name`() =
+        runComposeUiTest {
+            val store = janeAcmeStore()
+            setContent { MergeScreen(store) }
+            onNodeWithText("(no name)").assertIsDisplayed()
+            onNodeWithText("(no name)").performClick()
+            assertEquals(
+                true,
+                store.state.value.items
+                    .single()
+                    .nameCleared,
+            )
+        }
+
+    @Test
+    fun `company-org control offers any source name (not just detected) for promotion`() =
+        runComposeUiTest {
+            val store = janeAcmeStore()
+            setContent { MergeScreen(store) }
+            // "Jane Smith" is NOT company-like, yet must still be promotable to org
+            onNodeWithText("Jane Smith (from name)", substring = true).assertIsDisplayed()
+        }
 }

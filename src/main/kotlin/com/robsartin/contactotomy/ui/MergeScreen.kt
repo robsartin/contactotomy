@@ -182,11 +182,19 @@ private fun MergeDetailContent(
                     FieldGroup("Name (pick one)") {
                         namedMembers.forEach { m ->
                             val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                            val selected = !item.nameCleared && m.id == chosen
                             val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
                             Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                                RadioButton(selected = selected, onClick = { store.chooseName(item.id, m.id) })
                                 Text(displayName(m.name) + badge)
                             }
+                        }
+                        Row(
+                            Modifier.clickable { store.clearName(item.id) },
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            RadioButton(selected = item.nameCleared, onClick = null)
+                            Text("(no name)")
                         }
                     }
                 }
@@ -226,10 +234,7 @@ private fun CompanyOrgField(
 ) {
     val members = item.proposal.cluster.members
     val orgs = members.mapNotNull { it.org?.takeIf { o -> o.isNotBlank() } }
-    val promotions =
-        members.mapNotNull { m ->
-            if (CompanyNameDetector.detect(m.name) != null) displayName(m.name).takeIf { it.isNotBlank() } else null
-        }
+    val promotions = members.mapNotNull { m -> displayName(m.name).takeIf { it.isNotBlank() } }
     // value -> label, insertion-ordered, de-duplicated; promotions tagged "(from name)"; "" = none.
     val candidates = LinkedHashMap<String, String>()
     orgs.forEach { candidates.putIfAbsent(it, it) }
