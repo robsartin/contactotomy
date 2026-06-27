@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -29,6 +30,10 @@ import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.ui.components.ClusterRow
+import com.robsartin.contactotomy.ui.components.LabeledProgress
+import com.robsartin.contactotomy.ui.components.SectionHeader
+import com.robsartin.contactotomy.ui.components.SourceCard
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -67,10 +72,25 @@ fun MergeScreen(store: MergeReviewStore) {
                     }
                 }
             }
-            Text("${resolved.size} of ${state.items.size} reviewed", Modifier.padding(vertical = 4.dp))
+            LabeledProgress(reviewed = resolved.size, total = state.items.size)
             LazyColumn(Modifier.weight(1f)) {
                 items(pending) { item ->
-                    ClusterRow(item, selected = item.id == (selected?.id)) { selectedId = item.id }
+                    val label =
+                        if (item.origin == Origin.UNCERTAIN) {
+                            item.proposal.cluster.members
+                                .joinToString(" ↔ ") { displayName(it.name) } +
+                                " · " +
+                                item.proposal.cluster.reasons
+                                    .joinToString(", ")
+                        } else {
+                            "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
+                        }
+                    ClusterRow(
+                        title = label,
+                        origin = item.origin,
+                        selected = item.id == selected?.id,
+                        onClick = { selectedId = item.id },
+                    )
                 }
                 if (resolved.isNotEmpty()) {
                     item { Text("Resolved (${resolved.size})", Modifier.padding(top = 10.dp)) }
@@ -104,32 +124,6 @@ fun MergeScreen(store: MergeReviewStore) {
                 }
             }
         }
-    }
-}
-
-@Composable
-private fun ClusterRow(
-    item: ReviewItem,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    val tag =
-        when (item.origin) {
-            Origin.UNCERTAIN -> "maybe"
-            Origin.MANUAL -> "manual"
-            Origin.HIGH -> "HIGH"
-        }
-    val label =
-        if (item.origin == Origin.UNCERTAIN) {
-            val names =
-                item.proposal.cluster.members
-                    .joinToString(" ↔ ") { displayName(it.name) }
-            "$names · ${item.proposal.cluster.reasons.joinToString(", ")}"
-        } else {
-            "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
-        }
-    Row(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-        Button(onClick = onClick) { Text((if (selected) "▸ " else "") + "$label  [$tag]") }
     }
 }
 
@@ -228,15 +222,12 @@ private fun CompanyOrgField(
 @Composable
 private fun SourceCards(members: List<Contact>) {
     val sorted = members.sortedWith(compareByDescending(nullsLast()) { it.modifiedAt })
-    Text("Source cards (${sorted.size})", Modifier.padding(bottom = 4.dp))
-    sorted.forEachIndexed { index, m ->
-        Column(Modifier.fillMaxWidth().padding(vertical = 3.dp)) {
-            val primary = if (index == 0) " ★ primary" else ""
-            val date = m.modifiedAt?.toString()?.take(10) ?: "—"
-            Text("[${m.source}]$primary · $date")
-            Text(displayName(m.name))
-            val line = (m.phones + m.emails + listOfNotNull(m.org)).joinToString(" · ")
-            if (line.isNotEmpty()) Text(line)
+    SectionHeader("Source cards (${sorted.size})")
+    Row(Modifier.fillMaxWidth()) {
+        sorted.forEachIndexed { index, m ->
+            Box(Modifier.weight(1f)) {
+                SourceCard(contact = m, primary = index == 0, selected = index == 0)
+            }
         }
     }
 }

@@ -27,7 +27,7 @@ class MergeScreenManualMergeTest {
             val store = store()
             store.manualMerge(listOf("c", "d"))
             setContent { MergeScreen(store) }
-            onNodeWithText("[manual]", substring = true).assertIsDisplayed()
+            onNodeWithText("manual", substring = true).assertIsDisplayed()
         }
 
     @Test
@@ -43,7 +43,7 @@ class MergeScreenManualMergeTest {
             onNodeWithText("Devon Vasquez", substring = true).performClick()
             onNodeWithText("Create merge").performClick()
 
-            onNodeWithText("[manual]", substring = true).assertIsDisplayed()
+            onNodeWithText("manual", substring = true).assertIsDisplayed()
             assertEquals(1, store.state.value.items.size)
             assertEquals(
                 Origin.MANUAL,
