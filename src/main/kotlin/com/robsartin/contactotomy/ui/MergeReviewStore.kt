@@ -58,6 +58,11 @@ class MergeReviewStore(
         memberId: String,
     ) = updateItem(itemId) { it.copy(nameChoiceId = memberId) }
 
+    fun chooseOrg(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { it.copy(orgChoice = value) }
+
     fun toggleField(
         itemId: String,
         value: ExcludedValue,

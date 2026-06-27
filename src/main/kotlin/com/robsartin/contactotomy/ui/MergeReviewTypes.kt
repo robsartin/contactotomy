@@ -15,6 +15,7 @@ data class ReviewItem(
     val excludedValues: Set<ExcludedValue> = emptySet(),
     val conflictChoices: Map<String, String> = emptyMap(),
     val nameChoiceId: String? = null,
+    val orgChoice: String? = null,
 )
 
 data class MergeReviewState(
