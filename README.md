@@ -18,16 +18,13 @@ Your contacts never leave your machine.
 
 ## Status
 
-Design phase. See:
-
-- Design spec: [`docs/superpowers/specs/2026-06-23-contactotomy-design.md`](docs/superpowers/specs/2026-06-23-contactotomy-design.md)
-- Architecture Decision Records: [`docs/adr/`](docs/adr/)
+Design phase.
 
 ## Documentation
 
-The full export → clean → import workflow (including the back-up-and-wipe step
-required by the mirror-into-both approach) lives in the design spec and will be
-surfaced in-app.
-
+- **User guide** (end-to-end: export → clean → import → ongoing sync):
+  [`docs/user-guide.md`](docs/user-guide.md)
 - Export / clean / import guide (also shown in-app on the Export screen):
   [`src/main/resources/export-instructions.md`](src/main/resources/export-instructions.md)
+- Design spec: [`docs/superpowers/specs/2026-06-23-contactotomy-design.md`](docs/superpowers/specs/2026-06-23-contactotomy-design.md)
+- Architecture Decision Records: [`docs/adr/`](docs/adr/)
