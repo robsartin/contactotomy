@@ -1,12 +1,16 @@
 package com.robsartin.contactotomy.core.exporter
 
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactPhoto
 import com.robsartin.contactotomy.core.model.PostalAddress
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion
+import ezvcard.parameter.ImageType
 import ezvcard.property.Categories
+import ezvcard.property.Photo
 import ezvcard.property.StructuredName
+import java.util.Base64
 
 class VcfExporter {
     /** Serializes contacts to a single vCard 3.0, UTF-8 string. */
@@ -39,7 +43,25 @@ class VcfExporter {
         if (contact.categories.isNotEmpty()) {
             card.setCategories(Categories().apply { values.addAll(contact.categories) })
         }
+        contact.photo?.let { toEzPhoto(it)?.let { ezPhoto -> card.addPhoto(ezPhoto) } }
         return card
+    }
+
+    private fun mimeTypeToImageType(contentType: String?): ImageType =
+        when (contentType?.lowercase()) {
+            "image/jpeg", "image/jpg" -> ImageType.JPEG
+            "image/png" -> ImageType.PNG
+            "image/gif" -> ImageType.GIF
+            else -> ImageType.JPEG // sensible default
+        }
+
+    private fun toEzPhoto(photo: ContactPhoto): Photo? {
+        val imageType = mimeTypeToImageType(photo.contentType)
+        return when {
+            photo.base64 != null -> Photo(Base64.getDecoder().decode(photo.base64), imageType)
+            photo.url != null -> Photo(photo.url, imageType)
+            else -> null
+        }
     }
 
     private fun toEzAddress(addr: PostalAddress): ezvcard.property.Address =
