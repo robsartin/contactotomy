@@ -54,7 +54,12 @@ everything a manual item needs (`proposal`, `decision`, `excludedValues`,
   - resolve ids to `Contact`s from `contacts`.
   - build `Cluster(id = "manual-" + sortedIds.joinToString("+"),
     members = thoseContacts, confidence = Confidence.HIGH /* user-asserted */,
-    reasons = listOf("Manually merged"))`.
+    reasons = emptyList())`. (`Cluster.reasons` is `List<MatchReason>`, an enum
+    with no manual variant, and reasons are only rendered for UNCERTAIN items, so
+    a manual cluster carries no reasons — no `core` change needed.)
+  - return type is `String?`: the new item id, or `null` if fewer than two
+    eligible contacts were supplied (the UI only enables "Create merge" at ≥2, so
+    this is just a defensive guard).
   - `proposal = merger.merge(cluster)`; append
     `ReviewItem(id = cluster.id, origin = Origin.MANUAL, proposal = proposal)`
     (decision defaults to `PENDING`) to `items`.
