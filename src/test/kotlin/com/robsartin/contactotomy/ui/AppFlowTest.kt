@@ -7,6 +7,7 @@ import androidx.compose.ui.test.onFirst
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.runComposeUiTest
+import com.robsartin.contactotomy.core.exporter.VcfExporter
 import com.robsartin.contactotomy.core.model.Source
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -95,6 +96,35 @@ class AppFlowTest {
                 store.state.value.finalContacts
                     ?.size,
             )
+        }
+
+    @Test
+    fun `manual merge promotes a company name into org and exports it`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("name-company.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge
+            onNodeWithText("+ Manual merge").performClick()
+            onNodeWithText("Jane Smith", substring = true).performClick()
+            onNodeWithText("Acme Inc", substring = true).performClick()
+            onNodeWithText("Create merge").performClick()
+            // auto-suggest: name = Jane Smith, org = Acme Inc (promoted from the company card's name)
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
+            onNodeWithText("Next").performClick() // commit merge -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertEquals("Acme Inc", final.single().org)
+
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("ORG:Acme Inc"), "exported vCard should carry the promoted org:\n$vcard")
+            assertTrue(vcard.contains("FN:Jane Smith"), "exported vCard should carry the person name:\n$vcard")
         }
 
     @Test

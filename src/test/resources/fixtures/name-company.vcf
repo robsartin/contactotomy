@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Smith;Jane;;;
+FN:Jane Smith
+EMAIL;TYPE=INTERNET:jane@acme.com
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:;Acme Inc;;;
+FN:Acme Inc
+EMAIL;TYPE=INTERNET:info@acme.com
+END:VCARD

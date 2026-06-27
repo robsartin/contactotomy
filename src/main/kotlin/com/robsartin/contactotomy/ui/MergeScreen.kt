@@ -27,8 +27,8 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
+import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -156,18 +156,16 @@ private fun MergeDetailContent(
 
         Text("Merged result — tick what to keep", Modifier.padding(top = 8.dp, bottom = 4.dp))
 
-        // Name: pick which source card's name wins (most-complete pre-selected = merged.name).
-        val names =
-            p.cluster.members
-                .associate { it.id to displayName(it.name) }
-                .filterValues { it.isNotBlank() }
-        if (names.isNotEmpty()) {
+        // Name: pick which source card's name wins; company-like names are badged.
+        val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
+        if (namedMembers.isNotEmpty()) {
             Text("Name (pick one)")
-            names.forEach { (memberId, name) ->
+            namedMembers.forEach { m ->
                 val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
+                val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
                 Row(verticalAlignment = Alignment.CenterVertically) {
-                    RadioButton(selected = memberId == chosen, onClick = { store.chooseName(item.id, memberId) })
-                    Text(name)
+                    RadioButton(selected = m.id == chosen, onClick = { store.chooseName(item.id, m.id) })
+                    Text(displayName(m.name) + badge)
                 }
             }
         }
@@ -177,8 +175,11 @@ private fun MergeDetailContent(
         MultiField("emails", p.merged.emails, item, store)
         MultiField("categories", p.merged.categories, item, store)
 
-        // Single-value conflicts (org/title/notes): pick one with a radio.
-        p.conflicts.forEach { conflict ->
+        // Company / org has its own control (supports promoting a mis-filed company name).
+        CompanyOrgField(store, item)
+
+        // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
+        p.conflicts.filter { it.field != "org" }.forEach { conflict ->
             Text("${conflict.field} (pick one)", Modifier.padding(top = 4.dp))
             conflict.candidates.map { it.value }.distinct().forEach { value ->
                 val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
@@ -190,6 +191,36 @@ private fun MergeDetailContent(
                     Text(value)
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CompanyOrgField(
+    store: MergeReviewStore,
+    item: ReviewItem,
+) {
+    val members = item.proposal.cluster.members
+    val orgs = members.mapNotNull { it.org?.takeIf { o -> o.isNotBlank() } }
+    val promotions =
+        members.mapNotNull { m ->
+            if (CompanyNameDetector.detect(m.name) != null) displayName(m.name).takeIf { it.isNotBlank() } else null
+        }
+    // value -> label, insertion-ordered, de-duplicated; promotions tagged "(from name)"; "" = none.
+    val candidates = LinkedHashMap<String, String>()
+    orgs.forEach { candidates.putIfAbsent(it, it) }
+    promotions.forEach { candidates.putIfAbsent(it, "$it (from name)") }
+    candidates[""] = "(none)"
+
+    val chosen = item.orgChoice ?: item.proposal.merged.org ?: ""
+    Text("Company / org (pick one)", Modifier.padding(top = 4.dp))
+    candidates.forEach { (value, label) ->
+        Row(
+            Modifier.clickable { store.chooseOrg(item.id, value) },
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            RadioButton(selected = value == chosen, onClick = null)
+            Text(label)
         }
     }
 }
@@ -272,5 +303,3 @@ private fun defaultNameMemberId(members: List<Contact>): String =
             listOf(m.name.prefix, m.name.given, m.name.middle, m.name.family, m.name.suffix).count { p -> !p.isNullOrBlank() }
         }?.id
         ?: members.first().id
-
-private fun displayName(name: ContactName): String = name.formatted ?: listOfNotNull(name.given, name.family).joinToString(" ")

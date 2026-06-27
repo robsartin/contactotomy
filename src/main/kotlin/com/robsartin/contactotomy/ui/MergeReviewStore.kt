@@ -4,6 +4,7 @@ import com.robsartin.contactotomy.core.apply.Action
 import com.robsartin.contactotomy.core.apply.DecisionApplier
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.apply.MergeDecision
+import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.matcher.Cluster
 import com.robsartin.contactotomy.core.matcher.Confidence
 import com.robsartin.contactotomy.core.matcher.ContactMatcher
@@ -31,7 +32,7 @@ class MergeReviewStore(
         val result = matcher.match(contacts)
         val high =
             result.clusters.map { cluster ->
-                ReviewItem(id = cluster.id, origin = Origin.HIGH, proposal = merger.merge(cluster))
+                reviewItem(id = cluster.id, origin = Origin.HIGH, cluster = cluster)
             }
         val uncertain =
             result.uncertainPairs.map { edge ->
@@ -42,7 +43,7 @@ class MergeReviewStore(
                         confidence = Confidence.UNCERTAIN,
                         reasons = edge.reasons,
                     )
-                ReviewItem(id = cluster.id, origin = Origin.UNCERTAIN, proposal = merger.merge(cluster))
+                reviewItem(id = cluster.id, origin = Origin.UNCERTAIN, cluster = cluster)
             }
         return high + uncertain
     }
@@ -57,6 +58,11 @@ class MergeReviewStore(
         itemId: String,
         memberId: String,
     ) = updateItem(itemId) { it.copy(nameChoiceId = memberId) }
+
+    fun chooseOrg(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { it.copy(orgChoice = value) }
 
     fun toggleField(
         itemId: String,
@@ -105,9 +111,47 @@ class MergeReviewStore(
                 confidence = Confidence.HIGH,
                 reasons = emptyList(),
             )
-        val item = ReviewItem(id = cluster.id, origin = Origin.MANUAL, proposal = merger.merge(cluster))
+        val item = reviewItem(id = cluster.id, origin = Origin.MANUAL, cluster = cluster)
         _state.update { st -> st.copy(items = st.items + item) }
         return item.id
+    }
+
+    /** Builds a ReviewItem for a cluster, applying company auto-suggest defaults. */
+    private fun reviewItem(
+        id: String,
+        origin: Origin,
+        cluster: Cluster,
+    ): ReviewItem {
+        val (nameChoiceId, orgChoice) = companyAutoSuggest(cluster.members)
+        return ReviewItem(
+            id = id,
+            origin = origin,
+            proposal = merger.merge(cluster),
+            nameChoiceId = nameChoiceId,
+            orgChoice = orgChoice,
+        )
+    }
+
+    /**
+     * When no member has an org but some member's name looks like a company, suggest promoting that
+     * name into org, and (if a different member has a non-company name) using that as the person name.
+     * Returns (nameChoiceId, orgChoice); both null if nothing to suggest.
+     */
+    private fun companyAutoSuggest(members: List<Contact>): Pair<String?, String?> {
+        if (members.any { !it.org.isNullOrBlank() }) return null to null
+        val companyMembers = members.mapNotNull { m -> CompanyNameDetector.detect(m.name)?.let { m to it } }
+        if (companyMembers.isEmpty()) return null to null
+        val company = companyMembers.minBy { it.second.ordinal }.first
+        val personId =
+            members
+                .firstOrNull {
+                    it.id != company.id &&
+                        CompanyNameDetector.detect(
+                            it.name,
+                        ) == null &&
+                        displayName(it.name).isNotBlank()
+                }?.id
+        return personId to displayName(company.name)
     }
 
     private fun updateItem(
@@ -160,6 +204,13 @@ class MergeReviewStore(
                     item.proposal.merged.id to member.name
                 }.toMap()
         val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
+        // Apply per-cluster org overrides (chosen company/org, or "" to clear) — engine untouched.
+        // orgChoice is the single source of truth for the merged org; it supersedes any
+        // conflictChoices["org"] (the UI routes org through chooseOrg, not chooseConflict).
+        val orgOverrides: Map<String, String> =
+            finalAccepted.mapNotNull { item -> item.orgChoice?.let { item.proposal.merged.id to it } }.toMap()
+        val withOrg =
+            withNames.map { c -> orgOverrides[c.id]?.let { oc -> c.copy(org = oc.ifEmpty { null }) } ?: c }
 
         _state.update { st ->
             st.copy(
@@ -167,7 +218,7 @@ class MergeReviewStore(
                 committed = true,
             )
         }
-        return withNames
+        return withOrg
     }
 
     companion object {
