@@ -25,4 +25,25 @@ class MergeReviewStoreCompanyTest {
     fun `orgChoice defaults to null`() {
         assertNull(orgCluster().state.value.items.single().orgChoice)
     }
+
+    @Test
+    fun `commit applies a chosen org to the merged contact`() {
+        val store = orgCluster()
+        val id = store.state.value.items.single().id
+        store.chooseOrg(id, "Acme Incorporated")
+        store.accept(id)
+        val result = store.commit()
+        assertEquals(1, result.size)
+        assertEquals("Acme Incorporated", result.single().org)
+    }
+
+    @Test
+    fun `commit with an empty org choice clears the merged org`() {
+        val store = orgCluster() // merged would otherwise be "Acme"
+        val id = store.state.value.items.single().id
+        store.chooseOrg(id, "")
+        store.accept(id)
+        val result = store.commit()
+        assertNull(result.single().org)
+    }
 }

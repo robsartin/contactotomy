@@ -165,6 +165,11 @@ class MergeReviewStore(
                     item.proposal.merged.id to member.name
                 }.toMap()
         val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
+        // Apply per-cluster org overrides (chosen company/org, or "" to clear) — engine untouched.
+        val orgOverrides: Map<String, String> =
+            finalAccepted.mapNotNull { item -> item.orgChoice?.let { item.proposal.merged.id to it } }.toMap()
+        val withOrg =
+            withNames.map { c -> orgOverrides[c.id]?.let { oc -> c.copy(org = oc.ifEmpty { null }) } ?: c }
 
         _state.update { st ->
             st.copy(
@@ -172,7 +177,7 @@ class MergeReviewStore(
                 committed = true,
             )
         }
-        return withNames
+        return withOrg
     }
 
     companion object {
