@@ -9,8 +9,8 @@ import kotlin.test.assertTrue
 
 class CompanyReviewStoreTest {
     private val acme = contact("acme").copy(name = ContactName(formatted = "Acme Inc")) // LEGAL_SUFFIX
-    private val jane = contact("jane", given = "Jane", family = "Smith")                // null -> not a suspect
-    private val bottle = contact("bottle", given = "Blue", family = "Bottle")           // null -> not a suspect
+    private val jane = contact("jane", given = "Jane", family = "Smith") // null -> not a suspect
+    private val bottle = contact("bottle", given = "Blue", family = "Bottle") // null -> not a suspect
 
     @Test
     fun `high-precision suspects are pre-marked, others are not`() {

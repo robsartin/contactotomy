@@ -9,10 +9,14 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-data class CompanyReviewState(val markedIds: Set<String> = emptySet())
+data class CompanyReviewState(
+    val markedIds: Set<String> = emptySet(),
+)
 
 /** Review which standalone contacts are companies; high-precision suspects start marked. */
-class CompanyReviewStore(private val contacts: List<Contact>) {
+class CompanyReviewStore(
+    private val contacts: List<Contact>,
+) {
     private val _state =
         MutableStateFlow(
             CompanyReviewState(
