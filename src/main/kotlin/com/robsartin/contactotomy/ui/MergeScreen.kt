@@ -62,12 +62,24 @@ fun MergeScreen(store: MergeReviewStore) {
             )
         }
         // ---- RIGHT: detail ----
-        Column(Modifier.fillMaxWidth().padding(start = 12.dp).verticalScroll(rememberScrollState())) {
+        Column(Modifier.fillMaxWidth().fillMaxHeight().padding(start = 12.dp)) {
             if (selected == null) {
                 Text("All clusters reviewed")
             } else {
-                MergeDetail(store, selected) {
-                    selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                // Scrollable content: source cards + merged-result fields.
+                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
+                    MergeDetailContent(store, selected)
+                }
+                // Pinned footer: decision buttons stay on-screen regardless of detail length.
+                Row(Modifier.padding(top = 10.dp)) {
+                    Button(onClick = {
+                        store.accept(selected.id)
+                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                    }) { Text("✓ Accept merge") }
+                    Button(onClick = {
+                        store.reject(selected.id)
+                        selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                    }) { Text("✕ Keep separate") }
                 }
             }
         }
@@ -108,10 +120,9 @@ private fun ResolvedRow(
 }
 
 @Composable
-private fun MergeDetail(
+private fun MergeDetailContent(
     store: MergeReviewStore,
     item: ReviewItem,
-    onDecided: () -> Unit,
 ) {
     val p = item.proposal
     Column {
@@ -153,17 +164,6 @@ private fun MergeDetail(
                     Text(value)
                 }
             }
-        }
-
-        Row(Modifier.padding(top = 10.dp)) {
-            Button(onClick = {
-                store.accept(item.id)
-                onDecided()
-            }) { Text("✓ Accept merge") }
-            Button(onClick = {
-                store.reject(item.id)
-                onDecided()
-            }) { Text("✕ Keep separate") }
         }
     }
 }
