@@ -188,6 +188,28 @@ class AppFlowTest {
         }
 
     @Test
+    fun `nameless email card is named from its email via the Tidy step`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("nameless-email.vcf"), Source.APPLE) }
+            assertEquals(1, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
+            onNodeWithText("Next").performClick() // commit merge -> Tidy
+            onNodeWithText("→ name: lonely@example.com", substring = true).assertIsDisplayed() // pre-marked
+            onNodeWithText("Next").performClick() // commit Tidy -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(ContactName(formatted = "lonely@example.com"), final.single().name)
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("FN:lonely@example.com"), "expected FN from email:\n$vcard")
+        }
+
+    @Test
     fun `standalone company is normalized by the Tidy step and exported as org only`() =
         runComposeUiTest {
             val store = AppStore()
