@@ -22,3 +22,6 @@ gradle.properties
 
 # Visual brainstorm scratch (not committed)
 .superpowers/
+
+# Local agent worktrees / tooling state
+.claude/
