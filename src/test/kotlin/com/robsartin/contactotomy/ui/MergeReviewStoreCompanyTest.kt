@@ -139,6 +139,12 @@ class MergeReviewStoreCompanyTest {
                 .single()
                 .nameChoiceId,
         )
+        assertEquals(
+            true,
+            store.state.value.items
+                .single()
+                .nameCleared,
+        )
     }
 
     @Test

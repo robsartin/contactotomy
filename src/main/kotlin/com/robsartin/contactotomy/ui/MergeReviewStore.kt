@@ -59,7 +59,7 @@ class MergeReviewStore(
         memberId: String,
     ) = updateItem(itemId) { it.copy(nameChoiceId = memberId, nameCleared = false) }
 
-    fun clearName(itemId: String) = updateItem(itemId) { it.copy(nameCleared = true) }
+    fun clearName(itemId: String) = updateItem(itemId) { it.copy(nameCleared = true, nameChoiceId = null) }
 
     fun chooseOrg(
         itemId: String,
@@ -147,9 +147,9 @@ class MergeReviewStore(
      * otherwise (company-only) clear the name.
      */
     private fun companyAutoSuggest(members: List<Contact>): AutoSuggest {
-        if (members.any { !it.org.isNullOrBlank() }) return AutoSuggest(null, false, null)
+        if (members.any { !it.org.isNullOrBlank() }) return AutoSuggest(nameChoiceId = null, nameCleared = false, orgChoice = null)
         val companyMembers = members.mapNotNull { m -> CompanyNameDetector.detect(m.name)?.let { m to it } }
-        if (companyMembers.isEmpty()) return AutoSuggest(null, false, null)
+        if (companyMembers.isEmpty()) return AutoSuggest(nameChoiceId = null, nameCleared = false, orgChoice = null)
         val company = companyMembers.minBy { it.second.ordinal }.first
         val personId =
             members
