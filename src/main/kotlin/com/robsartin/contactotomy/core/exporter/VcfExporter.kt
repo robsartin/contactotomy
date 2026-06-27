@@ -1,6 +1,7 @@
 package com.robsartin.contactotomy.core.exporter
 
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.PostalAddress
 import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion
@@ -30,6 +31,7 @@ class VcfExporter {
 
         contact.phones.forEach { card.addTelephoneNumber(it) }
         contact.emails.forEach { card.addEmail(it) }
+        contact.addresses.forEach { card.addAddress(toEzAddress(it)) }
         contact.org?.let { card.setOrganization(it) }
         contact.title?.let { card.addTitle(it) }
         contact.urls.forEach { card.addUrl(it) }
@@ -39,4 +41,15 @@ class VcfExporter {
         }
         return card
     }
+
+    private fun toEzAddress(addr: PostalAddress): ezvcard.property.Address =
+        ezvcard.property.Address().apply {
+            addr.poBox?.let { poBox = it }
+            addr.extended?.let { extendedAddress = it }
+            addr.street?.let { streetAddress = it }
+            addr.city?.let { locality = it }
+            addr.region?.let { region = it }
+            addr.postalCode?.let { postalCode = it }
+            addr.country?.let { country = it }
+        }
 }
