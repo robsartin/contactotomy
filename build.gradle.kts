@@ -46,6 +46,18 @@ tasks.test {
 compose.desktop {
     application {
         mainClass = "com.robsartin.contactotomy.ui.MainKt"
+
+        nativeDistributions {
+            targetFormats(org.jetbrains.compose.desktop.application.dsl.TargetFormat.Dmg)
+            packageName = "Contactotomy"
+            // jpackage requires MAJOR > 0 for DMG; project.version "0.1.0" is
+            // rejected. Using "1.0.0" here until the project version is bumped
+            // to 1.x. Update both together when that happens.
+            packageVersion = "1.0.0"
+            // NOTE: distributing outside the build machine requires Apple
+            // Developer code signing + notarization. No signing is configured
+            // here; the DMG is suitable for local use only.
+        }
     }
 }
 

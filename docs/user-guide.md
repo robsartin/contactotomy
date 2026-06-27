@@ -69,7 +69,17 @@ cd contactotomy
 ./gradlew run
 ```
 
-The app opens in a desktop window. A packaged `.app` build may be added later; check the [README](../README.md) for updates.
+The app opens in a desktop window.
+
+**Alternatively, build a distributable macOS DMG:**
+
+```bash
+./gradlew packageDmg
+```
+
+The DMG is written to `build/compose/binaries/main/dmg/`. Open it, drag Contactotomy to Applications, and launch it from there like any other Mac app.
+
+> **Note:** The DMG built this way is not code-signed or notarized. macOS Gatekeeper will warn when opening it on a machine other than the one that built it. To bypass the warning, right-click the app in Applications and choose **Open**. Apple Developer code signing and notarization are not configured in this project.
 
 **Privacy note:** Contactotomy reads and writes files only where you tell it to. No network connections are made. Your contacts never leave your machine.
 
