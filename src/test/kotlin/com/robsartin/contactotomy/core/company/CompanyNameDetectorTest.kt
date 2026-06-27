@@ -22,7 +22,6 @@ class CompanyNameDetectorTest {
     @Test
     fun `ampersand is detected`() {
         assertEquals(CompanySignal.AMPERSAND, CompanyNameDetector.detect(named(formatted = "Smith & Sons")))
-        assertEquals(CompanySignal.AMPERSAND, CompanyNameDetector.detect(named(formatted = "Jones and Co")))
     }
 
     @Test
@@ -47,5 +46,6 @@ class CompanyNameDetectorTest {
     @Test
     fun `highest-precision signal wins`() {
         assertEquals(CompanySignal.LEGAL_SUFFIX, CompanyNameDetector.detect(named(formatted = "ACME PLUMBING INC")))
+        assertEquals(CompanySignal.LEGAL_SUFFIX, CompanyNameDetector.detect(named(formatted = "Smith & Sons LLC")))
     }
 }

@@ -52,8 +52,8 @@ object CompanyNameDetector {
         val tokens = display.split(Regex("\\s+")).filter { it.isNotBlank() }
         val cleaned = tokens.map { it.replace(".", "").replace(",", "").uppercase() }
 
-        if (display.contains("&") || AND_CO.containsMatchIn(display)) return CompanySignal.AMPERSAND
         if (cleaned.isNotEmpty() && cleaned.last() in SUFFIXES) return CompanySignal.LEGAL_SUFFIX
+        if (display.contains("&") || AND_CO.containsMatchIn(display)) return CompanySignal.AMPERSAND
         if (cleaned.any { it in KEYWORDS }) return CompanySignal.KEYWORD
         val allCaps = display.any { it.isLetter() } && display == display.uppercase()
         val singleToken = tokens.size == 1 && name.family.isNullOrBlank()
