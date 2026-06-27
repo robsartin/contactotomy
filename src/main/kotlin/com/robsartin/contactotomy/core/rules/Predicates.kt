@@ -9,6 +9,7 @@ internal object Predicates {
     ): Boolean =
         when (predicate.kind) {
             PredicateKind.NO_NAME_AND_NO_PHONE -> !hasName(contact) && contact.phones.isEmpty()
+            PredicateKind.NO_PHONE -> contact.phones.isEmpty()
             PredicateKind.NO_EMAIL -> contact.emails.isEmpty()
             PredicateKind.EMPTY_CARD ->
                 !hasName(contact) &&

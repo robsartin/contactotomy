@@ -27,6 +27,11 @@ class PredicatesTest {
         assertFalse(Predicates.evaluate(p(PredicateKind.EMPTY_CARD), contact("1", notes = "hi")))
     }
 
+    @Test fun `no phone`() {
+        assertTrue(Predicates.evaluate(p(PredicateKind.NO_PHONE), contact("1", given = "Al")))
+        assertFalse(Predicates.evaluate(p(PredicateKind.NO_PHONE), contact("1", phones = listOf("+1"))))
+    }
+
     @Test fun `created before respects null createdAt`() {
         val cutoff = Instant.parse("2020-01-01T00:00:00Z")
         val old = contact("1", given = "Al", createdAt = Instant.parse("2015-01-01T00:00:00Z"))

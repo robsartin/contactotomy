@@ -10,6 +10,7 @@ enum class TextField { EMAIL, NAME, ORG, ADDRESS, URL, NOTES }
 
 enum class PredicateKind {
     NO_NAME_AND_NO_PHONE,
+    NO_PHONE,
     NO_EMAIL,
     EMPTY_CARD,
     CREATED_BEFORE,
