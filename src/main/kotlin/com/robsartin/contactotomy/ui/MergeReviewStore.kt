@@ -78,7 +78,17 @@ class MergeReviewStore(
         itemId: String,
         field: String,
         value: String,
-    ) = updateItem(itemId) { it.copy(conflictChoices = it.conflictChoices + (field to value)) }
+    ) = updateItem(itemId) {
+        it.copy(
+            conflictChoices = it.conflictChoices + (field to value),
+            clearedConflicts = it.clearedConflicts - field,
+        )
+    }
+
+    fun clearConflict(
+        itemId: String,
+        field: String,
+    ) = updateItem(itemId) { it.copy(clearedConflicts = it.clearedConflicts + field) }
 
     fun acceptAllHighConfidence() =
         _state.update { st ->
@@ -225,6 +235,15 @@ class MergeReviewStore(
             finalAccepted.mapNotNull { item -> item.orgChoice?.let { item.proposal.merged.id to it } }.toMap()
         val withOrg =
             withNames.map { c -> orgOverrides[c.id]?.let { oc -> c.copy(org = oc.ifEmpty { null }) } ?: c }
+        // Apply per-cluster cleared-field overrides (null out title/notes) — engine untouched.
+        val withCleared =
+            withOrg.map { c ->
+                val item = finalAccepted.firstOrNull { it.proposal.merged.id == c.id } ?: return@map c
+                var out = c
+                if ("title" in item.clearedConflicts) out = out.copy(title = null)
+                if ("notes" in item.clearedConflicts) out = out.copy(notes = null)
+                out
+            }
 
         _state.update { st ->
             st.copy(
@@ -232,7 +251,7 @@ class MergeReviewStore(
                 committed = true,
             )
         }
-        return withOrg
+        return withCleared
     }
 
     companion object {
