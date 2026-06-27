@@ -1,6 +1,7 @@
 package com.robsartin.contactotomy.core.rules
 
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.toDisplayString
 
 /** Evaluates a Condition against a Contact, returning a human reason when it matches. */
 internal class ConditionEvaluator {
@@ -61,7 +62,7 @@ internal class ConditionEvaluator {
             TextField.EMAIL -> c.emails
             TextField.NAME -> listOfNotNull(c.name.formatted, c.name.given, c.name.family)
             TextField.ORG -> listOfNotNull(c.org)
-            TextField.ADDRESS -> c.addresses
+            TextField.ADDRESS -> c.addresses.map { it.toDisplayString() }
             TextField.URL -> c.urls
             TextField.NOTES -> listOfNotNull(c.notes)
         }
