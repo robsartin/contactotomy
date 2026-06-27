@@ -17,6 +17,7 @@ data class ReviewItem(
     val nameChoiceId: String? = null,
     val nameCleared: Boolean = false,
     val orgChoice: String? = null,
+    val clearedConflicts: Set<String> = emptySet(),
 )
 
 data class MergeReviewState(

@@ -203,13 +203,19 @@ private fun MergeDetailContent(
                 p.conflicts.filter { it.field != "org" }.forEach { conflict ->
                     FieldGroup("${conflict.field} (pick one)") {
                         val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
+                        val cleared = conflict.field in item.clearedConflicts
                         conflict.candidates.map { it.value }.distinct().forEach { value ->
                             RadioRow(
                                 label = value,
-                                selected = value == chosen,
+                                selected = !cleared && value == chosen,
                                 onClick = { store.chooseConflict(item.id, conflict.field, value) },
                             )
                         }
+                        RadioRow(
+                            label = "(clear)",
+                            selected = cleared,
+                            onClick = { store.clearConflict(item.id, conflict.field) },
+                        )
                     }
                 }
             }
