@@ -92,7 +92,12 @@ private fun ClusterRow(
     selected: Boolean,
     onClick: () -> Unit,
 ) {
-    val tag = if (item.origin == Origin.UNCERTAIN) "maybe" else "HIGH"
+    val tag =
+        when (item.origin) {
+            Origin.UNCERTAIN -> "maybe"
+            Origin.MANUAL -> "manual"
+            Origin.HIGH -> "HIGH"
+        }
     val label =
         if (item.origin == Origin.UNCERTAIN) {
             val names =
