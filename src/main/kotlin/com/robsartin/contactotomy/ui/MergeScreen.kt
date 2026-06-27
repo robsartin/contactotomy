@@ -28,7 +28,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
 
 @Composable
 fun MergeScreen(store: MergeReviewStore) {
@@ -272,5 +271,3 @@ private fun defaultNameMemberId(members: List<Contact>): String =
             listOf(m.name.prefix, m.name.given, m.name.middle, m.name.family, m.name.suffix).count { p -> !p.isNullOrBlank() }
         }?.id
         ?: members.first().id
-
-private fun displayName(name: ContactName): String = name.formatted ?: listOfNotNull(name.given, name.family).joinToString(" ")
