@@ -9,21 +9,21 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
-data class CompanyReviewState(
+data class TidyState(
     val markedIds: Set<String> = emptySet(),
 )
 
 /** Review which standalone contacts are companies; high-precision suspects start marked. */
-class CompanyReviewStore(
+class TidyStore(
     private val contacts: List<Contact>,
 ) {
     private val _state =
         MutableStateFlow(
-            CompanyReviewState(
+            TidyState(
                 markedIds = contacts.filter { CompanyNameDetector.isHighPrecision(it.name) }.map { it.id }.toSet(),
             ),
         )
-    val state: StateFlow<CompanyReviewState> = _state.asStateFlow()
+    val state: StateFlow<TidyState> = _state.asStateFlow()
 
     /** Contacts with a non-blank name — the only ones worth marking. */
     fun listed(): List<Contact> = contacts.filter { companyNameText(it.name).isNotBlank() }

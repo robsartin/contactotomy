@@ -33,7 +33,7 @@ import com.robsartin.contactotomy.ui.theme.Dimens
 import com.robsartin.contactotomy.ui.theme.appColors
 
 @Composable
-fun CompanyScreen(store: CompanyReviewStore) {
+fun TidyScreen(store: TidyStore) {
     val state by store.state.collectAsState()
     var query by remember { mutableStateOf("") }
     var selectedId by remember { mutableStateOf<String?>(null) }
@@ -81,7 +81,7 @@ fun CompanyScreen(store: CompanyReviewStore) {
                 Text("Select a card")
             } else {
                 Card(shape = RoundedCornerShape(Dimens.cardRadius)) {
-                    Box(Modifier.padding(10.dp)) { CompanyCardDetail(selected) }
+                    Box(Modifier.padding(10.dp)) { TidyCardDetail(selected) }
                 }
             }
         }
@@ -89,7 +89,7 @@ fun CompanyScreen(store: CompanyReviewStore) {
 }
 
 @Composable
-private fun CompanyCardDetail(c: Contact) {
+private fun TidyCardDetail(c: Contact) {
     Column {
         Text(displayName(c.name))
         if (c.emails.isNotEmpty()) Text(c.emails.joinToString())
