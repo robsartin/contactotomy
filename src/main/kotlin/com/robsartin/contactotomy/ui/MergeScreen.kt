@@ -180,22 +180,16 @@ private fun MergeDetailContent(
                 val namedMembers = p.cluster.members.filter { displayName(it.name).isNotBlank() }
                 if (namedMembers.isNotEmpty()) {
                     FieldGroup("Name (pick one)") {
+                        val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
                         namedMembers.forEach { m ->
-                            val chosen = item.nameChoiceId ?: defaultNameMemberId(p.cluster.members)
-                            val selected = !item.nameCleared && m.id == chosen
                             val badge = if (CompanyNameDetector.detect(m.name) != null) "  · looks like a company" else ""
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(selected = selected, onClick = { store.chooseName(item.id, m.id) })
-                                Text(displayName(m.name) + badge)
-                            }
+                            RadioRow(
+                                label = displayName(m.name) + badge,
+                                selected = !item.nameCleared && m.id == chosen,
+                                onClick = { store.chooseName(item.id, m.id) },
+                            )
                         }
-                        Row(
-                            Modifier.clickable { store.clearName(item.id) },
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            RadioButton(selected = item.nameCleared, onClick = null)
-                            Text("(no name)")
-                        }
+                        RadioRow(label = "(no name)", selected = item.nameCleared, onClick = { store.clearName(item.id) })
                     }
                 }
 
@@ -210,15 +204,13 @@ private fun MergeDetailContent(
                 // Single-value conflicts (title/notes): pick one with a radio. (org handled above.)
                 p.conflicts.filter { it.field != "org" }.forEach { conflict ->
                     FieldGroup("${conflict.field} (pick one)") {
+                        val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
                         conflict.candidates.map { it.value }.distinct().forEach { value ->
-                            val chosen = item.conflictChoices[conflict.field] ?: conflict.chosen
-                            Row(verticalAlignment = Alignment.CenterVertically) {
-                                RadioButton(
-                                    selected = value == chosen,
-                                    onClick = { store.chooseConflict(item.id, conflict.field, value) },
-                                )
-                                Text(value)
-                            }
+                            RadioRow(
+                                label = value,
+                                selected = value == chosen,
+                                onClick = { store.chooseConflict(item.id, conflict.field, value) },
+                            )
                         }
                     }
                 }
@@ -244,13 +236,7 @@ private fun CompanyOrgField(
     val chosen = item.orgChoice ?: item.proposal.merged.org ?: ""
     FieldGroup("Company / org (pick one)") {
         candidates.forEach { (value, label) ->
-            Row(
-                Modifier.clickable { store.chooseOrg(item.id, value) },
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                RadioButton(selected = value == chosen, onClick = null)
-                Text(label)
-            }
+            RadioRow(label = label, selected = value == chosen, onClick = { store.chooseOrg(item.id, value) })
         }
     }
 }
@@ -330,9 +316,26 @@ private fun ManualMergePicker(
     }
 }
 
-private fun defaultNameMemberId(members: List<Contact>): String =
-    members
+@Composable
+private fun RadioRow(
+    label: String,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Row(
+        Modifier.clickable { onClick() },
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        RadioButton(selected = selected, onClick = null)
+        Text(label)
+    }
+}
+
+private fun defaultNameMemberId(members: List<Contact>): String {
+    val pool = members.filter { displayName(it.name).isNotBlank() }.ifEmpty { members }
+    return pool
         .maxByOrNull { m ->
-            listOf(m.name.prefix, m.name.given, m.name.middle, m.name.family, m.name.suffix).count { p -> !p.isNullOrBlank() }
+            listOf(m.name.prefix, m.name.given, m.name.middle, m.name.family, m.name.suffix).count { !it.isNullOrBlank() }
         }?.id
-        ?: members.first().id
+        ?: pool.first().id
+}
