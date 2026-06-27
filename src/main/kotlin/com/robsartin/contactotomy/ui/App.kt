@@ -7,7 +7,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
-import androidx.compose.material.MaterialTheme
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
@@ -15,6 +14,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.robsartin.contactotomy.ui.theme.ContactotomyTheme
 
 @Composable
 fun App(
@@ -24,7 +24,7 @@ fun App(
     otherPicker: FilePicker = AwtFilePicker("Choose a vCard file"),
 ) {
     val state: AppState by store.state.collectAsState()
-    MaterialTheme {
+    ContactotomyTheme {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
             StepIndicator(state.screen)
 
