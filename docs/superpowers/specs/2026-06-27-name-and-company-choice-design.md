@@ -43,6 +43,12 @@ separate ADR + spec.
 - **Org choice is stored as a UI override** (`orgChoice: String?`) and applied in
   `commit()` after `applyDecisions` and the name override — mirroring the existing
   name-override mechanism. The core engine is not touched.
+- **Export needs no change.** `VcfExporter.toVCard` builds each card from the
+  structured `Contact` fields (`contact.org?.let { card.setOrganization(it) }`,
+  `FN`/`N` from `contact.name`), not from `rawVCard`. So the merged contact's
+  overridden `org` and `name` serialize straight into the exported `ORG:` and
+  `FN:`/`N:` lines; `org = null` (the "(none)" case) emits no `ORG` line. This is
+  asserted by the e2e test below.
 - **Org leaves the generic conflict loop** and gets a dedicated "Company / org"
   control (title/notes stay generic conflicts).
 
@@ -142,9 +148,12 @@ The engine (`DecisionApplier`, `ContactMerger`) is unchanged.
   choice; "(none)" clears org; org no longer appears in the generic conflict list.
 - **End-to-end** (`AppFlowTest`): fixture with Card A "Jane Smith" (no org) + Card
   B "Acme Inc" (no org, same email domain so the user can manual-merge them in
-  Phase 1) → manual-merge → accept → exported merged contact has name "Jane Smith"
-  and org "Acme Inc". (Phase 1 relies on manual merge to pair them, since the
-  matcher linking is Phase 2.)
+  Phase 1) → manual-merge → accept → the merged contact has name "Jane Smith" and
+  org "Acme Inc" (auto-suggested). **Then serialize the final contacts via
+  `VcfExporter().export(final)` and assert the exported vCard string contains
+  `ORG:Acme Inc` and `FN:Jane Smith`** — proving the override reaches the exported
+  file. (Phase 1 relies on manual merge to pair them, since the matcher linking is
+  Phase 2.)
 - Konsist keeps `core` UI-free; coverage floors line ≥90 / branch ≥70 unchanged.
 
 ## 8. Scope
