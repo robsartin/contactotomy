@@ -85,6 +85,7 @@ fun App(
                         exportStore,
                         savePicker =
                             AwtFilePicker("Save cleaned vCard (.vcf)", save = true, defaultName = "contacts-clean.vcf"),
+                        summary = exportSummary(state),
                     )
             }
         }
