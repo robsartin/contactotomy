@@ -24,6 +24,8 @@ fun ExportScreen(
 ) {
     val state by store.state.collectAsState()
     Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
+        com.robsartin.contactotomy.ui.components
+            .SectionHeader("Export your cleaned contacts")
         Text("Ready to export ${state.contactCount} cleaned contacts")
         Button(
             onClick = {
@@ -40,8 +42,15 @@ fun ExportScreen(
         state.error?.let { Text("Error: $it") }
 
         Text("How to import your cleaned contacts", Modifier.padding(top = 8.dp))
-        Column(Modifier.verticalScroll(rememberScrollState())) {
-            Text(instructions)
+        androidx.compose.material.Card(
+            shape =
+                androidx.compose.foundation.shape
+                    .RoundedCornerShape(com.robsartin.contactotomy.ui.theme.Dimens.cardRadius),
+            modifier = Modifier.padding(top = 4.dp),
+        ) {
+            Column(Modifier.verticalScroll(rememberScrollState()).padding(10.dp)) {
+                Text(instructions)
+            }
         }
     }
 }

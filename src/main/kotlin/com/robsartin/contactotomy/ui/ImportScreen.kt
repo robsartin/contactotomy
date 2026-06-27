@@ -26,6 +26,8 @@ fun ImportScreen(
     val scope = rememberCoroutineScope()
 
     Column(Modifier.fillMaxWidth().padding(top = 12.dp)) {
+        com.robsartin.contactotomy.ui.components
+            .SectionHeader("Import your vCard exports")
         PickerRow("Choose Apple export") { applePicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.APPLE) } } }
         PickerRow("Choose Google export") { googlePicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.GOOGLE) } } }
         PickerRow("Add another file…") { otherPicker.pick()?.let { p -> scope.launch { store.importFile(p, Source.FILE) } } }
