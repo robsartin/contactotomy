@@ -8,8 +8,8 @@ import kotlin.test.assertEquals
 class CompanyNormalizerTest {
     @Test
     fun `blank org gets the name promoted and the name cleared`() {
-        val c = contact("a", given = "Round", family = "ISD", middle = "Rock") // name "Round Rock ISD"? see note
-        val out = CompanyNormalizer.markAsCompany(c.copy(name = ContactName(formatted = "Round Rock ISD")))
+        val c = contact("a").copy(name = ContactName(formatted = "Round Rock ISD"))
+        val out = CompanyNormalizer.markAsCompany(c)
         assertEquals("Round Rock ISD", out.org)
         assertEquals(ContactName(), out.name)
     }

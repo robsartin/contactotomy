@@ -5,6 +5,8 @@ import com.robsartin.contactotomy.core.model.ContactName
 /** Which signal flagged a name as company-like (precision order: LEGAL_SUFFIX highest). */
 enum class CompanySignal { LEGAL_SUFFIX, AMPERSAND, KEYWORD, WEAK }
 
+// Mirrors the UI's displayName but kept in core (no UI dependency) so core stays UI-free.
+
 /** The company string a name field holds: formatted if present, else given + family. */
 fun companyNameText(name: ContactName): String =
     name.formatted?.takeIf { it.isNotBlank() }
