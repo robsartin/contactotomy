@@ -20,16 +20,24 @@ import java.io.File
 
 private val NoopPicker = FilePicker { null }
 
+internal fun buildSummaryLine(summary: ExportSummary): String {
+    val mergedPart = if (summary.merged > 0) "−${summary.merged}" else "0"
+    val removedPart = if (summary.removed > 0) "−${summary.removed}" else "0"
+    return "Imported ${summary.imported} · merged $mergedPart · removed $removedPart · exporting ${summary.exporting}"
+}
+
 @Composable
 fun ExportScreen(
     store: ExportStore,
     savePicker: FilePicker = NoopPicker,
+    summary: ExportSummary = ExportSummary(0, 0, 0, 0),
     instructions: String = loadExportInstructions(),
 ) {
     val state by store.state.collectAsState()
     Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
         SectionHeader("Export your cleaned contacts")
         Text("Ready to export ${state.contactCount} cleaned contacts")
+        Text(buildSummaryLine(summary), modifier = Modifier.padding(top = Dimens.xs))
         Button(
             onClick = {
                 savePicker.pick()?.let { path ->
