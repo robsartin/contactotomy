@@ -42,7 +42,7 @@ class PredicatesTest {
         assertFalse(Predicates.evaluate(p(PredicateKind.CREATED_BEFORE, before = cutoff), unknown))
     }
 
-    @Test fun `source is and never contacted stub`() {
+    @Test fun `source is`() {
         assertTrue(
             Predicates.evaluate(
                 p(PredicateKind.SOURCE_IS, source = Source.GOOGLE),
@@ -55,6 +55,5 @@ class PredicatesTest {
                 contact("1", source = Source.GOOGLE),
             ),
         )
-        assertFalse(Predicates.evaluate(p(PredicateKind.NEVER_CONTACTED), contact("1")))
     }
 }

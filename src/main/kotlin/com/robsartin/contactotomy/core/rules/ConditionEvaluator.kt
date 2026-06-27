@@ -51,7 +51,6 @@ internal class ConditionEvaluator {
             PredicateKind.EMPTY_CARD -> "empty card"
             PredicateKind.CREATED_BEFORE -> "created before ${p.before}"
             PredicateKind.SOURCE_IS -> "source is ${p.source}"
-            PredicateKind.NEVER_CONTACTED -> "never contacted"
         }
 
     private fun textValues(

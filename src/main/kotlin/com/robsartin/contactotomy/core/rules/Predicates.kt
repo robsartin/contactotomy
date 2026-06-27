@@ -25,7 +25,6 @@ internal object Predicates {
                 before != null && created != null && created.isBefore(before)
             }
             PredicateKind.SOURCE_IS -> predicate.source != null && contact.source == predicate.source
-            PredicateKind.NEVER_CONTACTED -> false
         }
 
     private fun hasName(c: Contact): Boolean =
