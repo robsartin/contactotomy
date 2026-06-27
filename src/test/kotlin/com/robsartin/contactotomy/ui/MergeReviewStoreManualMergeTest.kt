@@ -3,6 +3,7 @@ package com.robsartin.contactotomy.ui
 import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 
 class MergeReviewStoreManualMergeTest {
     // a & b cluster (shared phone + nickname); c & d are lone singletons.
@@ -45,11 +46,18 @@ class MergeReviewStoreManualMergeTest {
     }
 
     @Test
-    fun `manualMerge with fewer than two eligible ids is a no-op returning null`() {
+    fun `manualMerge with one id is a no-op returning null`() {
         val store = store()
         val before = store.state.value.items.size
         assertEquals(null, store.manualMerge(listOf("c")))
-        // ids not in the eligible pool are ignored (a & b are already clustered)
+        assertEquals(before, store.state.value.items.size)
+    }
+
+    @Test
+    fun `manualMerge where only one id is eligible is a no-op returning null`() {
+        val store = store()
+        val before = store.state.value.items.size
+        // ids not in the eligible pool are ignored (a is already clustered)
         assertEquals(null, store.manualMerge(listOf("c", "a")))
         assertEquals(before, store.state.value.items.size)
     }
@@ -63,7 +71,7 @@ class MergeReviewStoreManualMergeTest {
         // a & b untouched (2), c & d collapse into 1 merged contact => 3 total.
         assertEquals(3, result.size)
         val ids = result.map { it.id }.toSet()
-        assertEquals(false, ids.contains("c"))
-        assertEquals(false, ids.contains("d"))
+        assertFalse("c" in ids)
+        assertFalse("d" in ids)
     }
 }
