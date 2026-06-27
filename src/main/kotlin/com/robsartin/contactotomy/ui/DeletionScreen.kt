@@ -42,7 +42,8 @@ fun DeletionScreen(
         Row(Modifier.fillMaxWidth()) {
             // --- Left: rules ---
             Column(Modifier.fillMaxWidth(0.28f).padding(end = 8.dp)) {
-                Text("Rules")
+                com.robsartin.contactotomy.ui.components
+                    .SectionHeader("Rules")
                 state.rules.forEach { rt ->
                     Row {
                         Checkbox(checked = rt.enabled, onCheckedChange = { store.toggleRule(rt.rule.name) })
@@ -94,7 +95,14 @@ fun DeletionScreen(
                 if (selected == null) {
                     Text("Select a flagged contact")
                 } else {
-                    CardDetail(selected)
+                    androidx.compose.material.Card(
+                        shape =
+                            androidx.compose.foundation.shape
+                                .RoundedCornerShape(com.robsartin.contactotomy.ui.theme.Dimens.cardRadius),
+                    ) {
+                        androidx.compose.foundation.layout
+                            .Box(Modifier.padding(10.dp)) { CardDetail(selected) }
+                    }
                 }
             }
         }
