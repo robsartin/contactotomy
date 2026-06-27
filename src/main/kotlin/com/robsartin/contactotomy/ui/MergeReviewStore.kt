@@ -4,6 +4,7 @@ import com.robsartin.contactotomy.core.apply.Action
 import com.robsartin.contactotomy.core.apply.DecisionApplier
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.apply.MergeDecision
+import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.matcher.Cluster
 import com.robsartin.contactotomy.core.matcher.Confidence
 import com.robsartin.contactotomy.core.matcher.ContactMatcher
@@ -31,7 +32,7 @@ class MergeReviewStore(
         val result = matcher.match(contacts)
         val high =
             result.clusters.map { cluster ->
-                ReviewItem(id = cluster.id, origin = Origin.HIGH, proposal = merger.merge(cluster))
+                reviewItem(id = cluster.id, origin = Origin.HIGH, cluster = cluster)
             }
         val uncertain =
             result.uncertainPairs.map { edge ->
@@ -42,7 +43,7 @@ class MergeReviewStore(
                         confidence = Confidence.UNCERTAIN,
                         reasons = edge.reasons,
                     )
-                ReviewItem(id = cluster.id, origin = Origin.UNCERTAIN, proposal = merger.merge(cluster))
+                reviewItem(id = cluster.id, origin = Origin.UNCERTAIN, cluster = cluster)
             }
         return high + uncertain
     }
@@ -110,9 +111,47 @@ class MergeReviewStore(
                 confidence = Confidence.HIGH,
                 reasons = emptyList(),
             )
-        val item = ReviewItem(id = cluster.id, origin = Origin.MANUAL, proposal = merger.merge(cluster))
+        val item = reviewItem(id = cluster.id, origin = Origin.MANUAL, cluster = cluster)
         _state.update { st -> st.copy(items = st.items + item) }
         return item.id
+    }
+
+    /** Builds a ReviewItem for a cluster, applying company auto-suggest defaults. */
+    private fun reviewItem(
+        id: String,
+        origin: Origin,
+        cluster: Cluster,
+    ): ReviewItem {
+        val (nameChoiceId, orgChoice) = companyAutoSuggest(cluster.members)
+        return ReviewItem(
+            id = id,
+            origin = origin,
+            proposal = merger.merge(cluster),
+            nameChoiceId = nameChoiceId,
+            orgChoice = orgChoice,
+        )
+    }
+
+    /**
+     * When no member has an org but some member's name looks like a company, suggest promoting that
+     * name into org, and (if a different member has a non-company name) using that as the person name.
+     * Returns (nameChoiceId, orgChoice); both null if nothing to suggest.
+     */
+    private fun companyAutoSuggest(members: List<Contact>): Pair<String?, String?> {
+        if (members.any { !it.org.isNullOrBlank() }) return null to null
+        val companyMembers = members.mapNotNull { m -> CompanyNameDetector.detect(m.name)?.let { m to it } }
+        if (companyMembers.isEmpty()) return null to null
+        val company = companyMembers.minByOrNull { it.second.ordinal }!!.first
+        val personId =
+            members
+                .firstOrNull {
+                    it.id != company.id &&
+                        CompanyNameDetector.detect(
+                            it.name,
+                        ) == null &&
+                        displayName(it.name).isNotBlank()
+                }?.id
+        return personId to displayName(company.name)
     }
 
     private fun updateItem(
