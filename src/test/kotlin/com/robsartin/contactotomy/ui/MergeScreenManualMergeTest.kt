@@ -37,7 +37,7 @@ class MergeScreenManualMergeTest {
             setContent { MergeScreen(store) }
 
             onNodeWithText("+ Manual merge").performClick() // open picker
-            onNodeWithText("Search").assertIsDisplayed()    // picker is shown
+            onNodeWithText("Search").assertIsDisplayed() // picker is shown
 
             onNodeWithText("Morgan Quill", substring = true).performClick()
             onNodeWithText("Devon Vasquez", substring = true).performClick()
@@ -45,7 +45,12 @@ class MergeScreenManualMergeTest {
 
             onNodeWithText("[manual]", substring = true).assertIsDisplayed()
             assertEquals(1, store.state.value.items.size)
-            assertEquals(Origin.MANUAL, store.state.value.items.single().origin)
+            assertEquals(
+                Origin.MANUAL,
+                store.state.value.items
+                    .single()
+                    .origin,
+            )
         }
 
     @Test
