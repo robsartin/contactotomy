@@ -46,6 +46,7 @@ internal class ConditionEvaluator {
     private fun describePredicate(p: Predicate): String =
         when (p.kind) {
             PredicateKind.NO_NAME_AND_NO_PHONE -> "no name and no phone"
+            PredicateKind.NO_PHONE -> "no phone"
             PredicateKind.NO_EMAIL -> "no email"
             PredicateKind.EMPTY_CARD -> "empty card"
             PredicateKind.CREATED_BEFORE -> "created before ${p.before}"

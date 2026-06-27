@@ -1,0 +1,128 @@
+{
+    "rules": [
+        {
+            "name": "empty cards",
+            "condition": { "type": "predicate", "kind": "EMPTY_CARD" }
+        },
+        {
+            "name": "no name and no phone",
+            "condition": { "type": "predicate", "kind": "NO_NAME_AND_NO_PHONE" }
+        },
+        {
+            "name": "name is an email address",
+            "condition": { "type": "text", "field": "NAME", "glob": "*@*" }
+        },
+        {
+            "name": "unreachable (no phone, no email)",
+            "condition": {
+                "type": "and",
+                "of": [
+                    { "type": "predicate", "kind": "NO_PHONE" },
+                    { "type": "predicate", "kind": "NO_EMAIL" }
+                ]
+            }
+        },
+        {
+            "name": "no-reply senders",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "text", "field": "EMAIL", "glob": "no-reply@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "noreply@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "donotreply@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "do-not-reply@*" }
+                ]
+            }
+        },
+        {
+            "name": "job-hunt / recruiter sites",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "text", "field": "EMAIL", "glob": "*@indeed.com" },
+                    { "type": "text", "field": "EMAIL", "glob": "*@linkedin.com" },
+                    { "type": "text", "field": "EMAIL", "glob": "*@ziprecruiter.com" },
+                    { "type": "text", "field": "EMAIL", "glob": "*@glassdoor.com" },
+                    { "type": "text", "field": "EMAIL", "glob": "*@monster.com" }
+                ]
+            }
+        },
+        {
+            "name": "role / department mailboxes",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "text", "field": "EMAIL", "glob": "info@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "sales@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "support@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "billing@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "hello@*" },
+                    { "type": "text", "field": "EMAIL", "glob": "contact@*" }
+                ]
+            }
+        },
+        {
+            "name": "toll-free / business lines",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "phone", "pattern": "800-???-????" },
+                    { "type": "phone", "pattern": "888-???-????" },
+                    { "type": "phone", "pattern": "877-???-????" },
+                    { "type": "phone", "pattern": "866-???-????" },
+                    { "type": "phone", "pattern": "855-???-????" },
+                    { "type": "phone", "pattern": "844-???-????" },
+                    { "type": "phone", "pattern": "833-???-????" }
+                ]
+            }
+        },
+        {
+            "name": "premium rate (1-900)",
+            "condition": { "type": "phone", "pattern": "900-???-????" }
+        },
+        {
+            "name": "placeholder names",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "text", "field": "NAME", "glob": "*test*" },
+                    { "type": "text", "field": "NAME", "glob": "*unknown*" },
+                    { "type": "text", "field": "NAME", "glob": "*no name*" },
+                    { "type": "text", "field": "NAME", "glob": "*new contact*" },
+                    { "type": "text", "field": "NAME", "glob": "*duplicate*" },
+                    { "type": "text", "field": "NAME", "glob": "*do not use*" }
+                ]
+            }
+        },
+        {
+            "name": "notes flagged to drop",
+            "condition": {
+                "type": "or",
+                "of": [
+                    { "type": "text", "field": "NOTES", "glob": "*delete*" },
+                    { "type": "text", "field": "NOTES", "glob": "*remove*" },
+                    { "type": "text", "field": "NOTES", "glob": "*old contact*" },
+                    { "type": "text", "field": "NOTES", "glob": "*do not keep*" }
+                ]
+            }
+        },
+        {
+            "name": "automated sender with no identity",
+            "condition": {
+                "type": "and",
+                "of": [
+                    {
+                        "type": "or",
+                        "of": [
+                            { "type": "text", "field": "EMAIL", "glob": "no-reply@*" },
+                            { "type": "text", "field": "EMAIL", "glob": "noreply@*" },
+                            { "type": "text", "field": "EMAIL", "glob": "donotreply@*" },
+                            { "type": "text", "field": "EMAIL", "glob": "do-not-reply@*" }
+                        ]
+                    },
+                    { "type": "predicate", "kind": "NO_NAME_AND_NO_PHONE" }
+                ]
+            }
+        }
+    ]
+}

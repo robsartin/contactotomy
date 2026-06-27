@@ -37,6 +37,23 @@ class RuleStoreTest {
         assertFailsWith<Exception> { RuleStore.fromJson("{ not valid") }
     }
 
+    @Test fun `shipped contact-cleanup library parses and round-trips`() {
+        val text = java.io.File("rules/contact-cleanup.json").readText()
+        val library = RuleStore.fromJson(text)
+        assertEquals(12, library.rules.size)
+        // names are present and unique
+        assertEquals(
+            library.rules.size,
+            library.rules
+                .map { it.name }
+                .filter { it.isNotBlank() }
+                .toSet()
+                .size,
+        )
+        // re-encoding the parsed set parses back to the same thing (stable)
+        assertEquals(library, RuleStore.fromJson(RuleStore.toJson(library)))
+    }
+
     @Test fun `save then load round-trips through a file`(
         @org.junit.jupiter.api.io.TempDir tempDir: java.nio.file.Path,
     ) {
