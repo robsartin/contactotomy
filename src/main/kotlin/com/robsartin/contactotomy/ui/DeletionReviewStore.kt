@@ -14,9 +14,11 @@ import kotlinx.coroutines.flow.update
 
 /** Holds deletion-review state: rule toggles, flagged results, and approvals. */
 class DeletionReviewStore(
-    private val contacts: List<Contact>,
+    contacts: List<Contact>,
     initialRules: RuleSet = RuleSet.starter(),
 ) {
+    /** The contacts being reviewed; passed to [RuleBuilderStore] for live match counts. */
+    val contactList: List<Contact> = contacts
     private val _state =
         MutableStateFlow(
             DeletionReviewState(
@@ -38,7 +40,7 @@ class DeletionReviewStore(
                     .filter { it.enabled }
                     .map { it.rule },
             )
-        val flagged = RuleEngine.evaluate(contacts, enabled)
+        val flagged = RuleEngine.evaluate(contactList, enabled)
         _state.update { it.copy(flagged = flagged, approvedIds = emptySet(), hasRun = true) }
     }
 
@@ -63,7 +65,7 @@ class DeletionReviewStore(
         _state.update {
             DeletionReviewState(
                 rules = RuleStore.fromJson(json).rules.map { r -> RuleToggle(r) },
-                totalContacts = contacts.size,
+                totalContacts = contactList.size,
             )
         }
 
@@ -92,7 +94,7 @@ class DeletionReviewStore(
     fun rulesToJson(): String = RuleStore.toJson(RuleSet(_state.value.rules.map { it.rule }))
 
     fun commit(): List<Contact> {
-        val result = applyDeletions(contacts, _state.value.approvedIds)
+        val result = applyDeletions(contactList, _state.value.approvedIds)
         _state.update { it.copy(committed = true) }
         return result
     }
