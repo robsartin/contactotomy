@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.core.importer
 
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.ContactPhoto
 import com.robsartin.contactotomy.core.model.PostalAddress
 import com.robsartin.contactotomy.core.model.Source
 import com.robsartin.contactotomy.core.normalize.EmailNormalizer
@@ -10,6 +11,7 @@ import ezvcard.Ezvcard
 import ezvcard.VCard
 import ezvcard.VCardVersion
 import java.time.Instant
+import java.util.Base64
 
 class VcfImporter(
     private val source: Source,
@@ -48,8 +50,33 @@ class VcfImporter(
             notes = card.notes.firstOrNull()?.value,
             categories = card.categories?.values?.toList() ?: emptyList(),
             modifiedAt = card.revision?.value?.let { Instant.from(it) },
+            photo = toContactPhoto(card),
             rawVCard = Ezvcard.write(card).version(card.version ?: VCardVersion.V3_0).go(),
         )
+    }
+
+    private fun imageTypeToMimeType(imageType: ezvcard.parameter.ImageType?): String? =
+        when {
+            imageType == null -> null
+            imageType == ezvcard.parameter.ImageType.JPEG -> "image/jpeg"
+            imageType == ezvcard.parameter.ImageType.PNG -> "image/png"
+            imageType == ezvcard.parameter.ImageType.GIF -> "image/gif"
+            else -> imageType.value?.let { "image/${it.lowercase()}" }
+        }
+
+    private fun toContactPhoto(card: VCard): ContactPhoto? {
+        val photo = card.photos.firstOrNull() ?: return null
+        val contentType = imageTypeToMimeType(photo.contentType)
+        val data = photo.data
+        return if (data != null && data.isNotEmpty()) {
+            ContactPhoto(
+                base64 = Base64.getEncoder().encodeToString(data),
+                contentType = contentType,
+            )
+        } else {
+            val url = photo.url ?: return null
+            ContactPhoto(url = url, contentType = contentType)
+        }
     }
 
     private fun toPostalAddress(addr: ezvcard.property.Address): PostalAddress =
