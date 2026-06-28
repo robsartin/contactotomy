@@ -1,6 +1,7 @@
 package com.robsartin.contactotomy.ui
 
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.rules.Rule
 import com.robsartin.contactotomy.core.rules.RuleEngine
 import com.robsartin.contactotomy.core.rules.RuleSet
 import com.robsartin.contactotomy.core.rules.RuleStore
@@ -64,6 +65,28 @@ class DeletionReviewStore(
                 rules = RuleStore.fromJson(json).rules.map { r -> RuleToggle(r) },
                 totalContacts = contacts.size,
             )
+        }
+
+    fun addRule(rule: Rule) =
+        _state.update { st ->
+            st.copy(rules = st.rules + RuleToggle(rule, enabled = true))
+        }
+
+    fun updateRule(
+        originalName: String,
+        rule: Rule,
+    ) = _state.update { st ->
+        st.copy(
+            rules =
+                st.rules.map { toggle ->
+                    if (toggle.rule.name == originalName) toggle.copy(rule = rule) else toggle
+                },
+        )
+    }
+
+    fun removeRule(name: String) =
+        _state.update { st ->
+            st.copy(rules = st.rules.filter { it.rule.name != name })
         }
 
     fun rulesToJson(): String = RuleStore.toJson(RuleSet(_state.value.rules.map { it.rule }))
