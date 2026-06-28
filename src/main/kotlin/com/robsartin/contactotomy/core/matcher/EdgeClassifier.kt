@@ -1,5 +1,6 @@
 package com.robsartin.contactotomy.core.matcher
 
+import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
 
 /** Classifies a pair of contacts into a MatchEdge, or null when they must never merge. */
@@ -10,6 +11,26 @@ class EdgeClassifier(
         a: Contact,
         b: Contact,
     ): MatchEdge? {
+        // Phase 2: person <-> company-name. Runs BEFORE the given-name conflict gate,
+        // because comparing a person name to a company name is meaningless.
+        val aCompany = CompanyNameDetector.isHighPrecision(a.name)
+        val bCompany = CompanyNameDetector.isHighPrecision(b.name)
+        if (aCompany != bCompany) { // exactly one side is a strong company name
+            val sharedPhone = a.phones.any { it in b.phones }
+            val sharedEmail = a.emails.any { it in b.emails }
+            if (sharedPhone || sharedEmail) {
+                val reasons =
+                    buildList {
+                        if (sharedPhone) add(MatchReason.SHARED_PHONE)
+                        if (sharedEmail) add(MatchReason.SHARED_EMAIL)
+                        add(MatchReason.COMPANY_MATCH)
+                    }
+                return MatchEdge(a, b, Confidence.UNCERTAIN, reasons)
+            }
+            return null // company-name but no shared contact -> don't pair
+        }
+        // otherwise: fall through to the existing Rules 1..5 unchanged
+
         // Rule 1: clearly different given names => never merge, even with shared contact info.
         if (nameMatcher.givenConflict(a.name, b.name)) return null
 

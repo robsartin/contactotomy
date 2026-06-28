@@ -9,6 +9,44 @@ import kotlin.test.assertTrue
 class EdgeClassifierTest {
     private val classifier = EdgeClassifier(NameMatcher(NicknameDictionary(listOf(setOf("robert", "rob", "bob")))))
 
+    // Phase 2: person <-> company-name tests
+
+    @Test
+    fun `person plus high-precision company sharing a phone is UNCERTAIN with SHARED_PHONE and COMPANY_MATCH`() {
+        val person = contact("p", given = "Robert", family = "Sartin", phones = listOf("+15125551234"))
+        val company = contact("c", given = "Acme", family = "Inc", phones = listOf("+15125551234"))
+        val edge = classifier.classify(person, company)!!
+        assertEquals(Confidence.UNCERTAIN, edge.confidence)
+        assertTrue(edge.reasons.contains(MatchReason.SHARED_PHONE))
+        assertTrue(edge.reasons.contains(MatchReason.COMPANY_MATCH))
+    }
+
+    @Test
+    fun `person plus high-precision company sharing an email is UNCERTAIN with SHARED_EMAIL and COMPANY_MATCH`() {
+        val person = contact("p", given = "Robert", family = "Sartin", emails = listOf("rob@example.com"))
+        val company = contact("c", given = "Acme", family = "Inc", emails = listOf("rob@example.com"))
+        val edge = classifier.classify(person, company)!!
+        assertEquals(Confidence.UNCERTAIN, edge.confidence)
+        assertTrue(edge.reasons.contains(MatchReason.SHARED_EMAIL))
+        assertTrue(edge.reasons.contains(MatchReason.COMPANY_MATCH))
+    }
+
+    @Test
+    fun `person plus high-precision company with no shared contact is null`() {
+        val person = contact("p", given = "Robert", family = "Sartin")
+        val company = contact("c", given = "Acme", family = "Inc")
+        assertNull(classifier.classify(person, company))
+    }
+
+    @Test
+    fun `person plus weak company-ish name sharing a phone falls through to existing rules (null due to given-name conflict)`() {
+        // "Acme" alone (no family) is WEAK, so isHighPrecision = false; Phase 2 does not intercept.
+        val person = contact("p", given = "Robert", family = "Sartin", phones = listOf("+15125551234"))
+        val weakCo = contact("w", given = "Acme", phones = listOf("+15125551234"))
+        // given-name conflict "Robert" vs "Acme" => existing Rule 1 returns null
+        assertNull(classifier.classify(person, weakCo))
+    }
+
     @Test
     fun `married couple sharing a phone is never merged`() {
         val alice = contact("a", given = "Alice", family = "Smith", phones = listOf("+15125550000"))

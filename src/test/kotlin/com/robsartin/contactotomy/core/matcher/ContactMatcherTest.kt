@@ -75,6 +75,18 @@ class ContactMatcherTest {
     }
 
     @Test
+    fun `person plus high-precision company sharing email produces an uncertain pair`() {
+        val person = contact("jane", given = "Jane", family = "Smith", emails = listOf("jane@example.com"))
+        val company = contact("acme", given = "Acme", family = "Inc", emails = listOf("jane@example.com"))
+        val result = matcher.match(listOf(person, company))
+        assertTrue(result.clusters.isEmpty())
+        assertEquals(1, result.uncertainPairs.size)
+        val edge = result.uncertainPairs.single()
+        assertTrue(edge.reasons.contains(MatchReason.COMPANY_MATCH))
+        assertTrue(edge.reasons.contains(MatchReason.SHARED_EMAIL))
+    }
+
+    @Test
     fun `cluster id is deterministic from member ids`() {
         val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"))
         val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+1111"))

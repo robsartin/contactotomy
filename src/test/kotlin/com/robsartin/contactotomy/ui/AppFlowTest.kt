@@ -245,6 +245,33 @@ class AppFlowTest {
         }
 
     @Test
+    fun `phase2 auto-detected person-company pair is reviewed and exported as person name with company org`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("phase2-company-person.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (one UNCERTAIN pair auto-detected)
+            // The single uncertain pair auto-selects; accept it from the detail pane
+            onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
+            onNodeWithText("Next").performClick() // commit merge -> Tidy
+            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertEquals("Acme Inc", final.single().org)
+
+            val vcard = VcfExporter().export(final)
+            assertTrue(vcard.contains("ORG:Acme Inc"), "exported vCard should carry the promoted org:\n$vcard")
+            assertTrue(vcard.contains("FN:Jane Smith"), "exported vCard should carry the person name:\n$vcard")
+            assertFalse(vcard.contains("FN:Acme Inc"), "exported vCard should not have Acme Inc as FN:\n$vcard")
+        }
+
+    @Test
     fun `standalone company is normalized by the Tidy step and exported as org only`() =
         runComposeUiTest {
             val store = AppStore()

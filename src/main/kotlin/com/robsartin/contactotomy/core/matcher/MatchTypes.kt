@@ -12,6 +12,7 @@ enum class MatchReason {
     NAME_INITIAL,
     SURNAME_CHANGE,
     NAME_ONLY,
+    COMPANY_MATCH,
 }
 
 data class MatchEdge(
