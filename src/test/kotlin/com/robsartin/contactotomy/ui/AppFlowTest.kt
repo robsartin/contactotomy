@@ -4,8 +4,10 @@ import androidx.compose.ui.test.ExperimentalTestApi
 import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onAllNodesWithText
 import androidx.compose.ui.test.onFirst
+import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.runComposeUiTest
 import com.robsartin.contactotomy.core.exporter.VcfExporter
 import com.robsartin.contactotomy.core.model.ContactName
@@ -206,6 +208,40 @@ class AppFlowTest {
             assertEquals(ContactName(formatted = "lonely@example.com"), final.single().name)
             val vcard = VcfExporter().export(final)
             assertTrue(vcard.contains("FN:lonely@example.com"), "expected FN from email:\n$vcard")
+        }
+
+    @Test
+    fun `rule builder end-to-end - build a spam rule, run, approve all, flagged card removed from export`() =
+        runComposeUiTest {
+            val store = AppStore()
+            runBlocking { store.importFile(fixturePath("spam-filter.vcf"), Source.APPLE) }
+            assertEquals(2, store.state.value.contacts.size)
+            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
+
+            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
+            onNodeWithText("Next").performClick() // Merge -> Tidy
+            onNodeWithText("Next").performClick() // Tidy -> Deletion
+
+            // Open the rule builder and create a rule that flags *@spam.com
+            onNodeWithTag("new-rule").performClick()
+            onNodeWithTag("rule-name").performTextInput("spam-filter")
+            // The dialog's RuleBuilderStore starts fresh; root id is "n0"
+            onNodeWithTag("glob:n0").performTextInput("*@spam.com")
+            onNodeWithTag("save-rule").performClick()
+
+            // Run, approve all, proceed to Export
+            onNodeWithText("Run").performClick()
+            onAllNodesWithText("Approve all").onFirst().performClick()
+            onNodeWithText("Next").performClick() // commit deletion -> Export
+
+            assertEquals(Screen.EXPORT, store.state.value.screen)
+            val final = store.state.value.finalContacts
+            assertNotNull(final)
+            assertEquals(1, final.size)
+            assertTrue(
+                final.none { c -> c.emails.any { it.contains("spam.com") } },
+                "no surviving contact should have a @spam.com email",
+            )
         }
 
     @Test

@@ -1,0 +1,12 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Smith;Alice;;;
+FN:Alice Smith
+EMAIL;TYPE=INTERNET:alice@legit.com
+END:VCARD
+BEGIN:VCARD
+VERSION:3.0
+N:Spammer;Bob;;;
+FN:Bob Spammer
+EMAIL;TYPE=INTERNET:bob@spam.com
+END:VCARD

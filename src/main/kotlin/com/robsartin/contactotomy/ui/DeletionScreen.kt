@@ -12,6 +12,7 @@ import androidx.compose.material.Button
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
+import androidx.compose.material.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -19,9 +20,11 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.rules.Flagged
+import com.robsartin.contactotomy.core.rules.Rule
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.theme.Dimens
 import java.io.File
@@ -37,6 +40,34 @@ fun DeletionScreen(
     val state by store.state.collectAsState()
     var selectedId by remember { mutableStateOf<String?>(null) }
 
+    // Rule-builder dialog state: null = closed; non-null Rule = editing that rule; "" name = new
+    var editingRule by remember { mutableStateOf<Rule?>(null) }
+    var showNewRule by remember { mutableStateOf(false) }
+
+    // Show dialog when either new or edit is active
+    if (showNewRule || editingRule != null) {
+        val builderStore =
+            remember(showNewRule, editingRule) {
+                RuleBuilderStore(store.contactList, existing = editingRule)
+            }
+        RuleBuilderDialog(
+            store = builderStore,
+            onSave = { rule ->
+                if (editingRule != null) {
+                    store.updateRule(editingRule!!.name, rule)
+                } else {
+                    store.addRule(rule)
+                }
+                editingRule = null
+                showNewRule = false
+            },
+            onCancel = {
+                editingRule = null
+                showNewRule = false
+            },
+        )
+    }
+
     // flagged grouped by matched rule name
     val byRule: Map<String, List<Flagged>> =
         state.flagged
@@ -51,9 +82,21 @@ fun DeletionScreen(
                 state.rules.forEach { rt ->
                     Row {
                         Checkbox(checked = rt.enabled, onCheckedChange = { store.toggleRule(rt.rule.name) })
-                        Text(rt.rule.name)
+                        Text(rt.rule.name, modifier = Modifier.weight(1f))
+                        TextButton(
+                            onClick = { editingRule = rt.rule },
+                            modifier = Modifier.testTag("edit-rule:${rt.rule.name}"),
+                        ) { Text("Edit") }
+                        TextButton(
+                            onClick = { store.removeRule(rt.rule.name) },
+                            modifier = Modifier.testTag("delete-rule:${rt.rule.name}"),
+                        ) { Text("✕") }
                     }
                 }
+                Button(
+                    onClick = { showNewRule = true },
+                    modifier = Modifier.testTag("new-rule"),
+                ) { Text("New rule…") }
                 Row(Modifier.padding(top = 6.dp)) {
                     Button(onClick = { loadPicker.pick()?.let { store.loadRules(File(it).readText()) } }) { Text("Load…") }
                     Button(onClick = { savePicker.pick()?.let { File(it).writeText(store.rulesToJson()) } }) { Text("Save…") }
