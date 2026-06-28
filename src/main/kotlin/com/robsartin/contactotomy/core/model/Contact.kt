@@ -28,5 +28,6 @@ data class Contact(
     val categories: List<String> = emptyList(), // Google labels (vCard CATEGORIES)
     val createdAt: Instant? = null, // best-effort
     val modifiedAt: Instant? = null, // best-effort (vCard REV)
+    val photo: ContactPhoto? = null,
     val rawVCard: String,
 )

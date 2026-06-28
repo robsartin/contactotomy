@@ -1,0 +1,6 @@
+BEGIN:VCARD
+VERSION:3.0
+N:Jones;Bob;;;
+FN:Bob Jones
+PHOTO;VALUE=URI:https://example.com/bob.jpg
+END:VCARD

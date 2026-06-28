@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.testsupport
 
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.ContactPhoto
 import com.robsartin.contactotomy.core.model.PostalAddress
 import com.robsartin.contactotomy.core.model.Source
 import java.time.Instant
@@ -30,6 +31,7 @@ fun contact(
     source: Source = Source.APPLE,
     addresses: List<PostalAddress> = emptyList(),
     urls: List<String> = emptyList(),
+    photo: ContactPhoto? = null,
 ) = Contact(
     id = id,
     source = source,
@@ -44,5 +46,6 @@ fun contact(
     categories = categories,
     modifiedAt = modifiedAt,
     createdAt = createdAt,
+    photo = photo,
     rawVCard = "",
 )

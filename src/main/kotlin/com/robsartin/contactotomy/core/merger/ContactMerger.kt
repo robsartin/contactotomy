@@ -27,6 +27,7 @@ class ContactMerger {
         val org = ordered.firstNotNullOfOrNull { it.org }
         val title = ordered.firstNotNullOfOrNull { it.title }
         val notes = ordered.firstNotNullOfOrNull { it.notes }
+        val photo = ordered.firstNotNullOfOrNull { it.photo }
 
         val merged =
             Contact(
@@ -44,6 +45,7 @@ class ContactMerger {
                 categories = categories,
                 createdAt = cluster.members.mapNotNull { it.createdAt }.minOrNull(),
                 modifiedAt = primary.modifiedAt,
+                photo = photo,
                 rawVCard = primary.rawVCard,
             )
 
