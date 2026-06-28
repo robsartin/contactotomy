@@ -6,6 +6,8 @@ import com.robsartin.contactotomy.core.matcher.MatchReason
 import com.robsartin.contactotomy.core.merger.ContactMerger
 import com.robsartin.contactotomy.core.merger.MergeProposal
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.PostalAddress
+import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.testsupport.contact
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -65,6 +67,51 @@ class DecisionApplierTest {
             )
         assertTrue("+1111" !in result.first().phones)
         assertTrue("+2222" in result.first().phones)
+    }
+
+    @Test
+    fun `excluding a URL removes it from the merged card`() {
+        val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"), urls = listOf("https://rob.example.com"))
+        val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+2222"), urls = listOf("https://robert.example.com"))
+        val p = proposalFor(a, b)
+        val result =
+            applier.applyDecisions(
+                listOf(a, b),
+                listOf(p),
+                listOf(
+                    MergeDecision(
+                        p.cluster.id,
+                        Action.ACCEPT,
+                        excludedValues = setOf(ExcludedValue("urls", "https://rob.example.com")),
+                    ),
+                ),
+            )
+        assertTrue("https://rob.example.com" !in result.first().urls)
+        assertTrue("https://robert.example.com" in result.first().urls)
+    }
+
+    @Test
+    fun `excluding an address display string removes the matching PostalAddress`() {
+        val addr1 = PostalAddress(street = "100 Main St", city = "Austin", region = "TX", postalCode = "78701")
+        val addr2 = PostalAddress(street = "200 Oak Ave", city = "Seattle", region = "WA", postalCode = "98101")
+        val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+1111"), addresses = listOf(addr1))
+        val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+2222"), addresses = listOf(addr2))
+        val p = proposalFor(a, b)
+        val displayStr = addr1.toDisplayString()
+        val result =
+            applier.applyDecisions(
+                listOf(a, b),
+                listOf(p),
+                listOf(
+                    MergeDecision(
+                        p.cluster.id,
+                        Action.ACCEPT,
+                        excludedValues = setOf(ExcludedValue("addresses", displayStr)),
+                    ),
+                ),
+            )
+        assertTrue(result.first().addresses.none { it.toDisplayString() == displayStr })
+        assertTrue(result.first().addresses.any { it.toDisplayString() == addr2.toDisplayString() })
     }
 
     @Test
