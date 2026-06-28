@@ -212,4 +212,19 @@ class MergeReviewStoreCompanyTest {
         assertEquals(false, item.nameCleared)
         assertEquals("jane", item.nameChoiceId)
     }
+
+    @Test
+    fun `phase2 auto-detected uncertain pair auto-suggests org from company name and person name from person card`() {
+        // Phase 2: person + high-precision company sharing email => auto-detected UNCERTAIN pair.
+        // Neither card has an org so companyAutoSuggest should fire.
+        val jane = contact("jane", given = "Jane", family = "Smith", emails = listOf("jane@example.com"))
+        val acme = contact("acme", given = "Acme", family = "Inc", emails = listOf("jane@example.com"))
+        val store = MergeReviewStore(listOf(jane, acme))
+        val items = store.state.value.items
+        assertEquals(1, items.size)
+        val item = items.single()
+        assertEquals("Acme Inc", item.orgChoice)
+        assertEquals("jane", item.nameChoiceId)
+        assertEquals(false, item.nameCleared)
+    }
 }
