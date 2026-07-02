@@ -28,10 +28,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.ui.components.ClusterRow
 import com.robsartin.contactotomy.ui.components.FieldGroup
@@ -39,6 +41,7 @@ import com.robsartin.contactotomy.ui.components.LabeledProgress
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.components.SourceCard
 import com.robsartin.contactotomy.ui.components.ValuePill
+import com.robsartin.contactotomy.ui.theme.Dimens
 import com.robsartin.contactotomy.ui.theme.appColors
 
 /**
@@ -245,10 +248,119 @@ private fun MergeDetailContent(
                         )
                     }
                 }
+
+                // ---- Freeform edit block ----
+                EditOverrideBlock(store, item)
             }
         }
     }
 }
+
+/**
+ * Editable name-components, org, and notes block layered below the existing
+ * pick/exclude controls.  Typing any field sets an override that wins at commit time.
+ * Pre-fill from the item's current effective values (what commit() would currently produce).
+ */
+@Composable
+private fun EditOverrideBlock(
+    store: MergeReviewStore,
+    item: ReviewItem,
+) {
+    // The name displayed in the edit fields: use nameOverride if set, else what commit() would produce.
+    val displayName = item.nameOverride ?: effectiveNameForDisplay(item)
+    val effectiveOrg = item.orgOverride ?: item.orgChoice ?: item.proposal.merged.org ?: ""
+    // Compute effective notes: account for conflict choices and cleared conflicts, mirroring commit().
+    val effectiveNotes =
+        item.notesOverride ?: when {
+            "notes" in item.clearedConflicts -> ""
+            item.conflictChoices.containsKey("notes") -> item.conflictChoices["notes"] ?: ""
+            else -> {
+                val notesConflict = item.proposal.conflicts.firstOrNull { it.field == "notes" }
+                notesConflict?.chosen ?: item.proposal.merged.notes ?: ""
+            }
+        }
+
+    FieldGroup("Edit name components") {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
+            OutlinedTextField(
+                value = displayName.prefix ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.PREFIX, it) },
+                label = { Text("Prefix") },
+                modifier = Modifier.weight(1f).testTag("name-prefix"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.given ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.GIVEN, it) },
+                label = { Text("Given") },
+                modifier = Modifier.weight(2f).testTag("name-given"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.middle ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.MIDDLE, it) },
+                label = { Text("Middle") },
+                modifier = Modifier.weight(1f).testTag("name-middle"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.family ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.FAMILY, it) },
+                label = { Text("Family") },
+                modifier = Modifier.weight(2f).testTag("name-family"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.suffix ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.SUFFIX, it) },
+                label = { Text("Suffix") },
+                modifier = Modifier.weight(1f).testTag("name-suffix"),
+                singleLine = true,
+            )
+        }
+    }
+
+    FieldGroup("Edit org") {
+        OutlinedTextField(
+            value = effectiveOrg,
+            onValueChange = { store.setOrgOverride(item.id, it) },
+            label = { Text("Org") },
+            modifier = Modifier.fillMaxWidth().testTag("org-edit"),
+            singleLine = true,
+        )
+    }
+
+    FieldGroup("Edit notes") {
+        OutlinedTextField(
+            value = effectiveNotes,
+            onValueChange = { store.setNotesOverride(item.id, it) },
+            label = { Text("Notes") },
+            modifier = Modifier.fillMaxWidth().testTag("notes-edit"),
+            minLines = 2,
+        )
+        Button(
+            onClick = { store.appendSourceNotes(item.id) },
+            modifier = Modifier.padding(top = Dimens.xs).testTag("append-notes"),
+        ) {
+            Text("Append source notes")
+        }
+    }
+}
+
+/**
+ * Returns the ContactName that would be used for display / seeding (what commit() currently
+ * produces before any nameOverride), for pre-filling the editable fields.
+ */
+private fun effectiveNameForDisplay(item: ReviewItem): ContactName =
+    when {
+        item.nameCleared -> ContactName()
+        item.nameChoiceId != null ->
+            item.proposal.cluster.members
+                .firstOrNull { it.id == item.nameChoiceId }
+                ?.name
+                ?: item.proposal.merged.name
+        else -> item.proposal.merged.name
+    }
 
 @Composable
 private fun CompanyOrgField(
