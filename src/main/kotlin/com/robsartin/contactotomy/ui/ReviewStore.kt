@@ -10,7 +10,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /** The transform that will be applied to a marked singleton in Section 2. */
-enum class TidyAction { COMPANY, EMAIL_NAME }
+enum class TidyAction { COMPANY, EMAIL_NAME, PHONE_NAME }
 
 /**
  * Composes [MergeReviewStore] (Section 1: duplicates) with singleton-tidy state
@@ -57,8 +57,12 @@ class ReviewStore(
 
     /** The transform a card would get if marked. */
     fun actionFor(contact: Contact): TidyAction =
-        if (companyNameText(contact.name).isBlank() && contact.org.isNullOrBlank() && contact.emails.isNotEmpty()) {
-            TidyAction.EMAIL_NAME
+        if (companyNameText(contact.name).isBlank() && contact.org.isNullOrBlank()) {
+            when {
+                contact.emails.isNotEmpty() -> TidyAction.EMAIL_NAME
+                contact.phones.isNotEmpty() -> TidyAction.PHONE_NAME
+                else -> TidyAction.COMPANY
+            }
         } else {
             TidyAction.COMPANY
         }
@@ -77,6 +81,7 @@ class ReviewStore(
             } else {
                 when (actionFor(c)) {
                     TidyAction.EMAIL_NAME -> CompanyNormalizer.nameFromEmail(c)
+                    TidyAction.PHONE_NAME -> CompanyNormalizer.nameFromPhone(c)
                     TidyAction.COMPANY -> CompanyNormalizer.markAsCompany(c)
                 }
             }
@@ -86,5 +91,6 @@ class ReviewStore(
     /** True if the contact should be pre-marked in Section 2. */
     private fun suggested(c: Contact): Boolean =
         CompanyNameDetector.isHighPrecision(c.name) ||
-            (companyNameText(c.name).isBlank() && c.org.isNullOrBlank() && c.emails.isNotEmpty())
+            (companyNameText(c.name).isBlank() && c.org.isNullOrBlank() && c.emails.isNotEmpty()) ||
+            (companyNameText(c.name).isBlank() && c.org.isNullOrBlank() && c.emails.isEmpty() && c.phones.isNotEmpty())
 }
