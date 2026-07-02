@@ -46,8 +46,8 @@ import com.robsartin.contactotomy.ui.theme.appColors
 @Composable
 fun ReviewScreen(store: ReviewStore) {
     val mergeState by store.mergeStore.state.collectAsState()
-    // Track marked IDs for Section 2 via a state we can read reactively
-    var markedSnapshot by remember { mutableStateOf(store.markedIds) }
+    // Section 2 marked state, collected from the store's StateFlow.
+    val marked by store.markedState.collectAsState()
     // Lift picker state to ReviewScreen level so the picker overlay spans the full screen,
     // preventing ambiguous node matches when Section 2 also shows merge-eligible contacts.
     var showPicker by remember { mutableStateOf(false) }
@@ -97,11 +97,8 @@ fun ReviewScreen(store: ReviewStore) {
             CleanSection(
                 candidates = candidates,
                 store = store,
-                markedSnapshot = markedSnapshot,
-                onToggle = { id ->
-                    store.toggleClean(id)
-                    markedSnapshot = store.markedIds
-                },
+                marked = marked,
+                onToggle = { id -> store.toggleClean(id) },
                 // Always give Section 2 a weight so it doesn't consume all remaining height
                 // and leave Section 1 with too little space for scrollable content.
                 modifier = Modifier.weight(1f),
@@ -114,7 +111,7 @@ fun ReviewScreen(store: ReviewStore) {
 private fun CleanSection(
     candidates: List<Contact>,
     store: ReviewStore,
-    markedSnapshot: Set<String>,
+    marked: Set<String>,
     onToggle: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -125,7 +122,7 @@ private fun CleanSection(
         Column(Modifier.weight(1f)) {
             LazyColumn(Modifier.weight(1f)) {
                 items(candidates) { c ->
-                    val marked = c.id in markedSnapshot
+                    val isMarked = c.id in marked
                     Row(
                         Modifier
                             .fillMaxWidth()
@@ -134,13 +131,13 @@ private fun CleanSection(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Checkbox(
-                            checked = marked,
+                            checked = isMarked,
                             onCheckedChange = { onToggle(c.id) },
                             modifier = Modifier.testTag("mark:${c.id}"),
                         )
                         SourceBadge(c.source)
                         Text("  ${displayName(c.name).ifBlank { "(no name)" }}")
-                        if (marked) {
+                        if (isMarked) {
                             val hint =
                                 when (store.actionFor(c)) {
                                     TidyAction.EMAIL_NAME -> "→ name: ${c.emails.first()}"

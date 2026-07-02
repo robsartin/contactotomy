@@ -81,10 +81,10 @@ class ReviewScreenTest {
             setContent { ReviewScreen(store) }
             // acme is pre-marked; toggle it off
             onNodeWithTag("mark:acme").performClick()
-            assertTrue("acme" !in store.markedIds)
+            assertTrue("acme" !in store.markedState.value)
             // toggle it back on
             onNodeWithTag("mark:acme").performClick()
-            assertTrue("acme" in store.markedIds)
+            assertTrue("acme" in store.markedState.value)
         }
 
     @Test

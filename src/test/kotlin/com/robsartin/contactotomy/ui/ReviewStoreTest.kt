@@ -43,7 +43,7 @@ class ReviewStoreTest {
     @Test
     fun `both suggested candidates are pre-marked by default`() {
         val store = ReviewStore(allContacts)
-        val marked = store.markedIds
+        val marked = store.markedState.value
         assertTrue("acme" in marked, "acme should be pre-marked")
         assertTrue("email" in marked, "email should be pre-marked")
         assertFalse("rob" in marked, "rob should not be pre-marked")
@@ -53,19 +53,19 @@ class ReviewStoreTest {
     @Test
     fun `toggleClean flips a mark`() {
         val store = ReviewStore(allContacts)
-        assertTrue("acme" in store.markedIds)
+        assertTrue("acme" in store.markedState.value)
         store.toggleClean("acme")
-        assertFalse("acme" in store.markedIds)
+        assertFalse("acme" in store.markedState.value)
         store.toggleClean("acme")
-        assertTrue("acme" in store.markedIds)
+        assertTrue("acme" in store.markedState.value)
     }
 
     @Test
     fun `toggleClean can mark a non-default candidate`() {
         val store = ReviewStore(allContacts)
-        assertFalse("jane" in store.markedIds)
+        assertFalse("jane" in store.markedState.value)
         store.toggleClean("jane")
-        assertTrue("jane" in store.markedIds)
+        assertTrue("jane" in store.markedState.value)
     }
 
     @Test
@@ -121,7 +121,7 @@ class ReviewStoreTest {
         val store = ReviewStore(allContacts)
         // Untick acme so it should not be transformed
         store.toggleClean("acme")
-        assertFalse("acme" in store.markedIds)
+        assertFalse("acme" in store.markedState.value)
 
         val result = store.commit()
         val byId = result.associateBy { it.id }

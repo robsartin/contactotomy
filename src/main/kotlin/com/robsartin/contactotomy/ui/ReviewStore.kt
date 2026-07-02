@@ -5,6 +5,8 @@ import com.robsartin.contactotomy.core.company.CompanyNormalizer
 import com.robsartin.contactotomy.core.company.companyNameText
 import com.robsartin.contactotomy.core.model.Contact
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 
 /** The transform that will be applied to a marked singleton in Section 2. */
@@ -20,7 +22,7 @@ enum class TidyAction { COMPANY, EMAIL_NAME }
  * company-name text, no org, and at least one email.
  *
  * [commit] chains: mergeStore.commit() first, then applies the tidy transforms over
- * the markedIds in the result.
+ * the marked ids in the result.
  */
 class ReviewStore(
     contacts: List<Contact>,
@@ -42,16 +44,16 @@ class ReviewStore(
     private val suggested: Set<String> =
         singletons.filter { suggested(it) }.map { it.id }.toSet()
 
-    private val _markedIds = MutableStateFlow(suggested)
+    private val _markedState = MutableStateFlow(suggested)
 
-    /** Current set of marked singleton ids for Section 2. */
-    val markedIds: Set<String> get() = _markedIds.value
+    /** Observable set of marked singleton ids for Section 2; the screen collects this. */
+    val markedState: StateFlow<Set<String>> = _markedState.asStateFlow()
 
     /** All suggested singletons (Section 2 content). */
     fun cleanCandidates(): List<Contact> = singletons.filter { suggested(it) }
 
     /** Flip the mark for a singleton. */
-    fun toggleClean(id: String) = _markedIds.update { ids -> if (id in ids) ids - id else ids + id }
+    fun toggleClean(id: String) = _markedState.update { ids -> if (id in ids) ids - id else ids + id }
 
     /** The transform a card would get if marked. */
     fun actionFor(contact: Contact): TidyAction =
@@ -64,11 +66,11 @@ class ReviewStore(
     /**
      * Section 1 result chained into Section 2 transforms.
      * 1. mergeStore.commit() applies merges; singletons pass through untouched (their ids survive).
-     * 2. For each contact in the result whose id is in markedIds, apply the tidy transform.
+     * 2. For each contact in the result whose id is marked, apply the tidy transform.
      */
     fun commit(): List<Contact> {
         val merged = mergeStore.commit()
-        val marked = _markedIds.value
+        val marked = _markedState.value
         return merged.map { c ->
             if (c.id !in marked) {
                 c
