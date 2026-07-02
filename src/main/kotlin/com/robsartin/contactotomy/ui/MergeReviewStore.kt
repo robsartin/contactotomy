@@ -173,7 +173,9 @@ class MergeReviewStore(
         when {
             item.nameCleared -> ContactName()
             item.nameChoiceId != null ->
-                item.proposal.cluster.members.firstOrNull { it.id == item.nameChoiceId }?.name
+                item.proposal.cluster.members
+                    .firstOrNull { it.id == item.nameChoiceId }
+                    ?.name
                     ?: item.proposal.merged.name
             else -> item.proposal.merged.name
         }
