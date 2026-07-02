@@ -2,6 +2,7 @@ package com.robsartin.contactotomy.ui
 
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performKeyInput
@@ -171,5 +172,12 @@ class MergeScreenKeyboardTest {
                     "Item ${item.id} should remain PENDING when keyboard is captured by text field",
                 )
             }
+        }
+
+    @Test
+    fun `shortcut legend is displayed under the Section-1 header`() =
+        runComposeUiTest {
+            setContent { MergeScreen(twoClusterStore()) }
+            onNodeWithTag("shortcut-legend").assertIsDisplayed()
         }
 }

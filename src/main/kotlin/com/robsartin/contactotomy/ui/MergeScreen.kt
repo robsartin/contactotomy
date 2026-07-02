@@ -187,6 +187,13 @@ fun MergeScreen(
                 }
             }
             LabeledProgress(reviewed = resolved.size, total = state.items.size)
+            // Shortcut legend — always visible, muted style.
+            Text(
+                "↑/↓ move · A accept · R keep separate · D discard",
+                fontSize = 11.sp,
+                color = appColors.muted,
+                modifier = Modifier.padding(vertical = Dimens.xs).testTag("shortcut-legend"),
+            )
             val listState = rememberLazyListState()
             Box(Modifier.weight(1f)) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxHeight()) {
