@@ -10,9 +10,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.Text
@@ -50,23 +48,42 @@ fun ReviewScreen(store: ReviewStore) {
     val mergeState by store.mergeStore.state.collectAsState()
     // Track marked IDs for Section 2 via a state we can read reactively
     var markedSnapshot by remember { mutableStateOf(store.markedIds) }
+    // Lift picker state to ReviewScreen level so the picker overlay spans the full screen,
+    // preventing ambiguous node matches when Section 2 also shows merge-eligible contacts.
+    var showPicker by remember { mutableStateOf(false) }
 
     val hasMergeItems = mergeState.items.isNotEmpty()
     val candidates = store.cleanCandidates()
     val hasCleanItems = candidates.isNotEmpty()
 
+    // When the manual-merge picker is open, render it full-screen over both sections.
+    if (showPicker) {
+        MergeScreen(
+            store = store.mergeStore,
+            externalShowPicker = true,
+            onExternalPickerChange = { showPicker = it },
+        )
+        return
+    }
+
     Column(Modifier.fillMaxSize()) {
         // ---- Section 1: Duplicates to merge ----
         SectionHeader("Duplicates to merge")
+        // Always render MergeScreen so the "+ Manual merge" button is always accessible.
+        // Show "No duplicates found" as a hint when there are no auto-detected items;
+        // the MergeScreen itself handles the empty list gracefully.
         if (!hasMergeItems) {
             Text(
                 "No duplicates found",
-                Modifier.padding(vertical = 8.dp),
+                Modifier.padding(vertical = 4.dp),
             )
-        } else {
-            Box(Modifier.weight(1f).fillMaxWidth()) {
-                MergeScreen(store.mergeStore)
-            }
+        }
+        Box(Modifier.weight(1f).fillMaxWidth()) {
+            MergeScreen(
+                store = store.mergeStore,
+                externalShowPicker = false,
+                onExternalPickerChange = { v -> showPicker = v },
+            )
         }
 
         // ---- Section 2: Cards to clean ----
@@ -85,7 +102,9 @@ fun ReviewScreen(store: ReviewStore) {
                     store.toggleClean(id)
                     markedSnapshot = store.markedIds
                 },
-                modifier = if (hasMergeItems) Modifier.weight(1f) else Modifier,
+                // Always give Section 2 a weight so it doesn't consume all remaining height
+                // and leave Section 1 with too little space for scrollable content.
+                modifier = Modifier.weight(1f),
             )
         }
     }

@@ -6,18 +6,18 @@ import kotlin.test.assertEquals
 
 class WorkingContactsTest {
     private val imported = listOf(contact("i"))
-    private val merged = listOf(contact("m"))
+    private val reviewed = listOf(contact("r"))
     private val finalSet = listOf(contact("f"))
 
     @Test
-    fun `prefers final, then merged, then imported`() {
+    fun `prefers final, then reviewed, then imported`() {
         assertEquals(
             listOf("f"),
-            workingContacts(AppState(contacts = imported, mergedContacts = merged, finalContacts = finalSet)).map { it.id },
+            workingContacts(AppState(contacts = imported, reviewedContacts = reviewed, finalContacts = finalSet)).map { it.id },
         )
         assertEquals(
-            listOf("m"),
-            workingContacts(AppState(contacts = imported, mergedContacts = merged)).map { it.id },
+            listOf("r"),
+            workingContacts(AppState(contacts = imported, reviewedContacts = reviewed)).map { it.id },
         )
         assertEquals(
             listOf("i"),

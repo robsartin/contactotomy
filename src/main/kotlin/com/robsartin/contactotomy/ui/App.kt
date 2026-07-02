@@ -30,10 +30,8 @@ fun App(
 
             // Hoist the per-screen stores so the single top Next can commit the current
             // screen before advancing, replacing the old per-screen commit buttons.
-            val mergeStore = remember(state.contacts) { MergeReviewStore(state.contacts) }
-            val tidySource = state.mergedContacts ?: state.contacts
-            val tidyStore = remember(tidySource) { TidyStore(tidySource) }
-            val deletionSource = state.tidyContacts ?: state.mergedContacts ?: state.contacts
+            val reviewStore = remember(state.contacts) { ReviewStore(state.contacts) }
+            val deletionSource = state.reviewedContacts ?: state.contacts
             val deletionStore = remember(deletionSource) { DeletionReviewStore(deletionSource) }
             val exportSource = workingContacts(state)
             val exportStore = remember(exportSource) { ExportStore(exportSource) }
@@ -49,12 +47,8 @@ fun App(
                 Button(
                     onClick = {
                         when (state.screen) {
-                            Screen.MERGE -> {
-                                store.setMergedContacts(mergeStore.commit())
-                                store.next()
-                            }
-                            Screen.TIDY -> {
-                                store.setTidyContacts(tidyStore.commit())
+                            Screen.REVIEW -> {
+                                store.setReviewedContacts(reviewStore.commit())
                                 store.next()
                             }
                             Screen.DELETION -> {
@@ -70,10 +64,8 @@ fun App(
             when (state.screen) {
                 Screen.IMPORT ->
                     ImportScreen(store, applePicker, googlePicker, otherPicker)
-                Screen.MERGE ->
-                    MergeScreen(mergeStore)
-                Screen.TIDY ->
-                    TidyScreen(tidyStore)
+                Screen.REVIEW ->
+                    ReviewScreen(reviewStore)
                 Screen.DELETION ->
                     DeletionScreen(
                         deletionStore,
@@ -97,8 +89,7 @@ private fun StepIndicator(current: Screen) {
     val labels =
         listOf(
             Screen.IMPORT to "Import",
-            Screen.MERGE to "Merge",
-            Screen.TIDY to "Tidy",
+            Screen.REVIEW to "Review",
             Screen.DELETION to "Deletion",
             Screen.EXPORT to "Export",
         )

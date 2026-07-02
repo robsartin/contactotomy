@@ -28,7 +28,9 @@ class ReviewScreenTest {
     private val jane = contact("jane", given = "Jane", family = "Smith", phones = listOf("+15125559999"))
 
     private fun fullStore() = ReviewStore(listOf(rob, robert, acme, emailOnly, jane))
+
     private fun noMergeStore() = ReviewStore(listOf(acme, emailOnly, jane))
+
     private fun noCleanStore() = ReviewStore(listOf(rob, robert))
 
     @Test
@@ -56,7 +58,9 @@ class ReviewScreenTest {
             onNodeWithText("Accept merge", substring = true).performClick()
             assertEquals(
                 Decision.ACCEPT,
-                store.mergeStore.state.value.items.single().decision,
+                store.mergeStore.state.value.items
+                    .single()
+                    .decision,
             )
         }
 

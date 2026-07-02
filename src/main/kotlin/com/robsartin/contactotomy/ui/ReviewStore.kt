@@ -7,6 +7,9 @@ import com.robsartin.contactotomy.core.model.Contact
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 
+/** The transform that will be applied to a marked singleton in Section 2. */
+enum class TidyAction { COMPANY, EMAIL_NAME }
+
 /**
  * Composes [MergeReviewStore] (Section 1: duplicates) with singleton-tidy state
  * (Section 2: cards to clean).
@@ -19,15 +22,19 @@ import kotlinx.coroutines.flow.update
  * [commit] chains: mergeStore.commit() first, then applies the tidy transforms over
  * the markedIds in the result.
  */
-class ReviewStore(contacts: List<Contact>) {
+class ReviewStore(
+    contacts: List<Contact>,
+) {
     /** Exposed so the screen (and tests) can drive Section 1 directly. */
     val mergeStore = MergeReviewStore(contacts)
 
     // IDs of all contacts that appear in any merge group (Section 1).
     private val groupedIds: Set<String> =
         mergeStore.state.value.items
-            .flatMap { item -> item.proposal.cluster.members.map { it.id } }
-            .toSet()
+            .flatMap { item ->
+                item.proposal.cluster.members
+                    .map { it.id }
+            }.toSet()
 
     // Section 2: singletons that are suggested for cleaning.
     private val singletons: List<Contact> = contacts.filter { it.id !in groupedIds }
@@ -44,10 +51,9 @@ class ReviewStore(contacts: List<Contact>) {
     fun cleanCandidates(): List<Contact> = singletons.filter { suggested(it) }
 
     /** Flip the mark for a singleton. */
-    fun toggleClean(id: String) =
-        _markedIds.update { ids -> if (id in ids) ids - id else ids + id }
+    fun toggleClean(id: String) = _markedIds.update { ids -> if (id in ids) ids - id else ids + id }
 
-    /** The transform a card would get if marked (mirrors TidyStore.actionFor). */
+    /** The transform a card would get if marked. */
     fun actionFor(contact: Contact): TidyAction =
         if (companyNameText(contact.name).isBlank() && contact.org.isNullOrBlank() && contact.emails.isNotEmpty()) {
             TidyAction.EMAIL_NAME

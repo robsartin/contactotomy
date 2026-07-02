@@ -159,7 +159,9 @@ class ReviewStoreTest {
         // All contacts are in the duplicate pair, no singletons
         val store = ReviewStore(listOf(rob, robert))
         assertEquals(0, store.cleanCandidates().size)
-        val mergeItem = store.mergeStore.state.value.items.first()
+        val mergeItem =
+            store.mergeStore.state.value.items
+                .first()
         store.mergeStore.accept(mergeItem.id)
         val result = store.commit()
         assertEquals(1, result.size)
