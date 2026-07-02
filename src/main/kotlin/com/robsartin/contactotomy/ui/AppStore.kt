@@ -46,9 +46,7 @@ class AppStore(
 
     fun goTo(screen: Screen) = _state.update { it.copy(screen = screen) }
 
-    fun setMergedContacts(merged: List<Contact>) = _state.update { it.copy(mergedContacts = merged) }
-
-    fun setTidyContacts(tidy: List<Contact>) = _state.update { it.copy(tidyContacts = tidy) }
+    fun setReviewedContacts(reviewed: List<Contact>) = _state.update { it.copy(reviewedContacts = reviewed) }
 
     fun setFinalContacts(final: List<Contact>) = _state.update { it.copy(finalContacts = final) }
 

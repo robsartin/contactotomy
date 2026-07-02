@@ -24,6 +24,9 @@ import kotlin.test.assertTrue
  * the real wizard with REAL data. The default [AppStore] parses with the real
  * [com.robsartin.contactotomy.core.importer.VcfImporter] reading a fixture .vcf,
  * exercising the cross-screen flow that per-screen tests miss.
+ *
+ * Wizard is now Import → Review → Deletion → Export (one fewer Next; merge + tidy
+ * actions both happen on the single Review screen).
  */
 @OptIn(ExperimentalTestApi::class)
 class AppFlowTest {
@@ -44,12 +47,11 @@ class AppFlowTest {
             assertEquals(5, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge
+            onNodeWithText("Next").performClick() // Import -> Review
             onAllNodesWithText("Robert A Sartin", substring = true).onFirst().performClick()
             // The detail-pane Accept button is a pinned footer, visible without scrolling.
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -66,9 +68,8 @@ class AppFlowTest {
             val store = importedStore()
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge
-            onNodeWithText("Next").performClick() // commit with zero accepted -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // Import -> Review
+            onNodeWithText("Next").performClick() // commit with zero accepted -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -87,14 +88,13 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (zero auto clusters)
+            onNodeWithText("Next").performClick() // Import -> Review (zero auto clusters)
             onNodeWithText("+ Manual merge").performClick()
             onNodeWithText("Morgan Quill", substring = true).performClick()
             onNodeWithText("Devon Vasquez", substring = true).performClick()
             onNodeWithText("Create merge").performClick()
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -113,15 +113,14 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge
+            onNodeWithText("Next").performClick() // Import -> Review
             onNodeWithText("+ Manual merge").performClick()
             onNodeWithText("Jane Smith", substring = true).performClick()
             onNodeWithText("Acme Inc", substring = true).performClick()
             onNodeWithText("Create merge").performClick()
             // auto-suggest: name = Jane Smith, org = Acme Inc (promoted from the company card's name)
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -143,11 +142,10 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (one HIGH cluster, auto-suggested company-only)
+            onNodeWithText("Next").performClick() // Import -> Review (one HIGH cluster, auto-suggested company-only)
             onAllNodesWithText("Round Rock ISD", substring = true).onFirst().performClick() // select the cluster
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -170,9 +168,8 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
-            onNodeWithText("Next").performClick() // commit merge (no accepts) -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // Import -> Review (no clusters)
+            onNodeWithText("Next").performClick() // commit review (no accepts) -> Deletion
 
             onNodeWithText("Run").performClick() // starter "no-reply senders" flags the noreply contact
             onAllNodesWithText("Approve all").onFirst().performClick()
@@ -189,17 +186,16 @@ class AppFlowTest {
         }
 
     @Test
-    fun `nameless email card is named from its email via the Tidy step`() =
+    fun `nameless email card is named from its email via the Review step Section 2`() =
         runComposeUiTest {
             val store = AppStore()
             runBlocking { store.importFile(fixturePath("nameless-email.vcf"), Source.APPLE) }
             assertEquals(1, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("→ name: lonely@example.com", substring = true).assertIsDisplayed() // pre-marked
-            onNodeWithText("Next").performClick() // commit Tidy -> Deletion
+            onNodeWithText("Next").performClick() // Import -> Review (no clusters)
+            onNodeWithText("→ name: lonely@example.com", substring = true).assertIsDisplayed() // pre-marked in Section 2
+            onNodeWithText("Next").performClick() // commit Review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -218,9 +214,8 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
-            onNodeWithText("Next").performClick() // Merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy -> Deletion
+            onNodeWithText("Next").performClick() // Import -> Review (no clusters)
+            onNodeWithText("Next").performClick() // Review -> Deletion
 
             // Open the rule builder and create a rule that flags *@spam.com
             onNodeWithTag("new-rule").performClick()
@@ -252,11 +247,10 @@ class AppFlowTest {
             assertEquals(2, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (one UNCERTAIN pair auto-detected)
+            onNodeWithText("Next").performClick() // Import -> Review (one UNCERTAIN pair auto-detected)
             // The single uncertain pair auto-selects; accept it from the detail pane
             onNodeWithText("Accept merge", substring = true).assertIsDisplayed().performClick()
-            onNodeWithText("Next").performClick() // commit merge -> Tidy
-            onNodeWithText("Next").performClick() // Tidy (pass-through) -> Deletion
+            onNodeWithText("Next").performClick() // commit review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)
@@ -272,18 +266,17 @@ class AppFlowTest {
         }
 
     @Test
-    fun `standalone company is normalized by the Tidy step and exported as org only`() =
+    fun `standalone company is normalized by the Review Section 2 and exported as org only`() =
         runComposeUiTest {
             val store = AppStore()
             runBlocking { store.importFile(fixturePath("lone-company.vcf"), Source.APPLE) }
             assertEquals(1, store.state.value.contacts.size)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
-            onNodeWithText("Next").performClick() // Import -> Merge (no clusters)
-            onNodeWithText("Next").performClick() // commit merge (no accepts) -> Tidy
-            // "Round Rock ISD" is high-precision (ISD) => pre-checked on the Tidy step
+            onNodeWithText("Next").performClick() // Import -> Review (no clusters)
+            // "Round Rock ISD" is high-precision (ISD) => pre-checked in Section 2
             onNodeWithText("→ org: Round Rock ISD", substring = true).assertIsDisplayed()
-            onNodeWithText("Next").performClick() // commit Tidy -> Deletion
+            onNodeWithText("Next").performClick() // commit Review -> Deletion
             onNodeWithText("Next").performClick() // commit deletion (no run) -> Export
 
             assertEquals(Screen.EXPORT, store.state.value.screen)

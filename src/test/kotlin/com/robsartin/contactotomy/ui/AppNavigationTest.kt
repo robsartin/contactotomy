@@ -34,42 +34,31 @@ class AppNavigationTest {
     private val noPickers = arrayOf(FilePicker { null }, FilePicker { null }, FilePicker { null })
 
     @Test
-    fun `Next on Import advances to Merge`() =
+    fun `Next on Import advances to Review`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
             onNodeWithText("Next").performClick()
-            assertEquals(Screen.MERGE, store.state.value.screen)
+            assertEquals(Screen.REVIEW, store.state.value.screen)
         }
 
     @Test
-    fun `Next on Merge commits the merge and advances to Tidy`() =
+    fun `Next on Review commits the review and advances to Deletion`() =
         runComposeUiTest {
             val store = appStoreWithDuplicates()
-            store.goTo(Screen.MERGE)
+            store.goTo(Screen.REVIEW)
             setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
 
             onAllNodesWithText("Sartin", substring = true).onFirst().performClick() // select the cluster
             onNodeWithText("Accept merge", substring = true).performClick() // the detail-pane Accept button
             onNodeWithText("Next").performClick()
 
-            // the two duplicates collapse to one merged contact, and we advance to Tidy
+            // the two duplicates collapse to one reviewed contact, and we advance to Deletion
             assertEquals(
                 1,
-                store.state.value.mergedContacts
+                store.state.value.reviewedContacts
                     ?.size,
             )
-            assertEquals(Screen.TIDY, store.state.value.screen)
-        }
-
-    @Test
-    fun `Next on Tidy commits and advances to Deletion`() =
-        runComposeUiTest {
-            val store = appStoreWithDuplicates()
-            store.goTo(Screen.TIDY)
-            setContent { App(store, noPickers[0], noPickers[1], noPickers[2]) }
-            onNodeWithText("Next").performClick()
-            assertNotNull(store.state.value.tidyContacts)
             assertEquals(Screen.DELETION, store.state.value.screen)
         }
 

@@ -8,20 +8,18 @@ class ExportSummaryTest {
     @Test
     fun `all stages present - merges and deletions happened`() {
         val contacts = (1..10).map { contact("c$it") }
-        val merged = (1..8).map { contact("m$it") }
-        val tidy = (1..8).map { contact("t$it") }
+        val reviewed = (1..8).map { contact("r$it") }
         val final = (1..6).map { contact("f$it") }
         val state =
             AppState(
                 contacts = contacts,
-                mergedContacts = merged,
-                tidyContacts = tidy,
+                reviewedContacts = reviewed,
                 finalContacts = final,
             )
         val summary = exportSummary(state)
         assertEquals(10, summary.imported)
         assertEquals(2, summary.merged) // 10 - 8
-        assertEquals(2, summary.removed) // tidyContacts.size - finalContacts.size = 8 - 6
+        assertEquals(2, summary.removed) // reviewedContacts.size - finalContacts.size = 8 - 6
         assertEquals(6, summary.exporting)
     }
 
@@ -37,15 +35,13 @@ class ExportSummaryTest {
     }
 
     @Test
-    fun `finalContacts null - removed is zero exporting from tidy`() {
+    fun `finalContacts null - removed is zero exporting from reviewed`() {
         val contacts = (1..10).map { contact("c$it") }
-        val merged = (1..8).map { contact("m$it") }
-        val tidy = (1..8).map { contact("t$it") }
+        val reviewed = (1..8).map { contact("r$it") }
         val state =
             AppState(
                 contacts = contacts,
-                mergedContacts = merged,
-                tidyContacts = tidy,
+                reviewedContacts = reviewed,
                 finalContacts = null,
             )
         val summary = exportSummary(state)
@@ -56,14 +52,13 @@ class ExportSummaryTest {
     }
 
     @Test
-    fun `mergedContacts null - merged delta is zero fallback for removed uses contacts`() {
+    fun `reviewedContacts null - merged delta is zero fallback for removed uses contacts`() {
         val contacts = (1..10).map { contact("c$it") }
         val final = (1..7).map { contact("f$it") }
         val state =
             AppState(
                 contacts = contacts,
-                mergedContacts = null,
-                tidyContacts = null,
+                reviewedContacts = null,
                 finalContacts = final,
             )
         val summary = exportSummary(state)

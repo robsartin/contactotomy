@@ -29,7 +29,7 @@ class AppStoreNavigationTest {
     fun `next advances and back returns once there are contacts`() {
         val store = storeWithContacts(2)
         store.next()
-        assertEquals(Screen.MERGE, store.state.value.screen)
+        assertEquals(Screen.REVIEW, store.state.value.screen)
         store.back()
         assertEquals(Screen.IMPORT, store.state.value.screen)
     }

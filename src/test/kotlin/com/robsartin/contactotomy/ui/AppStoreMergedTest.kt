@@ -8,10 +8,10 @@ import kotlin.test.assertEquals
 
 class AppStoreMergedTest {
     @Test
-    fun `setMergedContacts stores the working set`() {
+    fun `setReviewedContacts stores the working set`() {
         val store = AppStore(parse = { _, _ -> emptyList() })
-        val merged = listOf(Contact(id = "m1", source = Source.APPLE, name = ContactName(given = "M"), rawVCard = ""))
-        store.setMergedContacts(merged)
-        assertEquals(merged, store.state.value.mergedContacts)
+        val reviewed = listOf(Contact(id = "r1", source = Source.APPLE, name = ContactName(given = "R"), rawVCard = ""))
+        store.setReviewedContacts(reviewed)
+        assertEquals(reviewed, store.state.value.reviewedContacts)
     }
 }

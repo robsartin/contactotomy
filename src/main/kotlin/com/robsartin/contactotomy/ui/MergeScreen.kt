@@ -41,8 +41,20 @@ import com.robsartin.contactotomy.ui.components.SourceCard
 import com.robsartin.contactotomy.ui.components.ValuePill
 import com.robsartin.contactotomy.ui.theme.appColors
 
+/**
+ * [MergeScreen] with optional external picker-state control.
+ *
+ * When [externalShowPicker] and [onExternalPickerChange] are provided (non-null),
+ * the picker open/close is driven by the caller (e.g. ReviewScreen) so the picker
+ * overlay can span the whole parent rather than just the MergeScreen area.
+ * When both are null, picker state is managed internally (backward-compatible).
+ */
 @Composable
-fun MergeScreen(store: MergeReviewStore) {
+fun MergeScreen(
+    store: MergeReviewStore,
+    externalShowPicker: Boolean? = null,
+    onExternalPickerChange: ((Boolean) -> Unit)? = null,
+) {
     val state by store.state.collectAsState()
     val pending = state.items.filter { it.decision == Decision.PENDING }
     val resolved = state.items.filter { it.decision != Decision.PENDING }
@@ -51,16 +63,20 @@ fun MergeScreen(store: MergeReviewStore) {
     var selectedId by remember { mutableStateOf<String?>(null) }
     val selected = state.items.firstOrNull { it.id == selectedId } ?: pending.firstOrNull()
 
-    var showPicker by remember { mutableStateOf(false) }
+    val useExternalPicker = externalShowPicker != null && onExternalPickerChange != null
+    var internalShowPicker by remember { mutableStateOf(false) }
+    val showPicker = if (useExternalPicker) externalShowPicker!! else internalShowPicker
+    val setShowPicker: (Boolean) -> Unit = if (useExternalPicker) onExternalPickerChange!! else { v -> internalShowPicker = v }
+
     val eligible = remember(state) { store.eligibleForManualMerge() }
 
     if (showPicker) {
         ManualMergePicker(
             eligible = eligible,
-            onCancel = { showPicker = false },
+            onCancel = { setShowPicker(false) },
             onCreate = { ids ->
                 store.manualMerge(ids)?.let { selectedId = it }
-                showPicker = false
+                setShowPicker(false)
             },
         )
         return
@@ -72,7 +88,7 @@ fun MergeScreen(store: MergeReviewStore) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Needs review (${pending.size})")
                 Row {
-                    Button(onClick = { showPicker = true }) { Text("+ Manual merge") }
+                    Button(onClick = { setShowPicker(true) }) { Text("+ Manual merge") }
                     if (pending.any { it.origin == Origin.HIGH }) {
                         Button(onClick = { store.acceptAllHighConfidence() }) { Text("Accept all high-confidence") }
                     }

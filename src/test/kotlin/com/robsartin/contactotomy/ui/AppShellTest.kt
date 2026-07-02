@@ -28,16 +28,16 @@ class AppShellTest {
         runComposeUiTest {
             setContent { App(AppStore(parse = { _, _ -> emptyList() })) }
             onNodeWithText("Import").assertExists()
-            onNodeWithText("Merge").assertExists()
+            onNodeWithText("Review").assertExists()
             onNodeWithText("Deletion").assertExists()
             onNodeWithText("Export").assertExists()
         }
 
     @Test
-    fun `next advances to the merge screen when contacts exist`() =
+    fun `next advances to the review screen when contacts exist`() =
         runComposeUiTest {
             setContent { App(storeWithOneContact()) }
             onNodeWithText("Next").performClick()
-            onNodeWithText("Will merge", substring = true).assertExists()
+            onNodeWithText("Duplicates to merge", substring = true).assertExists()
         }
 }
