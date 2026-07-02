@@ -92,6 +92,92 @@ class MergeReviewStore(
         field: String,
     ) = updateItem(itemId) { it.copy(clearedConflicts = it.clearedConflicts + field) }
 
+    // ---- Override-layer intents ----
+
+    /**
+     * Sets one component of [itemId]'s name override.  The override is seeded from the
+     * item's current *effective* name (what commit() would currently produce) so that
+     * untouched components are preserved.
+     */
+    fun setNameComponent(
+        itemId: String,
+        component: NameComponent,
+        value: String,
+    ) = updateItem(itemId) { item ->
+        val seed = item.nameOverride ?: effectiveName(item)
+        val updated =
+            when (component) {
+                NameComponent.PREFIX -> seed.copy(prefix = value.ifBlank { null })
+                NameComponent.GIVEN -> seed.copy(given = value.ifBlank { null })
+                NameComponent.MIDDLE -> seed.copy(middle = value.ifBlank { null })
+                NameComponent.FAMILY -> seed.copy(family = value.ifBlank { null })
+                NameComponent.SUFFIX -> seed.copy(suffix = value.ifBlank { null })
+            }
+        item.copy(nameOverride = updated)
+    }
+
+    fun setOrgOverride(
+        itemId: String,
+        value: String?,
+    ) = updateItem(itemId) { it.copy(orgOverride = value) }
+
+    fun setNotesOverride(
+        itemId: String,
+        value: String?,
+    ) = updateItem(itemId) { it.copy(notesOverride = value) }
+
+    /**
+     * Sets [notesOverride] to the newline-joined non-blank notes of all cluster members,
+     * deduplicated (order-preserved).
+     */
+    fun appendSourceNotes(itemId: String) =
+        updateItem(itemId) { item ->
+            val seen = LinkedHashSet<String>()
+            item.proposal.cluster.members
+                .mapNotNull { it.notes?.takeIf { n -> n.isNotBlank() } }
+                .forEach { seen.add(it) }
+            val joined = seen.joinToString("\n").ifBlank { null }
+            item.copy(notesOverride = joined)
+        }
+
+    fun addPhone(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { item ->
+        if (value in item.addedPhones) item else item.copy(addedPhones = item.addedPhones + value)
+    }
+
+    fun removeAddedPhone(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { it.copy(addedPhones = it.addedPhones - value) }
+
+    fun addEmail(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { item ->
+        if (value in item.addedEmails) item else item.copy(addedEmails = item.addedEmails + value)
+    }
+
+    fun removeAddedEmail(
+        itemId: String,
+        value: String,
+    ) = updateItem(itemId) { it.copy(addedEmails = it.addedEmails - value) }
+
+    /**
+     * Returns the name that commit() would currently produce for [item] (before any
+     * nameOverride), used to seed the override on first edit so untouched components are
+     * preserved.
+     */
+    private fun effectiveName(item: ReviewItem): ContactName =
+        when {
+            item.nameCleared -> ContactName()
+            item.nameChoiceId != null ->
+                item.proposal.cluster.members.firstOrNull { it.id == item.nameChoiceId }?.name
+                    ?: item.proposal.merged.name
+            else -> item.proposal.merged.name
+        }
+
     fun acceptAllHighConfidence() =
         _state.update { st ->
             st.copy(items = st.items.map { if (it.origin == Origin.HIGH) it.copy(decision = Decision.ACCEPT) else it })
@@ -247,13 +333,27 @@ class MergeReviewStore(
                 out
             }
 
+        // Apply user-typed override layer (nameOverride / orgOverride / notesOverride / addedPhones / addedEmails).
+        // Applied LAST so they win over pick/exclude/choice results.
+        val withOverrides =
+            withCleared.map { c ->
+                val item = finalAccepted.firstOrNull { it.proposal.merged.id == c.id } ?: return@map c
+                var out = c
+                item.nameOverride?.let { out = out.copy(name = it) }
+                item.orgOverride?.let { out = out.copy(org = it.ifBlank { null }) }
+                item.notesOverride?.let { out = out.copy(notes = it.ifBlank { null }) }
+                if (item.addedPhones.isNotEmpty()) out = out.copy(phones = (out.phones + item.addedPhones).distinct())
+                if (item.addedEmails.isNotEmpty()) out = out.copy(emails = (out.emails + item.addedEmails).distinct())
+                out
+            }
+
         _state.update { st ->
             st.copy(
                 items = st.items.map { if (it.id in downgraded) it.copy(decision = Decision.PENDING) else it },
                 committed = true,
             )
         }
-        return withCleared
+        return withOverrides
     }
 
     companion object {
