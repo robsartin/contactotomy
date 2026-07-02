@@ -345,6 +345,83 @@ private fun EditOverrideBlock(
             Text("Append source notes")
         }
     }
+
+    AddValueField(
+        label = "Add phone",
+        inputTag = "add-phone-input",
+        btnTag = "add-phone-btn",
+        chipTagPrefix = "added-phone",
+        addedValues = item.addedPhones,
+        onAdd = { store.addPhone(item.id, it) },
+        onRemove = { store.removeAddedPhone(item.id, it) },
+    )
+
+    AddValueField(
+        label = "Add email",
+        inputTag = "add-email-input",
+        btnTag = "add-email-btn",
+        chipTagPrefix = "added-email",
+        addedValues = item.addedEmails,
+        onAdd = { store.addEmail(item.id, it) },
+        onRemove = { store.removeAddedEmail(item.id, it) },
+    )
+}
+
+/**
+ * A small input + "Add" button that appends freeform phone or email values,
+ * rendered as removable chips beneath the input.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AddValueField(
+    label: String,
+    inputTag: String,
+    btnTag: String,
+    chipTagPrefix: String,
+    addedValues: List<String>,
+    onAdd: (String) -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    var draft by remember { mutableStateOf("") }
+    FieldGroup(label) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                label = { Text(label) },
+                modifier = Modifier.weight(1f).testTag(inputTag),
+                singleLine = true,
+            )
+            Button(
+                onClick = {
+                    val trimmed = draft.trim()
+                    if (trimmed.isNotEmpty()) {
+                        onAdd(trimmed)
+                        draft = ""
+                    }
+                },
+                modifier = Modifier.testTag(btnTag),
+            ) {
+                Text("Add")
+            }
+        }
+        if (addedValues.isNotEmpty()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(top = Dimens.xs),
+            ) {
+                addedValues.forEach { value ->
+                    ValuePill(
+                        label = value,
+                        removed = false,
+                        onToggle = { onRemove(value) },
+                        tag = "$chipTagPrefix:$value",
+                    )
+                }
+            }
+        }
+    }
 }
 
 /**
