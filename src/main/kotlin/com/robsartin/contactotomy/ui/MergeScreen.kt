@@ -32,7 +32,9 @@ import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
+import com.robsartin.contactotomy.core.company.companyNameText
 import com.robsartin.contactotomy.core.model.Contact
+import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.ui.components.ClusterRow
 import com.robsartin.contactotomy.ui.components.FieldGroup
@@ -356,6 +358,20 @@ private fun EditOverrideBlock(
         onAdd = { store.addEmail(item.id, it) },
         onRemove = { store.removeAddedEmail(item.id, it) },
     )
+
+    FieldGroup("Company") {
+        Button(
+            onClick = {
+                val effectiveName = store.effectiveName(item)
+                val orgText = companyNameText(effectiveName).ifBlank { displayName(effectiveName) }
+                store.setOrgOverride(item.id, orgText)
+                store.setNameOverride(item.id, ContactName())
+            },
+            modifier = Modifier.testTag("mark-as-company"),
+        ) {
+            Text("Mark as company")
+        }
+    }
 }
 
 /**

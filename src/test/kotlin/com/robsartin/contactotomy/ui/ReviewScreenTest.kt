@@ -108,4 +108,16 @@ class ReviewScreenTest {
             // jane should not have a mark tag in the clean section
             onNodeWithTag("mark:jane").assertDoesNotExist()
         }
+
+    @Test
+    fun `section 2 shows phone-name hint for a nameless phone-only card`() =
+        runComposeUiTest {
+            val phoneOnly =
+                com.robsartin.contactotomy.testsupport
+                    .contact("phone", phones = listOf("+15125557777"))
+            val store = ReviewStore(listOf(phoneOnly))
+            setContent { ReviewScreen(store) }
+            // Phone-name hint should appear for the phone-only card
+            onNodeWithText("→ name: +15125557777", substring = true).assertIsDisplayed()
+        }
 }
