@@ -14,8 +14,6 @@ import com.robsartin.contactotomy.core.matcher.NicknameDictionary
 import com.robsartin.contactotomy.core.merger.ContactMerger
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
-import com.robsartin.contactotomy.core.model.toDisplayString
-import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -240,15 +238,15 @@ class MergeReviewStore(
      * helpers, then the explicit override layer last.
      */
     fun previewContact(item: ReviewItem): Contact {
-        // Step 1: start from proposal.merged and apply exclusions + conflict choices
-        // (mirrors DecisionApplier.adjust for this single item)
-        var out = item.proposal.merged
-        for ((field, value) in item.conflictChoices) {
-            out = setSingle(out, field, value)
-        }
-        for (excluded in item.excludedValues) {
-            out = removeValue(out, excluded.field, excluded.value)
-        }
+        // Step 1: apply exclusions + conflict choices via DecisionApplier (single source of truth)
+        val decision =
+            MergeDecision(
+                clusterId = item.proposal.cluster.id,
+                action = Action.ACCEPT,
+                excludedValues = item.excludedValues,
+                conflictChoices = item.conflictChoices,
+            )
+        var out = DecisionApplier().adjust(item.proposal, decision)
         // Step 2: effective name / org / notes (pick/clear/conflict choices)
         out = out.copy(name = effectiveName(item))
         out = out.copy(org = effectiveOrg(item).ifEmpty { null })
@@ -263,41 +261,6 @@ class MergeReviewStore(
         if (item.addedPhones.isNotEmpty()) out = out.copy(phones = (out.phones + item.addedPhones).distinct())
         if (item.addedEmails.isNotEmpty()) out = out.copy(emails = (out.emails + item.addedEmails).distinct())
         return out
-    }
-
-    private fun setSingle(
-        c: Contact,
-        field: String,
-        value: String,
-    ): Contact =
-        when (field) {
-            "org" -> c.copy(org = value)
-            "title" -> c.copy(title = value)
-            "notes" -> c.copy(notes = value)
-            else -> c
-        }
-
-    private fun removeValue(
-        c: Contact,
-        field: String,
-        value: String,
-    ): Contact {
-        val phoneNormalizer = PhoneNormalizer()
-        return when (field) {
-            "phones" ->
-                c.copy(
-                    phones = c.phones - value,
-                    rawPhones = c.rawPhones.filterNot { phoneNormalizer.normalize(it) == value },
-                )
-            "emails" -> c.copy(emails = c.emails - value)
-            "addresses" -> c.copy(addresses = c.addresses.filterNot { it.toDisplayString() == value })
-            "urls" -> c.copy(urls = c.urls - value)
-            "categories" -> c.copy(categories = c.categories - value)
-            "org" -> if (c.org == value) c.copy(org = null) else c
-            "title" -> if (c.title == value) c.copy(title = null) else c
-            "notes" -> if (c.notes == value) c.copy(notes = null) else c
-            else -> c
-        }
     }
 
     fun acceptAllHighConfidence() =
