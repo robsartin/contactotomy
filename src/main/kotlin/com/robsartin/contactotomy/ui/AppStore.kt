@@ -50,6 +50,8 @@ class AppStore(
 
     fun setFinalContacts(final: List<Contact>) = _state.update { it.copy(finalContacts = final) }
 
+    fun toggleDarkMode() = _state.update { it.copy(darkMode = !it.darkMode) }
+
     suspend fun importFile(
         path: String,
         source: Source,
