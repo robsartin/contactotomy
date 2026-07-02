@@ -56,7 +56,13 @@ fun ValuePill(
 
 @Composable
 fun SectionHeader(text: String) {
-    Text(text, fontSize = 16.sp, fontWeight = FontWeight.Medium, modifier = Modifier.padding(bottom = Dimens.sm))
+    Text(
+        text,
+        fontSize = 16.sp,
+        fontWeight = FontWeight.SemiBold,
+        color = appColors.onSurface,
+        modifier = Modifier.padding(bottom = Dimens.sm),
+    )
 }
 
 @Composable

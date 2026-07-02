@@ -7,13 +7,18 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Button
+import androidx.compose.material.IconButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import com.robsartin.contactotomy.ui.components.StepIndicator
 import com.robsartin.contactotomy.ui.theme.ContactotomyTheme
 
 @Composable
@@ -24,9 +29,23 @@ fun App(
     otherPicker: FilePicker = AwtFilePicker("Choose a vCard file"),
 ) {
     val state: AppState by store.state.collectAsState()
-    ContactotomyTheme {
+    ContactotomyTheme(darkMode = state.darkMode) {
         Column(Modifier.fillMaxSize().padding(16.dp)) {
-            StepIndicator(state.screen)
+            // Top bar: step indicator + dark mode toggle
+            Row(
+                Modifier.fillMaxWidth().padding(bottom = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Row(Modifier.weight(1f)) {
+                    StepIndicator(state.screen)
+                }
+                IconButton(
+                    onClick = { store.toggleDarkMode() },
+                    modifier = Modifier.testTag("dark-mode-toggle"),
+                ) {
+                    Text(if (state.darkMode) "☀" else "☾", fontSize = 16.sp)
+                }
+            }
 
             // Hoist the per-screen stores so the single top Next can commit the current
             // screen before advancing, replacing the old per-screen commit buttons.
@@ -80,23 +99,6 @@ fun App(
                         summary = exportSummary(state),
                     )
             }
-        }
-    }
-}
-
-@Composable
-private fun StepIndicator(current: Screen) {
-    val labels =
-        listOf(
-            Screen.IMPORT to "Import",
-            Screen.REVIEW to "Review",
-            Screen.DELETION to "Deletion",
-            Screen.EXPORT to "Export",
-        )
-    Row(Modifier.fillMaxWidth().padding(bottom = 12.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        labels.forEach { (screen, label) ->
-            if (screen == current) Text("▸")
-            Text(label)
         }
     }
 }

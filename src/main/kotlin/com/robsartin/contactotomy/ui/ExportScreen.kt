@@ -1,9 +1,13 @@
 package com.robsartin.contactotomy.ui
 
+import androidx.compose.foundation.VerticalScrollbar
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
@@ -12,10 +16,12 @@ import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.theme.Dimens
+import com.robsartin.contactotomy.ui.theme.appColors
 import java.io.File
 
 private val NoopPicker = FilePicker { null }
@@ -34,10 +40,11 @@ fun ExportScreen(
     instructions: String = loadExportInstructions(),
 ) {
     val state by store.state.collectAsState()
-    Column(Modifier.fillMaxSize().padding(top = 8.dp)) {
+    val c = appColors
+    Column(Modifier.fillMaxSize().padding(top = Dimens.sm)) {
         SectionHeader("Export your cleaned contacts")
         Text("Ready to export ${state.contactCount} cleaned contacts")
-        Text(buildSummaryLine(summary), modifier = Modifier.padding(top = Dimens.xs))
+        Text(buildSummaryLine(summary), modifier = Modifier.padding(top = Dimens.xs), color = c.muted)
         Button(
             onClick = {
                 savePicker.pick()?.let { path ->
@@ -49,16 +56,23 @@ fun ExportScreen(
             modifier = Modifier.padding(vertical = 6.dp),
         ) { Text("Save cleaned vCard…") }
 
-        state.exportedPath?.let { Text("✓ Exported ${state.contactCount} contacts to $it") }
-        state.error?.let { Text("Error: $it") }
+        state.exportedPath?.let { Text("✓ Exported ${state.contactCount} contacts to $it", color = c.accept) }
+        state.error?.let { Text("Error: $it", color = c.reject) }
 
-        Text("How to import your cleaned contacts", Modifier.padding(top = 8.dp))
+        Text("How to import your cleaned contacts", Modifier.padding(top = Dimens.sm))
         Card(
             shape = RoundedCornerShape(Dimens.cardRadius),
-            modifier = Modifier.padding(top = 4.dp),
+            modifier = Modifier.padding(top = Dimens.xs).weight(1f),
         ) {
-            Column(Modifier.verticalScroll(rememberScrollState()).padding(10.dp)) {
-                Text(instructions)
+            val scrollState = rememberScrollState()
+            Box {
+                Column(Modifier.verticalScroll(scrollState).padding(10.dp)) {
+                    Text(instructions)
+                }
+                VerticalScrollbar(
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    adapter = rememberScrollbarAdapter(scrollState),
+                )
             }
         }
     }

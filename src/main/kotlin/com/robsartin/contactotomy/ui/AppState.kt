@@ -23,6 +23,7 @@ data class AppState(
     val error: String? = null,
     val reviewedContacts: List<Contact>? = null,
     val finalContacts: List<Contact>? = null,
+    val darkMode: Boolean = false,
 )
 
 /** The most-processed contact set available: final, else reviewed, else imported. */
