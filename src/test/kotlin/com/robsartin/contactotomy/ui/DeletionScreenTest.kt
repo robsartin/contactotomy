@@ -28,6 +28,7 @@ class DeletionScreenTest {
             onNodeWithText("Run").performClick()
             onNodeWithText("Al", substring = true).assertExists() // flagged contact appears
             onAllNodesWithText("Approve all", substring = true).onFirst().performClick()
-            onNodeWithText("1 approved", substring = true).assertExists()
+            // Both the summary headline and the footer now show "1 approved"; check footer text
+            onNodeWithText("1 approved →", substring = true).assertExists()
         }
 }
