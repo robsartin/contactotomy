@@ -28,6 +28,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
@@ -39,6 +40,7 @@ import com.robsartin.contactotomy.ui.components.LabeledProgress
 import com.robsartin.contactotomy.ui.components.SectionHeader
 import com.robsartin.contactotomy.ui.components.SourceCard
 import com.robsartin.contactotomy.ui.components.ValuePill
+import com.robsartin.contactotomy.ui.theme.Dimens
 import com.robsartin.contactotomy.ui.theme.appColors
 
 /**
@@ -244,6 +246,169 @@ private fun MergeDetailContent(
                             onClick = { store.clearConflict(item.id, conflict.field) },
                         )
                     }
+                }
+
+                // ---- Freeform edit block ----
+                EditOverrideBlock(store, item)
+            }
+        }
+    }
+}
+
+/**
+ * Editable name-components, org, and notes block layered below the existing
+ * pick/exclude controls.  Typing any field sets an override that wins at commit time.
+ * Pre-fill from the item's current effective values (what commit() would currently produce).
+ */
+@Composable
+private fun EditOverrideBlock(
+    store: MergeReviewStore,
+    item: ReviewItem,
+) {
+    // Prefill from the store's single-source-of-truth effective* helpers (what commit() produces
+    // pre-override), layering any user-typed override on top so an edit is what the user sees.
+    val displayName = item.nameOverride ?: store.effectiveName(item)
+    val effectiveOrg = item.orgOverride ?: store.effectiveOrg(item)
+    val effectiveNotes = item.notesOverride ?: store.effectiveNotes(item)
+
+    FieldGroup("Edit name components") {
+        Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
+            OutlinedTextField(
+                value = displayName.prefix ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.PREFIX, it) },
+                label = { Text("Prefix") },
+                modifier = Modifier.weight(1f).testTag("name-prefix"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.given ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.GIVEN, it) },
+                label = { Text("Given") },
+                modifier = Modifier.weight(2f).testTag("name-given"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.middle ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.MIDDLE, it) },
+                label = { Text("Middle") },
+                modifier = Modifier.weight(1f).testTag("name-middle"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.family ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.FAMILY, it) },
+                label = { Text("Family") },
+                modifier = Modifier.weight(2f).testTag("name-family"),
+                singleLine = true,
+            )
+            OutlinedTextField(
+                value = displayName.suffix ?: "",
+                onValueChange = { store.setNameComponent(item.id, NameComponent.SUFFIX, it) },
+                label = { Text("Suffix") },
+                modifier = Modifier.weight(1f).testTag("name-suffix"),
+                singleLine = true,
+            )
+        }
+    }
+
+    FieldGroup("Edit org") {
+        OutlinedTextField(
+            value = effectiveOrg,
+            onValueChange = { store.setOrgOverride(item.id, it) },
+            label = { Text("Org") },
+            modifier = Modifier.fillMaxWidth().testTag("org-edit"),
+            singleLine = true,
+        )
+    }
+
+    FieldGroup("Edit notes") {
+        OutlinedTextField(
+            value = effectiveNotes,
+            onValueChange = { store.setNotesOverride(item.id, it) },
+            label = { Text("Notes") },
+            modifier = Modifier.fillMaxWidth().testTag("notes-edit"),
+            minLines = 2,
+        )
+        Button(
+            onClick = { store.appendSourceNotes(item.id) },
+            modifier = Modifier.padding(top = Dimens.xs).testTag("append-notes"),
+        ) {
+            Text("Append source notes")
+        }
+    }
+
+    AddValueField(
+        label = "Add phone",
+        inputTag = "add-phone-input",
+        btnTag = "add-phone-btn",
+        chipTagPrefix = "added-phone",
+        addedValues = item.addedPhones,
+        onAdd = { store.addPhone(item.id, it) },
+        onRemove = { store.removeAddedPhone(item.id, it) },
+    )
+
+    AddValueField(
+        label = "Add email",
+        inputTag = "add-email-input",
+        btnTag = "add-email-btn",
+        chipTagPrefix = "added-email",
+        addedValues = item.addedEmails,
+        onAdd = { store.addEmail(item.id, it) },
+        onRemove = { store.removeAddedEmail(item.id, it) },
+    )
+}
+
+/**
+ * A small input + "Add" button that appends freeform phone or email values,
+ * rendered as removable chips beneath the input.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun AddValueField(
+    label: String,
+    inputTag: String,
+    btnTag: String,
+    chipTagPrefix: String,
+    addedValues: List<String>,
+    onAdd: (String) -> Unit,
+    onRemove: (String) -> Unit,
+) {
+    var draft by remember { mutableStateOf("") }
+    FieldGroup(label) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
+            OutlinedTextField(
+                value = draft,
+                onValueChange = { draft = it },
+                label = { Text(label) },
+                modifier = Modifier.weight(1f).testTag(inputTag),
+                singleLine = true,
+            )
+            Button(
+                onClick = {
+                    val trimmed = draft.trim()
+                    if (trimmed.isNotEmpty()) {
+                        onAdd(trimmed)
+                        draft = ""
+                    }
+                },
+                modifier = Modifier.testTag(btnTag),
+            ) {
+                Text("Add")
+            }
+        }
+        if (addedValues.isNotEmpty()) {
+            FlowRow(
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+                verticalArrangement = Arrangement.spacedBy(6.dp),
+                modifier = Modifier.padding(top = Dimens.xs),
+            ) {
+                addedValues.forEach { value ->
+                    ValuePill(
+                        label = value,
+                        removed = false,
+                        onToggle = { onRemove(value) },
+                        tag = "$chipTagPrefix:$value",
+                    )
                 }
             }
         }
