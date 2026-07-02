@@ -190,4 +190,28 @@ class MergeReviewStorePreviewContactTest {
         val committed = store.commit().single()
         assertEquals(committed.org, preview.org)
     }
+
+    @Test
+    fun `previewContact excluded phone removes from rawPhones via core`() {
+        // Contacts share the same phone; rawPhones should be cleaned when the phone is excluded.
+        val a = contact("a", given = "Rob", family = "Sartin", phones = listOf("+15125551234"))
+        val b = contact("b", given = "Robert", family = "Sartin", phones = listOf("+15125551234"))
+        val store = MergeReviewStore(listOf(a, b))
+        val item =
+            store.state.value.items
+                .single()
+        store.accept(item.id)
+        store.toggleField(item.id, ExcludedValue("phones", "+15125551234"))
+        val updatedItem =
+            store.state.value.items
+                .single()
+        val preview = store.previewContact(updatedItem)
+        // Phone excluded — must not appear in phones or rawPhones
+        assert("+15125551234" !in preview.phones) { "Expected phone excluded from preview.phones" }
+        assert(preview.rawPhones.none { it == "+15125551234" }) { "Expected phone excluded from preview.rawPhones" }
+        // commit output must match preview
+        val committed = store.commit().single()
+        assertEquals(committed.phones, preview.phones)
+        assertEquals(committed.rawPhones, preview.rawPhones)
+    }
 }

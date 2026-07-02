@@ -3,6 +3,7 @@ package com.robsartin.contactotomy.ui
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.focusable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -26,6 +27,7 @@ import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
 import androidx.compose.material.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -34,6 +36,14 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.input.key.Key
+import androidx.compose.ui.input.key.KeyEventType
+import androidx.compose.ui.input.key.key
+import androidx.compose.ui.input.key.onPreviewKeyEvent
+import androidx.compose.ui.input.key.type
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -94,9 +104,79 @@ fun MergeScreen(
         return
     }
 
+    // Track whether any OutlinedTextField in the detail pane is focused, so keyboard
+    // accelerators can pass through events while the user is typing.
+    var textFieldFocused by remember { mutableStateOf(false) }
+
+    // Focus requester for the Section-1 list container.
+    val listFocusRequester = remember { FocusRequester() }
+    // Request focus on first composition so keys work without clicking first.
+    LaunchedEffect(Unit) {
+        runCatching { listFocusRequester.requestFocus() }
+    }
+
+    // Build a snapshot of the pending list to use in the key handler (lambda captures).
+    // We use `state` (not `pending`) to get the updated list after decisions.
+    fun pendingItems() = state.items.filter { it.decision == Decision.PENDING }
+
+    fun handleKeyForSection1(event: androidx.compose.ui.input.key.KeyEvent): Boolean {
+        // Only handle key-down events; ignore key-up to avoid double-firing.
+        if (event.type != KeyEventType.KeyDown) return false
+        // Pass through when a text field is focused — let typing work normally.
+        if (textFieldFocused) return false
+        val cur = pendingItems()
+        val currentSelected = state.items.firstOrNull { it.id == selectedId } ?: cur.firstOrNull()
+        val currentIndex = cur.indexOfFirst { it.id == currentSelected?.id }
+        return when (event.key) {
+            Key.DirectionDown, Key.J -> {
+                if (cur.isNotEmpty()) {
+                    val nextIndex = if (currentIndex < cur.size - 1) currentIndex + 1 else currentIndex
+                    selectedId = cur[nextIndex].id
+                }
+                true
+            }
+            Key.DirectionUp, Key.K -> {
+                if (cur.isNotEmpty()) {
+                    val prevIndex = if (currentIndex > 0) currentIndex - 1 else 0
+                    selectedId = cur[prevIndex].id
+                }
+                true
+            }
+            Key.A, Key.Enter -> {
+                currentSelected?.let { item ->
+                    store.accept(item.id)
+                    selectedId = pendingItems().firstOrNull { it.id != item.id }?.id
+                }
+                true
+            }
+            Key.R -> {
+                currentSelected?.let { item ->
+                    store.reject(item.id)
+                    selectedId = pendingItems().firstOrNull { it.id != item.id }?.id
+                }
+                true
+            }
+            Key.D -> {
+                currentSelected?.let { item ->
+                    store.discardItem(item.id)
+                    selectedId = pendingItems().firstOrNull { it.id != item.id }?.id
+                }
+                true
+            }
+            else -> false
+        }
+    }
+
     Row(Modifier.fillMaxWidth().fillMaxHeight().padding(top = 8.dp)) {
-        // ---- LEFT: review list ----
-        Column(Modifier.fillMaxWidth(0.42f)) {
+        // ---- LEFT: review list (keyboard-navigable container) ----
+        Column(
+            Modifier
+                .fillMaxWidth(0.42f)
+                .focusRequester(listFocusRequester)
+                .focusable()
+                .onPreviewKeyEvent { handleKeyForSection1(it) }
+                .testTag("merge-list-container"),
+        ) {
             Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
                 Text("Needs review (${pending.size})")
                 Row {
@@ -107,6 +187,13 @@ fun MergeScreen(
                 }
             }
             LabeledProgress(reviewed = resolved.size, total = state.items.size)
+            // Shortcut legend — always visible, muted style.
+            Text(
+                "↑/↓ move · A accept · R keep separate · D discard",
+                fontSize = 11.sp,
+                color = appColors.muted,
+                modifier = Modifier.padding(vertical = Dimens.xs).testTag("shortcut-legend"),
+            )
             val listState = rememberLazyListState()
             Box(Modifier.weight(1f)) {
                 LazyColumn(state = listState, modifier = Modifier.fillMaxHeight()) {
@@ -152,7 +239,7 @@ fun MergeScreen(
                 val detailScrollState = rememberScrollState()
                 Box(Modifier.weight(1f)) {
                     Column(Modifier.fillMaxHeight().verticalScroll(detailScrollState)) {
-                        MergeDetailContent(store, selected)
+                        MergeDetailContent(store, selected, onTextFieldFocusChange = { textFieldFocused = it })
                     }
                     VerticalScrollbar(
                         modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
@@ -227,6 +314,7 @@ private fun ResolvedRow(
 private fun MergeDetailContent(
     store: MergeReviewStore,
     item: ReviewItem,
+    onTextFieldFocusChange: (Boolean) -> Unit = {},
 ) {
     val p = item.proposal
     Column {
@@ -293,7 +381,7 @@ private fun MergeDetailContent(
                 }
 
                 // ---- Freeform edit block ----
-                EditOverrideBlock(store, item)
+                EditOverrideBlock(store, item, onTextFieldFocusChange = onTextFieldFocusChange)
             }
         }
     }
@@ -352,11 +440,15 @@ private fun MergedResultCard(
  * Editable name-components, org, and notes block layered below the existing
  * pick/exclude controls.  Typing any field sets an override that wins at commit time.
  * Pre-fill from the item's current effective values (what commit() would currently produce).
+ *
+ * [onTextFieldFocusChange] is called with `true` when any text field gains focus and
+ * `false` when it loses focus; used by the parent to guard keyboard accelerators.
  */
 @Composable
 private fun EditOverrideBlock(
     store: MergeReviewStore,
     item: ReviewItem,
+    onTextFieldFocusChange: (Boolean) -> Unit = {},
 ) {
     // Prefill from the store's single-source-of-truth effective* helpers (what commit() produces
     // pre-override), layering any user-typed override on top so an edit is what the user sees.
@@ -364,41 +456,44 @@ private fun EditOverrideBlock(
     val effectiveOrg = item.orgOverride ?: store.effectiveOrg(item)
     val effectiveNotes = item.notesOverride ?: store.effectiveNotes(item)
 
+    // Extension to add focus tracking to any OutlinedTextField modifier.
+    fun Modifier.trackFocus() = this.onFocusChanged { onTextFieldFocusChange(it.isFocused) }
+
     FieldGroup("Edit name components") {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
             OutlinedTextField(
                 value = displayName.prefix ?: "",
                 onValueChange = { store.setNameComponent(item.id, NameComponent.PREFIX, it) },
                 label = { Text("Prefix") },
-                modifier = Modifier.weight(1f).testTag("name-prefix"),
+                modifier = Modifier.weight(1f).testTag("name-prefix").trackFocus(),
                 singleLine = true,
             )
             OutlinedTextField(
                 value = displayName.given ?: "",
                 onValueChange = { store.setNameComponent(item.id, NameComponent.GIVEN, it) },
                 label = { Text("Given") },
-                modifier = Modifier.weight(2f).testTag("name-given"),
+                modifier = Modifier.weight(2f).testTag("name-given").trackFocus(),
                 singleLine = true,
             )
             OutlinedTextField(
                 value = displayName.middle ?: "",
                 onValueChange = { store.setNameComponent(item.id, NameComponent.MIDDLE, it) },
                 label = { Text("Middle") },
-                modifier = Modifier.weight(1f).testTag("name-middle"),
+                modifier = Modifier.weight(1f).testTag("name-middle").trackFocus(),
                 singleLine = true,
             )
             OutlinedTextField(
                 value = displayName.family ?: "",
                 onValueChange = { store.setNameComponent(item.id, NameComponent.FAMILY, it) },
                 label = { Text("Family") },
-                modifier = Modifier.weight(2f).testTag("name-family"),
+                modifier = Modifier.weight(2f).testTag("name-family").trackFocus(),
                 singleLine = true,
             )
             OutlinedTextField(
                 value = displayName.suffix ?: "",
                 onValueChange = { store.setNameComponent(item.id, NameComponent.SUFFIX, it) },
                 label = { Text("Suffix") },
-                modifier = Modifier.weight(1f).testTag("name-suffix"),
+                modifier = Modifier.weight(1f).testTag("name-suffix").trackFocus(),
                 singleLine = true,
             )
         }
@@ -409,7 +504,7 @@ private fun EditOverrideBlock(
             value = effectiveOrg,
             onValueChange = { store.setOrgOverride(item.id, it) },
             label = { Text("Org") },
-            modifier = Modifier.fillMaxWidth().testTag("org-edit"),
+            modifier = Modifier.fillMaxWidth().testTag("org-edit").trackFocus(),
             singleLine = true,
         )
     }
@@ -419,7 +514,7 @@ private fun EditOverrideBlock(
             value = effectiveNotes,
             onValueChange = { store.setNotesOverride(item.id, it) },
             label = { Text("Notes") },
-            modifier = Modifier.fillMaxWidth().testTag("notes-edit"),
+            modifier = Modifier.fillMaxWidth().testTag("notes-edit").trackFocus(),
             minLines = 2,
         )
         Button(
@@ -438,6 +533,7 @@ private fun EditOverrideBlock(
         addedValues = item.addedPhones,
         onAdd = { store.addPhone(item.id, it) },
         onRemove = { store.removeAddedPhone(item.id, it) },
+        onTextFieldFocusChange = onTextFieldFocusChange,
     )
 
     AddValueField(
@@ -448,6 +544,7 @@ private fun EditOverrideBlock(
         addedValues = item.addedEmails,
         onAdd = { store.addEmail(item.id, it) },
         onRemove = { store.removeAddedEmail(item.id, it) },
+        onTextFieldFocusChange = onTextFieldFocusChange,
     )
 
     FieldGroup("Company") {
@@ -479,6 +576,7 @@ private fun AddValueField(
     addedValues: List<String>,
     onAdd: (String) -> Unit,
     onRemove: (String) -> Unit,
+    onTextFieldFocusChange: (Boolean) -> Unit = {},
 ) {
     var draft by remember { mutableStateOf("") }
     FieldGroup(label) {
@@ -487,7 +585,7 @@ private fun AddValueField(
                 value = draft,
                 onValueChange = { draft = it },
                 label = { Text(label) },
-                modifier = Modifier.weight(1f).testTag(inputTag),
+                modifier = Modifier.weight(1f).testTag(inputTag).onFocusChanged { onTextFieldFocusChange(it.isFocused) },
                 singleLine = true,
             )
             Button(

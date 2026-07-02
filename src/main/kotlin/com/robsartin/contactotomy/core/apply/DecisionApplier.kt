@@ -36,7 +36,7 @@ class DecisionApplier {
         return result
     }
 
-    private fun adjust(
+    fun adjust(
         proposal: MergeProposal,
         decision: MergeDecision,
     ): Contact {
