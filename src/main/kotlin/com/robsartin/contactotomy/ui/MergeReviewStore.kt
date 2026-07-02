@@ -14,6 +14,8 @@ import com.robsartin.contactotomy.core.matcher.NicknameDictionary
 import com.robsartin.contactotomy.core.merger.ContactMerger
 import com.robsartin.contactotomy.core.model.Contact
 import com.robsartin.contactotomy.core.model.ContactName
+import com.robsartin.contactotomy.core.model.toDisplayString
+import com.robsartin.contactotomy.core.normalize.PhoneNormalizer
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -55,6 +57,27 @@ class MergeReviewStore(
     fun undo(itemId: String) = updateItem(itemId) { it.copy(decision = Decision.PENDING) }
 
     fun deleteItem(itemId: String) = _state.update { st -> st.copy(items = st.items.filterNot { it.id == itemId }) }
+
+    /**
+     * Discards the cluster for [itemId]: marks its decision as [Decision.DISCARD] and records
+     * all cluster member ids in [MergeReviewState.discardedIds]. On [commit], those contacts
+     * are excluded from the output entirely (neither merged nor passed through).
+     *
+     * Distinct from [deleteItem] (which removes the suggestion from the list) and
+     * [reject] (which keeps members separate in the output).
+     */
+    fun discardItem(itemId: String) =
+        _state.update { st ->
+            val item = st.items.firstOrNull { it.id == itemId } ?: return@update st
+            val memberIds =
+                item.proposal.cluster.members
+                    .map { it.id }
+                    .toSet()
+            st.copy(
+                items = st.items.map { if (it.id == itemId) it.copy(decision = Decision.DISCARD) else it },
+                discardedIds = st.discardedIds + memberIds,
+            )
+        }
 
     fun chooseName(
         itemId: String,
@@ -207,6 +230,76 @@ class MergeReviewStore(
             }
         }
 
+    /**
+     * Returns the exact [Contact] that [commit()] would produce for this accepted item.
+     * This is the single source of truth: [commit()] calls this for every accepted item,
+     * and the preview card in the UI reads this too — they cannot drift.
+     *
+     * The logic mirrors the per-item transform inside [commit()]: apply field exclusions and
+     * conflict choices on top of [proposal.merged], then layer the effective name/org/notes
+     * helpers, then the explicit override layer last.
+     */
+    fun previewContact(item: ReviewItem): Contact {
+        // Step 1: start from proposal.merged and apply exclusions + conflict choices
+        // (mirrors DecisionApplier.adjust for this single item)
+        var out = item.proposal.merged
+        for ((field, value) in item.conflictChoices) {
+            out = setSingle(out, field, value)
+        }
+        for (excluded in item.excludedValues) {
+            out = removeValue(out, excluded.field, excluded.value)
+        }
+        // Step 2: effective name / org / notes (pick/clear/conflict choices)
+        out = out.copy(name = effectiveName(item))
+        out = out.copy(org = effectiveOrg(item).ifEmpty { null })
+        out = out.copy(notes = effectiveNotes(item).ifEmpty { null })
+        // title clearing
+        if ("title" in item.clearedConflicts) out = out.copy(title = null)
+        // Step 3: explicit override layer wins last
+        item.nameOverride?.let { out = out.copy(name = it) }
+        item.orgOverride?.let { out = out.copy(org = it.ifBlank { null }) }
+        item.notesOverride?.let { out = out.copy(notes = it.ifBlank { null }) }
+        // Step 4: added phones/emails
+        if (item.addedPhones.isNotEmpty()) out = out.copy(phones = (out.phones + item.addedPhones).distinct())
+        if (item.addedEmails.isNotEmpty()) out = out.copy(emails = (out.emails + item.addedEmails).distinct())
+        return out
+    }
+
+    private fun setSingle(
+        c: Contact,
+        field: String,
+        value: String,
+    ): Contact =
+        when (field) {
+            "org" -> c.copy(org = value)
+            "title" -> c.copy(title = value)
+            "notes" -> c.copy(notes = value)
+            else -> c
+        }
+
+    private fun removeValue(
+        c: Contact,
+        field: String,
+        value: String,
+    ): Contact {
+        val phoneNormalizer = PhoneNormalizer()
+        return when (field) {
+            "phones" ->
+                c.copy(
+                    phones = c.phones - value,
+                    rawPhones = c.rawPhones.filterNot { phoneNormalizer.normalize(it) == value },
+                )
+            "emails" -> c.copy(emails = c.emails - value)
+            "addresses" -> c.copy(addresses = c.addresses.filterNot { it.toDisplayString() == value })
+            "urls" -> c.copy(urls = c.urls - value)
+            "categories" -> c.copy(categories = c.categories - value)
+            "org" -> if (c.org == value) c.copy(org = null) else c
+            "title" -> if (c.title == value) c.copy(title = null) else c
+            "notes" -> if (c.notes == value) c.copy(notes = null) else c
+            else -> c
+        }
+    }
+
     fun acceptAllHighConfidence() =
         _state.update { st ->
             st.copy(items = st.items.map { if (it.origin == Origin.HIGH) it.copy(decision = Decision.ACCEPT) else it })
@@ -297,7 +390,11 @@ class MergeReviewStore(
         st.copy(items = st.items.map { if (it.id == itemId) transform(it) else it })
     }
 
-    /** Applies accepted merges and returns the resulting contact list; idempotent guard against double-touch. */
+    /**
+     * Applies accepted merges and returns the resulting contact list; idempotent guard against
+     * double-touch. Each accepted item's contact is produced by [previewContact], so the preview
+     * card and the committed result are provably identical.
+     */
     fun commit(): List<Contact> {
         val accepted = _state.value.items.filter { it.decision == Decision.ACCEPT }
         val seen = mutableSetOf<String>()
@@ -314,6 +411,8 @@ class MergeReviewStore(
                 finalAccepted += item
             }
         }
+        // Decisions drive DecisionApplier only for ordering/pass-through logic.
+        // Per-item field content is produced by previewContact (single source of truth).
         val decisions =
             finalAccepted.map {
                 MergeDecision(
@@ -323,32 +422,20 @@ class MergeReviewStore(
                     conflictChoices = it.conflictChoices,
                 )
             }
-        val result =
+        val rawResult =
             DecisionApplier().applyDecisions(
                 contacts,
                 finalAccepted.map { it.proposal },
                 decisions,
             )
-        // Apply the pick/clear/choice-derived field values via the shared effective* helpers,
-        // then the user-typed override layer LAST (so explicit edits win). Both the prefilled
-        // edit fields and this commit read the SAME effective* helpers, so they cannot drift.
-        // Name/org/notes flow through effective* here; title clearing stays inline (no editor yet).
-        val itemById = finalAccepted.associateBy { it.proposal.merged.id }
-        val withOverrides =
-            result.map { c ->
-                val item = itemById[c.id] ?: return@map c
-                var out = c.copy(name = effectiveName(item))
-                out = out.copy(org = effectiveOrg(item).ifEmpty { null })
-                out = out.copy(notes = effectiveNotes(item).ifEmpty { null })
-                if ("title" in item.clearedConflicts) out = out.copy(title = null)
-                // Override layer: an explicit edit supersedes the effective* value.
-                item.nameOverride?.let { out = out.copy(name = it) }
-                item.orgOverride?.let { out = out.copy(org = it.ifBlank { null }) }
-                item.notesOverride?.let { out = out.copy(notes = it.ifBlank { null }) }
-                if (item.addedPhones.isNotEmpty()) out = out.copy(phones = (out.phones + item.addedPhones).distinct())
-                if (item.addedEmails.isNotEmpty()) out = out.copy(emails = (out.emails + item.addedEmails).distinct())
-                out
-            }
+        // Replace each accepted-item contact with the result of previewContact, which is the
+        // single source of truth for what the merged card looks like.
+        val previewById = finalAccepted.associate { it.proposal.merged.id to previewContact(it) }
+        val result = rawResult.map { c -> previewById[c.id] ?: c }
+
+        // Exclude contacts whose ids are in discardedIds from the final output.
+        val discarded = _state.value.discardedIds
+        val withoutDiscarded = result.filterNot { it.id in discarded }
 
         _state.update { st ->
             st.copy(
@@ -356,7 +443,7 @@ class MergeReviewStore(
                 committed = true,
             )
         }
-        return withOverrides
+        return withoutDiscarded
     }
 
     companion object {

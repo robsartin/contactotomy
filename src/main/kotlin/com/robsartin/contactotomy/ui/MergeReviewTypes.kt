@@ -6,7 +6,7 @@ import com.robsartin.contactotomy.core.model.ContactName
 
 enum class Origin { HIGH, UNCERTAIN, MANUAL }
 
-enum class Decision { PENDING, ACCEPT, REJECT }
+enum class Decision { PENDING, ACCEPT, REJECT, DISCARD }
 
 /** Which component of a [ContactName] to update with [MergeReviewStore.setNameComponent]. */
 enum class NameComponent { PREFIX, GIVEN, MIDDLE, FAMILY, SUFFIX }
@@ -33,4 +33,6 @@ data class ReviewItem(
 data class MergeReviewState(
     val items: List<ReviewItem> = emptyList(),
     val committed: Boolean = false,
+    /** Ids of contacts whose cluster has been discarded — these are excluded from commit() output. */
+    val discardedIds: Set<String> = emptySet(),
 )

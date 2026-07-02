@@ -1,5 +1,7 @@
 package com.robsartin.contactotomy.ui
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -12,9 +14,13 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.rememberScrollbarAdapter
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.Button
+import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
 import androidx.compose.material.OutlinedTextField
 import androidx.compose.material.RadioButton
@@ -29,7 +35,9 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.company.companyNameText
@@ -99,29 +107,36 @@ fun MergeScreen(
                 }
             }
             LabeledProgress(reviewed = resolved.size, total = state.items.size)
-            LazyColumn(Modifier.weight(1f)) {
-                items(pending) { item ->
-                    val label =
-                        if (item.origin == Origin.UNCERTAIN) {
-                            item.proposal.cluster.members
-                                .joinToString(" ↔ ") { displayName(it.name) } +
-                                " · " +
-                                item.proposal.cluster.reasons
-                                    .joinToString(", ")
-                        } else {
-                            "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
-                        }
-                    ClusterRow(
-                        title = label,
-                        origin = item.origin,
-                        selected = item.id == selected?.id,
-                        onClick = { selectedId = item.id },
-                    )
+            val listState = rememberLazyListState()
+            Box(Modifier.weight(1f)) {
+                LazyColumn(state = listState, modifier = Modifier.fillMaxHeight()) {
+                    items(pending) { item ->
+                        val label =
+                            if (item.origin == Origin.UNCERTAIN) {
+                                item.proposal.cluster.members
+                                    .joinToString(" ↔ ") { displayName(it.name) } +
+                                    " · " +
+                                    item.proposal.cluster.reasons
+                                        .joinToString(", ")
+                            } else {
+                                "${displayName(item.proposal.merged.name)} · ${item.proposal.cluster.members.size} cards"
+                            }
+                        ClusterRow(
+                            title = label,
+                            origin = item.origin,
+                            selected = item.id == selected?.id,
+                            onClick = { selectedId = item.id },
+                        )
+                    }
+                    if (resolved.isNotEmpty()) {
+                        item { Text("Resolved (${resolved.size})", Modifier.padding(top = 10.dp)) }
+                        items(resolved) { item -> ResolvedRow(item) { store.undo(item.id) } }
+                    }
                 }
-                if (resolved.isNotEmpty()) {
-                    item { Text("Resolved (${resolved.size})", Modifier.padding(top = 10.dp)) }
-                    items(resolved) { item -> ResolvedRow(item) { store.undo(item.id) } }
-                }
+                VerticalScrollbar(
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    adapter = rememberScrollbarAdapter(listState),
+                )
             }
             Text(
                 "Will merge $willMerge clusters · ${pending.size} still pending",
@@ -134,8 +149,15 @@ fun MergeScreen(
                 Text("All clusters reviewed")
             } else {
                 // Scrollable content: source cards + merged-result fields.
-                Column(Modifier.weight(1f).verticalScroll(rememberScrollState())) {
-                    MergeDetailContent(store, selected)
+                val detailScrollState = rememberScrollState()
+                Box(Modifier.weight(1f)) {
+                    Column(Modifier.fillMaxHeight().verticalScroll(detailScrollState)) {
+                        MergeDetailContent(store, selected)
+                    }
+                    VerticalScrollbar(
+                        modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                        adapter = rememberScrollbarAdapter(detailScrollState),
+                    )
                 }
                 // Pinned footer: decision buttons stay on-screen regardless of detail length.
                 Row(Modifier.padding(top = 10.dp)) {
@@ -155,11 +177,22 @@ fun MergeScreen(
                             store.reject(selected.id)
                             selectedId = pending.firstOrNull { it.id != selected.id }?.id
                         },
-                        border = androidx.compose.foundation.BorderStroke(1.dp, appColors.reject),
+                        border = BorderStroke(1.dp, appColors.reject),
                         colors =
                             androidx.compose.material.ButtonDefaults
                                 .outlinedButtonColors(contentColor = appColors.reject),
                     ) { Text("✕ Keep separate") }
+                    androidx.compose.material.OutlinedButton(
+                        onClick = {
+                            store.discardItem(selected.id)
+                            selectedId = pending.firstOrNull { it.id != selected.id }?.id
+                        },
+                        border = BorderStroke(1.dp, appColors.reject),
+                        colors =
+                            androidx.compose.material.ButtonDefaults
+                                .outlinedButtonColors(contentColor = appColors.reject),
+                        modifier = Modifier.testTag("discard-cluster"),
+                    ) { Text("⊘ Discard all") }
                     androidx.compose.material.OutlinedButton(
                         onClick = {
                             store.deleteItem(selected.id)
@@ -177,7 +210,13 @@ private fun ResolvedRow(
     item: ReviewItem,
     onUndo: () -> Unit,
 ) {
-    val mark = if (item.decision == Decision.ACCEPT) "✓ will merge" else "✕ kept separate"
+    val mark =
+        when (item.decision) {
+            Decision.ACCEPT -> "✓ will merge"
+            Decision.REJECT -> "✕ kept separate"
+            Decision.DISCARD -> "⊘ discarded"
+            Decision.PENDING -> ""
+        }
     Row(Modifier.fillMaxWidth().padding(vertical = 2.dp), horizontalArrangement = Arrangement.SpaceBetween) {
         Text("$mark · ${displayName(item.proposal.merged.name)}")
         Button(onClick = onUndo) { Text("Undo") }
@@ -191,6 +230,9 @@ private fun MergeDetailContent(
 ) {
     val p = item.proposal
     Column {
+        // ---- Merged result preview card (single source of truth) ----
+        MergedResultCard(store, item)
+
         SourceCards(p.cluster.members)
 
         androidx.compose.material.Card(
@@ -252,6 +294,55 @@ private fun MergeDetailContent(
 
                 // ---- Freeform edit block ----
                 EditOverrideBlock(store, item)
+            }
+        }
+    }
+}
+
+/**
+ * Distinctive "Merged result" preview card — shows exactly what contact [commit()] would
+ * produce for this item. Backed by [MergeReviewStore.previewContact] (single source of truth),
+ * so this card and the commit output are provably identical.
+ */
+@Composable
+private fun MergedResultCard(
+    store: MergeReviewStore,
+    item: ReviewItem,
+) {
+    val preview = store.previewContact(item)
+    Card(
+        border = BorderStroke(Dimens.selected, appColors.accept),
+        shape = RoundedCornerShape(Dimens.cardRadius),
+        backgroundColor = appColors.accept.copy(alpha = 0.06f),
+        modifier = Modifier.fillMaxWidth().padding(bottom = Dimens.sm).testTag("merged-result-card"),
+    ) {
+        Column(Modifier.padding(Dimens.md)) {
+            Text(
+                "Merged result",
+                fontWeight = FontWeight.SemiBold,
+                fontSize = 13.sp,
+                color = appColors.accept,
+                modifier = Modifier.padding(bottom = Dimens.xs),
+            )
+            val name = displayName(preview.name)
+            if (name.isNotBlank()) {
+                Text(name, fontWeight = FontWeight.Medium, fontSize = 14.sp)
+            }
+            preview.org?.takeIf { it.isNotBlank() }?.let {
+                Text(it, fontSize = 12.sp, color = appColors.muted)
+            }
+            preview.phones.forEach { Text(it, fontSize = 12.sp) }
+            preview.emails.forEach { Text(it, fontSize = 12.sp) }
+            preview.addresses.forEach { Text(it.toDisplayString(), fontSize = 12.sp) }
+            preview.urls.forEach { Text(it, fontSize = 12.sp) }
+            preview.title?.takeIf { it.isNotBlank() }?.let {
+                Text("Title: $it", fontSize = 12.sp)
+            }
+            preview.notes?.takeIf { it.isNotBlank() }?.let {
+                Text("Notes: $it", fontSize = 12.sp)
+            }
+            if (preview.categories.isNotEmpty()) {
+                Text("Categories: ${preview.categories.joinToString()}", fontSize = 12.sp)
             }
         }
     }

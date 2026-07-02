@@ -1,5 +1,6 @@
 package com.robsartin.contactotomy.ui
 
+import androidx.compose.foundation.VerticalScrollbar
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -10,6 +11,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.rememberScrollbarAdapter
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.Card
 import androidx.compose.material.Checkbox
@@ -120,39 +123,46 @@ private fun CleanSection(
     Row(modifier.fillMaxWidth().fillMaxHeight()) {
         // Left: clean candidate list
         Column(Modifier.weight(1f)) {
-            LazyColumn(Modifier.weight(1f)) {
-                items(candidates) { c ->
-                    val isMarked = c.id in marked
-                    Row(
-                        Modifier
-                            .fillMaxWidth()
-                            .clickable { selectedId = c.id }
-                            .padding(vertical = 3.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Checkbox(
-                            checked = isMarked,
-                            onCheckedChange = { onToggle(c.id) },
-                            modifier = Modifier.testTag("mark:${c.id}"),
-                        )
-                        SourceBadge(c.source)
-                        Text("  ${displayName(c.name).ifBlank { "(no name)" }}")
-                        if (isMarked) {
-                            val hint =
-                                when (store.actionFor(c)) {
-                                    TidyAction.EMAIL_NAME -> "→ name: ${c.emails.first()}"
-                                    TidyAction.PHONE_NAME -> "→ name: ${c.phones.first()}"
-                                    TidyAction.COMPANY -> "→ org: ${companyNameText(c.name)}"
-                                }
-                            Text(
-                                "  $hint",
-                                color = appColors.muted,
-                                fontSize = 11.sp,
-                                modifier = Modifier.padding(start = 6.dp),
+            val cleanListState = rememberLazyListState()
+            Box(Modifier.weight(1f)) {
+                LazyColumn(state = cleanListState, modifier = Modifier.fillMaxHeight()) {
+                    items(candidates) { c ->
+                        val isMarked = c.id in marked
+                        Row(
+                            Modifier
+                                .fillMaxWidth()
+                                .clickable { selectedId = c.id }
+                                .padding(vertical = 3.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Checkbox(
+                                checked = isMarked,
+                                onCheckedChange = { onToggle(c.id) },
+                                modifier = Modifier.testTag("mark:${c.id}"),
                             )
+                            SourceBadge(c.source)
+                            Text("  ${displayName(c.name).ifBlank { "(no name)" }}")
+                            if (isMarked) {
+                                val hint =
+                                    when (store.actionFor(c)) {
+                                        TidyAction.EMAIL_NAME -> "→ name: ${c.emails.first()}"
+                                        TidyAction.PHONE_NAME -> "→ name: ${c.phones.first()}"
+                                        TidyAction.COMPANY -> "→ org: ${companyNameText(c.name)}"
+                                    }
+                                Text(
+                                    "  $hint",
+                                    color = appColors.muted,
+                                    fontSize = 11.sp,
+                                    modifier = Modifier.padding(start = 6.dp),
+                                )
+                            }
                         }
                     }
                 }
+                VerticalScrollbar(
+                    modifier = Modifier.align(Alignment.CenterEnd).fillMaxHeight(),
+                    adapter = rememberScrollbarAdapter(cleanListState),
+                )
             }
         }
         // Right: detail pane
