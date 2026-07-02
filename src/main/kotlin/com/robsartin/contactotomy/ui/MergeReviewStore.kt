@@ -165,11 +165,11 @@ class MergeReviewStore(
     ) = updateItem(itemId) { it.copy(addedEmails = it.addedEmails - value) }
 
     /**
-     * Returns the name that commit() would currently produce for [item] (before any
-     * nameOverride), used to seed the override on first edit so untouched components are
-     * preserved.
+     * The pre-override effective NAME for [item] — the name commit() produces from the
+     * pick/clear controls before any [ReviewItem.nameOverride] is applied. Single source of
+     * truth shared by commit() and the prefill of the editable name fields.
      */
-    private fun effectiveName(item: ReviewItem): ContactName =
+    fun effectiveName(item: ReviewItem): ContactName =
         when {
             item.nameCleared -> ContactName()
             item.nameChoiceId != null ->
@@ -178,6 +178,28 @@ class MergeReviewStore(
                     ?.name
                     ?: item.proposal.merged.name
             else -> item.proposal.merged.name
+        }
+
+    /**
+     * The pre-override effective ORG for [item] (empty string means "no org") — mirrors
+     * commit(): the org choice supersedes the merged org. Single source of truth shared by
+     * commit() and the prefill of the editable org field.
+     */
+    fun effectiveOrg(item: ReviewItem): String = item.orgChoice ?: item.proposal.merged.org ?: ""
+
+    /**
+     * The pre-override effective NOTES for [item] (empty string means "no notes") — mirrors
+     * commit(): a cleared conflict wins, else an explicit conflict choice, else the merged
+     * notes. Single source of truth shared by commit() and the prefill of the editable notes field.
+     */
+    fun effectiveNotes(item: ReviewItem): String =
+        when {
+            "notes" in item.clearedConflicts -> ""
+            item.conflictChoices.containsKey("notes") -> item.conflictChoices["notes"] ?: ""
+            else -> {
+                val notesConflict = item.proposal.conflicts.firstOrNull { it.field == "notes" }
+                notesConflict?.chosen ?: item.proposal.merged.notes ?: ""
+            }
         }
 
     fun acceptAllHighConfidence() =
@@ -302,45 +324,19 @@ class MergeReviewStore(
                 finalAccepted.map { it.proposal },
                 decisions,
             )
-        // Apply per-cluster name overrides (chosen source card's name) — kept in the UI, engine untouched.
-        val nameOverrides: Map<String, ContactName> =
-            finalAccepted
-                .mapNotNull { item ->
-                    when {
-                        item.nameCleared -> item.proposal.merged.id to ContactName()
-                        item.nameChoiceId != null -> {
-                            val member =
-                                item.proposal.cluster.members
-                                    .firstOrNull { it.id == item.nameChoiceId }
-                            member?.let { item.proposal.merged.id to it.name }
-                        }
-                        else -> null
-                    }
-                }.toMap()
-        val withNames = result.map { c -> nameOverrides[c.id]?.let { c.copy(name = it) } ?: c }
-        // Apply per-cluster org overrides (chosen company/org, or "" to clear) — engine untouched.
-        // orgChoice is the single source of truth for the merged org; it supersedes any
-        // conflictChoices["org"] (the UI routes org through chooseOrg, not chooseConflict).
-        val orgOverrides: Map<String, String> =
-            finalAccepted.mapNotNull { item -> item.orgChoice?.let { item.proposal.merged.id to it } }.toMap()
-        val withOrg =
-            withNames.map { c -> orgOverrides[c.id]?.let { oc -> c.copy(org = oc.ifEmpty { null }) } ?: c }
-        // Apply per-cluster cleared-field overrides (null out title/notes) — engine untouched.
-        val withCleared =
-            withOrg.map { c ->
-                val item = finalAccepted.firstOrNull { it.proposal.merged.id == c.id } ?: return@map c
-                var out = c
-                if ("title" in item.clearedConflicts) out = out.copy(title = null)
-                if ("notes" in item.clearedConflicts) out = out.copy(notes = null)
-                out
-            }
-
-        // Apply user-typed override layer (nameOverride / orgOverride / notesOverride / addedPhones / addedEmails).
-        // Applied LAST so they win over pick/exclude/choice results.
+        // Apply the pick/clear/choice-derived field values via the shared effective* helpers,
+        // then the user-typed override layer LAST (so explicit edits win). Both the prefilled
+        // edit fields and this commit read the SAME effective* helpers, so they cannot drift.
+        // Name/org/notes flow through effective* here; title clearing stays inline (no editor yet).
+        val itemById = finalAccepted.associateBy { it.proposal.merged.id }
         val withOverrides =
-            withCleared.map { c ->
-                val item = finalAccepted.firstOrNull { it.proposal.merged.id == c.id } ?: return@map c
-                var out = c
+            result.map { c ->
+                val item = itemById[c.id] ?: return@map c
+                var out = c.copy(name = effectiveName(item))
+                out = out.copy(org = effectiveOrg(item).ifEmpty { null })
+                out = out.copy(notes = effectiveNotes(item).ifEmpty { null })
+                if ("title" in item.clearedConflicts) out = out.copy(title = null)
+                // Override layer: an explicit edit supersedes the effective* value.
                 item.nameOverride?.let { out = out.copy(name = it) }
                 item.orgOverride?.let { out = out.copy(org = it.ifBlank { null }) }
                 item.notesOverride?.let { out = out.copy(notes = it.ifBlank { null }) }

@@ -33,7 +33,6 @@ import androidx.compose.ui.unit.dp
 import com.robsartin.contactotomy.core.apply.ExcludedValue
 import com.robsartin.contactotomy.core.company.CompanyNameDetector
 import com.robsartin.contactotomy.core.model.Contact
-import com.robsartin.contactotomy.core.model.ContactName
 import com.robsartin.contactotomy.core.model.toDisplayString
 import com.robsartin.contactotomy.ui.components.ClusterRow
 import com.robsartin.contactotomy.ui.components.FieldGroup
@@ -266,19 +265,11 @@ private fun EditOverrideBlock(
     store: MergeReviewStore,
     item: ReviewItem,
 ) {
-    // The name displayed in the edit fields: use nameOverride if set, else what commit() would produce.
-    val displayName = item.nameOverride ?: effectiveNameForDisplay(item)
-    val effectiveOrg = item.orgOverride ?: item.orgChoice ?: item.proposal.merged.org ?: ""
-    // Compute effective notes: account for conflict choices and cleared conflicts, mirroring commit().
-    val effectiveNotes =
-        item.notesOverride ?: when {
-            "notes" in item.clearedConflicts -> ""
-            item.conflictChoices.containsKey("notes") -> item.conflictChoices["notes"] ?: ""
-            else -> {
-                val notesConflict = item.proposal.conflicts.firstOrNull { it.field == "notes" }
-                notesConflict?.chosen ?: item.proposal.merged.notes ?: ""
-            }
-        }
+    // Prefill from the store's single-source-of-truth effective* helpers (what commit() produces
+    // pre-override), layering any user-typed override on top so an edit is what the user sees.
+    val displayName = item.nameOverride ?: store.effectiveName(item)
+    val effectiveOrg = item.orgOverride ?: store.effectiveOrg(item)
+    val effectiveNotes = item.notesOverride ?: store.effectiveNotes(item)
 
     FieldGroup("Edit name components") {
         Row(horizontalArrangement = Arrangement.spacedBy(Dimens.sm)) {
@@ -423,21 +414,6 @@ private fun AddValueField(
         }
     }
 }
-
-/**
- * Returns the ContactName that would be used for display / seeding (what commit() currently
- * produces before any nameOverride), for pre-filling the editable fields.
- */
-private fun effectiveNameForDisplay(item: ReviewItem): ContactName =
-    when {
-        item.nameCleared -> ContactName()
-        item.nameChoiceId != null ->
-            item.proposal.cluster.members
-                .firstOrNull { it.id == item.nameChoiceId }
-                ?.name
-                ?: item.proposal.merged.name
-        else -> item.proposal.merged.name
-    }
 
 @Composable
 private fun CompanyOrgField(
