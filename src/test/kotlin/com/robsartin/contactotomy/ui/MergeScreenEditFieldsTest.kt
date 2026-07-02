@@ -120,6 +120,7 @@ class MergeScreenEditFieldsTest {
     fun `org-edit field renders pre-filled with effective org`() =
         runComposeUiTest {
             setContent { MergeScreen(editStore()) }
+            onNodeWithTag("org-edit").performScrollTo()
             onNodeWithTag("org-edit").assertIsDisplayed()
         }
 
@@ -151,6 +152,7 @@ class MergeScreenEditFieldsTest {
     fun `notes-edit field renders`() =
         runComposeUiTest {
             setContent { MergeScreen(editStore()) }
+            onNodeWithTag("notes-edit").performScrollTo()
             onNodeWithTag("notes-edit").assertIsDisplayed()
         }
 
