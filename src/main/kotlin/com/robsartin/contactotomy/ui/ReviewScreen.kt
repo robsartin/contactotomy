@@ -141,6 +141,7 @@ private fun CleanSection(
                             val hint =
                                 when (store.actionFor(c)) {
                                     TidyAction.EMAIL_NAME -> "→ name: ${c.emails.first()}"
+                                    TidyAction.PHONE_NAME -> "→ name: ${c.phones.first()}"
                                     TidyAction.COMPANY -> "→ org: ${companyNameText(c.name)}"
                                 }
                             Text(

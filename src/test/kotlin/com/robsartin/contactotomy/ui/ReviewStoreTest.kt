@@ -23,10 +23,13 @@ class ReviewStoreTest {
     // Fixture: a lone nameless card with an email — should be in Section 2, EMAIL_NAME action
     private val emailOnly = contact("email", emails = listOf("lonely@example.com"))
 
+    // Fixture: a lone nameless card with a phone but no email — should be in Section 2, PHONE_NAME action
+    private val phoneOnly = contact("phone", phones = listOf("+15125557777"))
+
     // Fixture: a plain person with a name and phone — not suggested (not in Section 2)
     private val jane = contact("jane", given = "Jane", family = "Smith", phones = listOf("+15125559999"))
 
-    private val allContacts = listOf(rob, robert, acme, emailOnly, jane)
+    private val allContacts = listOf(rob, robert, acme, emailOnly, jane, phoneOnly)
 
     @Test
     fun `cleanCandidates returns only suggested singletons - not paired and not plain person`() {
@@ -35,17 +38,19 @@ class ReviewStoreTest {
         val ids = candidates.map { it.id }.toSet()
         assertTrue("acme" in ids, "Acme Inc (company name) should be a clean candidate")
         assertTrue("email" in ids, "nameless email card should be a clean candidate")
+        assertTrue("phone" in ids, "nameless phone-only card should be a clean candidate")
         assertFalse("rob" in ids, "paired card should not be a singleton candidate")
         assertFalse("robert" in ids, "paired card should not be a singleton candidate")
         assertFalse("jane" in ids, "plain person should not be a clean candidate")
     }
 
     @Test
-    fun `both suggested candidates are pre-marked by default`() {
+    fun `all suggested candidates are pre-marked by default`() {
         val store = ReviewStore(allContacts)
         val marked = store.markedState.value
         assertTrue("acme" in marked, "acme should be pre-marked")
         assertTrue("email" in marked, "email should be pre-marked")
+        assertTrue("phone" in marked, "phone-only card should be pre-marked")
         assertFalse("rob" in marked, "rob should not be pre-marked")
         assertFalse("jane" in marked, "jane should not be pre-marked")
     }
@@ -81,19 +86,19 @@ class ReviewStoreTest {
     }
 
     @Test
-    fun `commit with merge accepted and both clean cards marked applies both transforms`() {
+    fun `commit with merge accepted and all clean cards marked applies all transforms`() {
         val store = ReviewStore(allContacts)
         // Accept the merge in Section 1
         val mergeItems = store.mergeStore.state.value.items
         assertEquals(1, mergeItems.size, "expected exactly one merge cluster for rob+robert")
         store.mergeStore.accept(mergeItems.first().id)
 
-        // Both acme and email are pre-marked — no toggles needed
+        // acme, email, and phone are all pre-marked — no toggles needed
         val result = store.commit()
         val byId = result.associateBy { it.id }
 
         // Pair collapsed into one contact
-        val mergedIds = byId.keys.filter { it != "acme" && it != "email" && it != "jane" }
+        val mergedIds = byId.keys.filter { it != "acme" && it != "email" && it != "jane" && it != "phone" }
         assertEquals(1, mergedIds.size, "duplicate pair should collapse to 1 contact; got $mergedIds")
 
         // Acme normalized to org
@@ -107,13 +112,18 @@ class ReviewStoreTest {
         assertFalse(emailOut == null, "email card should survive in output")
         assertEquals(ContactName(formatted = "lonely@example.com"), emailOut!!.name)
 
+        // Phone card named from phone
+        val phoneOut = byId["phone"]
+        assertFalse(phoneOut == null, "phone card should survive in output")
+        assertEquals(ContactName(formatted = "+15125557777"), phoneOut!!.name)
+
         // Jane unchanged
         val janeOut = byId["jane"]
         assertFalse(janeOut == null, "jane should survive in output")
         assertEquals("Jane", janeOut!!.name.given)
 
-        // Total: 1 merged + acme + email + jane = 4
-        assertEquals(4, result.size)
+        // Total: 1 merged + acme + email + phone + jane = 5
+        assertEquals(5, result.size)
     }
 
     @Test
@@ -165,5 +175,49 @@ class ReviewStoreTest {
         store.mergeStore.accept(mergeItem.id)
         val result = store.commit()
         assertEquals(1, result.size)
+    }
+
+    // ---- PHONE_NAME tests ----
+
+    @Test
+    fun `a nameless phone-only card is a suggested clean candidate`() {
+        val store = ReviewStore(allContacts)
+        val ids = store.cleanCandidates().map { it.id }.toSet()
+        assertTrue("phone" in ids, "nameless phone-only card should be a clean candidate")
+    }
+
+    @Test
+    fun `actionFor returns PHONE_NAME for nameless phone-only card`() {
+        val store = ReviewStore(allContacts)
+        assertEquals(TidyAction.PHONE_NAME, store.actionFor(phoneOnly))
+    }
+
+    @Test
+    fun `actionFor returns EMAIL_NAME for nameless email card even when phone present (email wins)`() {
+        val store = ReviewStore(allContacts)
+        val emailAndPhone = contact("ep", phones = listOf("+15551234567"), emails = listOf("ep@example.com"))
+        assertEquals(TidyAction.EMAIL_NAME, store.actionFor(emailAndPhone))
+    }
+
+    @Test
+    fun `commit names a phone-only card from its phone`() {
+        val store = ReviewStore(listOf(phoneOnly, jane))
+        assertTrue("phone" in store.markedState.value)
+        val result = store.commit()
+        val byId = result.associateBy { it.id }
+        val phoneOut = byId["phone"]!!
+        assertEquals(ContactName(formatted = "+15125557777"), phoneOut.name)
+    }
+
+    @Test
+    fun `actionFor still returns EMAIL_NAME for nameless email card (regression)`() {
+        val store = ReviewStore(allContacts)
+        assertEquals(TidyAction.EMAIL_NAME, store.actionFor(emailOnly))
+    }
+
+    @Test
+    fun `actionFor still returns COMPANY for company-name card (regression)`() {
+        val store = ReviewStore(allContacts)
+        assertEquals(TidyAction.COMPANY, store.actionFor(acme))
     }
 }

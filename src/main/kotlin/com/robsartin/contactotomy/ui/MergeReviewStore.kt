@@ -116,6 +116,11 @@ class MergeReviewStore(
         item.copy(nameOverride = updated)
     }
 
+    fun setNameOverride(
+        itemId: String,
+        value: ContactName,
+    ) = updateItem(itemId) { it.copy(nameOverride = value) }
+
     fun setOrgOverride(
         itemId: String,
         value: String?,

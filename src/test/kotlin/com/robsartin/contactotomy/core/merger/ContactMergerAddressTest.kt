@@ -59,6 +59,24 @@ class ContactMergerAddressTest {
     }
 
     @Test
+    fun `deduplicates addresses with same display string but different struct across members`() {
+        // Two PostalAddress values that are structurally different (different poBox) but
+        // render identically via toDisplayString() (which only includes street, city, region, postalCode, country)
+        val addrA = PostalAddress(poBox = null, street = "123 Main St", city = "Austin", region = "TX", postalCode = "78701")
+        val addrB = PostalAddress(poBox = "P.O. Box 99", street = "123 Main St", city = "Austin", region = "TX", postalCode = "78701")
+
+        val a = contactWithAddresses("a", addrA)
+        val b = contactWithAddresses("b", addrB)
+
+        val merged = merger.merge(cluster(a, b)).merged
+
+        // Even though addrA and addrB are structurally different, their toDisplayString() is the same
+        // so only the first occurrence (addrA from member a, which is primary) should survive
+        assertEquals(1, merged.addresses.size)
+        assertEquals(addrA, merged.addresses.single())
+    }
+
+    @Test
     fun `preserves primary order then appends secondary unique addresses`() {
         val primary = PostalAddress(street = "1 Primary St", city = "Boston", region = "MA", postalCode = "02101")
         val secondary = PostalAddress(street = "2 Secondary Ave", city = "Chicago", region = "IL", postalCode = "60601")

@@ -19,8 +19,8 @@ class ContactMerger {
 
         val phones = union(ordered.map { it.phones })
         val rawPhones = union(ordered.map { it.rawPhones })
-        val emails = union(ordered.map { it.emails })
-        val addresses = unionOf(ordered.map { it.addresses })
+        val emails = unionCaseInsensitive(ordered.map { it.emails })
+        val addresses = unionByDisplayString(ordered.map { it.addresses })
         val urls = union(ordered.map { it.urls })
         val categories = union(ordered.map { it.categories })
 
@@ -109,10 +109,40 @@ class ContactMerger {
         return out.toList()
     }
 
+    /** Unions string lists, deduplicating case-insensitively and preserving the first occurrence's casing. */
+    private fun unionCaseInsensitive(lists: List<List<String>>): List<String> {
+        val seen = LinkedHashSet<String>() // lowercase sentinels
+        val out = mutableListOf<String>()
+        lists.forEach { list ->
+            list.forEach { value ->
+                val lower = value.lowercase()
+                if (seen.add(lower)) {
+                    out.add(value)
+                }
+            }
+        }
+        return out
+    }
+
     private fun unionOf(lists: List<List<PostalAddress>>): List<PostalAddress> {
         val out = LinkedHashSet<PostalAddress>()
         lists.forEach { out.addAll(it) }
         return out.toList()
+    }
+
+    /** Unions address lists, deduplicating by display string and preserving first occurrence. */
+    private fun unionByDisplayString(lists: List<List<PostalAddress>>): List<PostalAddress> {
+        val seen = LinkedHashSet<String>() // display string sentinels
+        val out = mutableListOf<PostalAddress>()
+        lists.forEach { list ->
+            list.forEach { addr ->
+                val key = addr.toDisplayString()
+                if (seen.add(key)) {
+                    out.add(addr)
+                }
+            }
+        }
+        return out
     }
 
     private fun addressProvenance(
