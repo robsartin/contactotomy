@@ -54,4 +54,13 @@ class ContactMergerTest {
         assertEquals("merged-a+b", merger.merge(cluster(a, b)).merged.id)
         assertEquals("merged-a+b", merger.merge(cluster(b, a)).merged.id)
     }
+
+    @Test
+    fun `dedupes emails case-insensitively preserving first occurrence casing`() {
+        val a = contact("a", given = "Rob", emails = listOf("Bob@X.com", "shared@y.com"))
+        val b = contact("b", given = "Rob", emails = listOf("bob@x.com", "extra@z.com"))
+        val merged = merger.merge(cluster(a, b)).merged
+        // "Bob@X.com" from member a comes first; "bob@x.com" is a case variant and should be dropped
+        assertEquals(listOf("Bob@X.com", "shared@y.com", "extra@z.com"), merged.emails)
+    }
 }
